@@ -1,0 +1,257 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Productos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2><i class="fas fa-boxes me-2"></i>Gestión de Productos</h2>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#productoModal">
+                        <i class="fas fa-plus me-1"></i>Nuevo Producto
+                    </button>
+                </div>
+
+                <!-- Tabla de productos -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Código</th>
+                                        <th>Producto</th>
+                                        <th>Categoría</th>
+                                        <th>Marca</th>
+                                        <th>Precio Venta</th>
+                                        <th>Stock</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="productosTableBody">
+                                    <!-- Los productos se cargan aquí -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para crear/editar producto -->
+    <div class="modal fade" id="productoModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nuevo Producto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="productoForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Código</label>
+                                    <input type="text" class="form-control" id="codigo" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Nombre</label>
+                                    <input type="text" class="form-control" id="nombre" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Descripción</label>
+                            <textarea class="form-control" id="descripcion" rows="3"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Categoría</label>
+                                    <select class="form-select" id="categoria" required>
+                                        <option value="">Seleccionar...</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Marca</label>
+                                    <select class="form-select" id="marca" required>
+                                        <option value="">Seleccionar...</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Precio Compra</label>
+                                    <input type="number" step="0.01" class="form-control" id="precioCompra" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Precio Venta</label>
+                                    <input type="number" step="0.01" class="form-control" id="precioVenta" required>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="guardarProducto()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let productos = [];
+
+        // Cargar productos al iniciar
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarProductos();
+            cargarCategorias();
+            cargarMarcas();
+        });
+
+        async function cargarProductos() {
+            try {
+                const response = await fetch('/api/productos/');
+                const data = await response.json();
+                productos = data.productos;
+                mostrarProductos();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al cargar productos');
+            }
+        }
+
+        function mostrarProductos() {
+            const tbody = document.getElementById('productosTableBody');
+            tbody.innerHTML = '';
+
+            productos.forEach(producto => {
+                const row = document.createElement('tr');
+                
+                // Formatear precio correctamente
+                const precioVenta = parseFloat(producto.precio_venta);
+                const precioFormateado = isNaN(precioVenta) ? '$0.00' : `$${precioVenta.toFixed(2)}`;
+                
+                // Determinar estado del stock
+                const stockClass = producto.stock <= 5 ? 'badge bg-danger' : 'badge bg-success';
+                const stockText = producto.stock <= 5 ? 'Stock Bajo' : 'Stock OK';
+                
+                row.innerHTML = `
+                    <td><strong>${producto.codigo}</strong></td>
+                    <td>${producto.nombre}</td>
+                    <td>${producto.categoria}</td>
+                    <td>${producto.marca}</td>
+                    <td><strong>${precioFormateado}</strong></td>
+                    <td>${producto.stock} unidades</td>
+                    <td><span class="${stockClass}">${stockText}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="editarProducto(${producto.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="eliminarProducto(${producto.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        async function cargarCategorias() {
+            try {
+                const response = await fetch('/api/categorias/');
+                const data = await response.json();
+                
+                const select = document.getElementById('categoria');
+                select.innerHTML = '<option value="">Seleccionar...</option>';
+                
+                data.categorias.forEach(categoria => {
+                    select.innerHTML += `<option value="${categoria.id}">${categoria.nombre}</option>`;
+                });
+            } catch (error) {
+                console.error('Error al cargar categorías:', error);
+            }
+        }
+
+        async function cargarMarcas() {
+            try {
+                const response = await fetch('/api/marcas/');
+                const data = await response.json();
+                
+                const select = document.getElementById('marca');
+                select.innerHTML = '<option value="">Seleccionar...</option>';
+                
+                data.marcas.forEach(marca => {
+                    select.innerHTML += `<option value="${marca.id}">${marca.nombre}</option>`;
+                });
+            } catch (error) {
+                console.error('Error al cargar marcas:', error);
+            }
+        }
+
+        async function guardarProducto() {
+            const formData = {
+                codigo: document.getElementById('codigo').value,
+                nombre: document.getElementById('nombre').value,
+                descripcion: document.getElementById('descripcion').value,
+                categoria_id: document.getElementById('categoria').value,
+                marca_id: document.getElementById('marca').value,
+                precio_compra: parseFloat(document.getElementById('precioCompra').value),
+                precio_venta: parseFloat(document.getElementById('precioVenta').value)
+            };
+
+            try {
+                const response = await fetch('/api/productos/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Producto guardado exitosamente');
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('productoModal'));
+                    modal.hide();
+                    cargarProductos();
+                    document.getElementById('productoForm').reset();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al guardar producto');
+            }
+        }
+
+        function editarProducto(id) {
+            alert('Función editar en desarrollo');
+        }
+
+        function eliminarProducto(id) {
+            alert('Función eliminar en desarrollo');
+        }
+    </script>
+</body>
+</html>
