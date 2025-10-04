@@ -3,8 +3,8 @@
     <h2>💳 Nueva Venta</h2>
 
     <div class="row mt-4">
-      <!-- Columna Izquierda: Selector de Productos -->
-      <div class="col-md-7">
+      <!-- Columna Izquierda: Selector de Productos (solo para INGRESO) -->
+      <div class="col-md-7" v-if="venta.tipo_movimiento === 'INGRESO'">
         <div class="card">
           <div class="card-header bg-primary text-white">
             <h5 class="mb-0">Seleccionar Productos</h5>
@@ -62,8 +62,68 @@
         </div>
       </div>
 
-      <!-- Columna Derecha: Carrito y Resumen -->
-      <div class="col-md-5">
+      <!-- Formulario para EGRESO -->
+      <div class="col-md-12" v-if="venta.tipo_movimiento === 'EGRESO'">
+        <div class="card">
+          <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">💸 Registrar Egreso (Gasto)</h5>
+          </div>
+          <div class="card-body">
+            <!-- Selector de Tipo de Movimiento -->
+            <div class="mb-3">
+              <label class="form-label">Tipo de Movimiento *</label>
+              <select v-model="venta.tipo_movimiento" class="form-select">
+                <option value="INGRESO">💰 Ingreso (Venta)</option>
+                <option value="EGRESO">💸 Egreso (Gasto)</option>
+              </select>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Monto del Egreso *</label>
+                  <input v-model.number="venta.monto_egreso" type="number" step="0.01" class="form-control form-control-lg" min="0.01" required placeholder="0.00">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Tipo de Pago *</label>
+                  <select v-model="venta.tipo_pago" class="form-select" required>
+                    <option value="">Seleccione...</option>
+                    <option value="EFECTIVO">Efectivo</option>
+                    <option value="TARJETA">Tarjeta</option>
+                    <option value="TRANSFERENCIA">Transferencia</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Descripción del Egreso *</label>
+              <textarea v-model="venta.observaciones" class="form-control" rows="3" required placeholder="Ej: Pago de servicios, compra de suministros, etc."></textarea>
+            </div>
+
+            <hr>
+
+            <div class="mb-3 d-flex justify-content-between fs-3">
+              <span><strong>TOTAL A EGRESAR:</strong></span>
+              <strong class="text-danger">${{ Number(venta.monto_egreso || 0).toFixed(2) }}</strong>
+            </div>
+
+            <div class="d-grid gap-2">
+              <button @click="procesarEgreso" class="btn btn-danger btn-lg" :disabled="!puedeRegistrarEgreso">
+                💸 Registrar Egreso
+              </button>
+              <router-link to="/ventas" class="btn btn-secondary">
+                ❌ Cancelar
+              </router-link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Columna Derecha: Carrito y Resumen (solo para INGRESO) -->
+      <div class="col-md-5" v-if="venta.tipo_movimiento === 'INGRESO'">
         <div class="card">
           <div class="card-header bg-success text-white">
             <h5 class="mb-0">🛒 Carrito de Compra</h5>
@@ -210,6 +270,7 @@ export default {
         impuesto_porcentaje: 0,
         tipo_pago: '',
         observaciones: '',
+        monto_egreso: 0,
         vendedor: 1 // TODO: Obtener del usuario autenticado
       }
     }
@@ -226,6 +287,9 @@ export default {
     },
     puedeVender() {
       return this.venta.tipo_pago && this.carrito.length > 0
+    },
+    puedeRegistrarEgreso() {
+      return this.venta.tipo_pago && this.venta.monto_egreso > 0 && this.venta.observaciones
     }
   },
   async created() {
@@ -354,6 +418,39 @@ export default {
           console.error('Error al procesar venta:', error)
           console.error('Respuesta del servidor:', error.response?.data)
           alert('Error al procesar la venta: ' + JSON.stringify(error.response?.data || error.message))
+        }
+      }
+    },
+    async procesarEgreso() {
+      if (!this.puedeRegistrarEgreso) {
+        alert('Complete todos los campos requeridos')
+        return
+      }
+
+      if (confirm('¿Confirmar el registro de este egreso?')) {
+        try {
+          const egresoData = {
+            tipo_movimiento: 'EGRESO',
+            cliente: null,
+            vendedor: this.venta.vendedor,
+            subtotal: Number(this.venta.monto_egreso).toFixed(2),
+            descuento: 0,
+            impuesto: 0,
+            total: Number(this.venta.monto_egreso).toFixed(2),
+            tipo_pago: this.venta.tipo_pago,
+            estado: 'PAGADO',
+            observaciones: this.venta.observaciones,
+            detalles: [] // Los egresos no tienen detalles de productos
+          }
+
+          console.log('Datos de egreso a enviar:', egresoData)
+          await api.createVenta(egresoData)
+          alert('Egreso registrado correctamente!')
+          this.$router.push('/ventas')
+        } catch (error) {
+          console.error('Error al procesar egreso:', error)
+          console.error('Respuesta del servidor:', error.response?.data)
+          alert('Error al procesar el egreso: ' + JSON.stringify(error.response?.data || error.message))
         }
       }
     }
