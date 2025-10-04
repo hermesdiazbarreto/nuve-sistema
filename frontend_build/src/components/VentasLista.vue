@@ -103,8 +103,13 @@
                   <router-link :to="`/ventas/${venta.id}`" class="btn btn-info" title="Ver detalles">
                     👁️
                   </router-link>
-                  <button @click="editarVenta(venta)" class="btn btn-warning" title="Editar">
-                    ✏️
+                  <button
+                    @click="cancelarVenta(venta)"
+                    class="btn btn-warning"
+                    title="Cancelar venta"
+                    :disabled="venta.estado === 'CANCELADO'"
+                  >
+                    ❌
                   </button>
                   <button @click="eliminarVenta(venta.id)" class="btn btn-danger" title="Eliminar">
                     🗑️
@@ -206,10 +211,36 @@ export default {
       if (!fecha) return ''
       return new Date(fecha).toLocaleString('es-ES')
     },
-    editarVenta(venta) {
-      // Por ahora, mostrar alerta indicando que la edición no está implementada
-      // TODO: Implementar formulario de edición de ventas
-      alert(`Edición de ventas no implementada aún.\n\nVenta: ${venta.numero_venta}\nTotal: $${venta.total}\n\nPara editar una venta, contacta al administrador del sistema.`)
+    async cancelarVenta(venta) {
+      if (venta.estado === 'CANCELADO') {
+        alert('⚠️ Esta venta ya está cancelada')
+        return
+      }
+
+      const mensaje = `⚠️ ¿Estás seguro de cancelar esta venta?\n\n` +
+        `Venta: ${venta.numero_venta}\n` +
+        `Cliente: ${venta.cliente_nombre}\n` +
+        `Total: $${Number(venta.total).toFixed(2)}\n` +
+        `Tipo: ${venta.tipo_movimiento === 'INGRESO' ? 'Ingreso' : 'Egreso'}\n\n` +
+        `Nota: El stock NO se restaurará automáticamente. Si es necesario, deberás hacer un ajuste de inventario manual.`
+
+      if (!confirm(mensaje)) {
+        return
+      }
+
+      try {
+        // Actualizar solo el estado a CANCELADO
+        await api.updateVenta(venta.id, {
+          ...venta,
+          estado: 'CANCELADO'
+        })
+        alert('✅ Venta cancelada correctamente')
+        await this.cargarVentas()
+      } catch (error) {
+        console.error('Error al cancelar venta:', error)
+        console.error('Detalles:', error.response?.data)
+        alert('❌ Error al cancelar la venta: ' + (error.response?.data?.detail || error.message))
+      }
     },
     async eliminarVenta(ventaId) {
       if (!confirm('⚠️ ¿Estás seguro de eliminar esta venta?\n\nEsta acción NO se puede deshacer y eliminará:\n- La venta\n- Los detalles de productos\n- Los movimientos de inventario relacionados')) {
