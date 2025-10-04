@@ -132,6 +132,7 @@ class VentaViewSet(viewsets.ModelViewSet):
         Eliminar venta - Restaurar stock automáticamente si es INGRESO
         """
         from django.db import transaction
+        import traceback
 
         instance = self.get_object()
 
@@ -166,8 +167,12 @@ class VentaViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_204_NO_CONTENT
             )
         except Exception as e:
+            # Imprimir el traceback completo para debugging
+            error_traceback = traceback.format_exc()
+            print(f"ERROR AL ELIMINAR VENTA: {error_traceback}")
+
             return Response(
-                {'error': f'Error al eliminar venta: {str(e)}'},
+                {'error': f'Error al eliminar venta: {str(e)}', 'traceback': error_traceback},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
