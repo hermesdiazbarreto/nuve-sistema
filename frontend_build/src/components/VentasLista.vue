@@ -148,8 +148,8 @@
                 </span>
               </p>
             </div>
-            <div class="alert alert-warning">
-              <strong>⚠️ Importante:</strong> El stock NO se restaurará automáticamente. Si es necesario, deberás hacer un ajuste de inventario manual.
+            <div class="alert alert-success">
+              <strong>✅ Stock automático:</strong> Si esta es una venta de INGRESO, el stock se restaurará automáticamente y se crearán movimientos de inventario de reversión.
             </div>
           </div>
           <div class="modal-footer">
@@ -179,6 +179,9 @@
                 <li>Los detalles de productos</li>
                 <li>Los movimientos de inventario relacionados</li>
               </ul>
+            </div>
+            <div class="alert alert-success">
+              <strong>✅ Stock automático:</strong> Si es una venta de INGRESO, el stock se restaurará automáticamente antes de eliminar.
             </div>
           </div>
           <div class="modal-footer">
