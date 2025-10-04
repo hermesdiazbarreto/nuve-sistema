@@ -1,4 +1,5 @@
 from django.urls import path, include
+from django.http import JsonResponse
 from rest_framework.routers import DefaultRouter
 from .views import (
     CategoriaViewSet, MarcaViewSet, TallaViewSet, ColorViewSet,
@@ -6,6 +7,9 @@ from .views import (
     VentaViewSet, DetalleVentaViewSet, MovimientoInventarioViewSet,
     ProveedorViewSet, login_view, logout_view
 )
+
+def health_check(request):
+    return JsonResponse({'status': 'ok', 'message': 'Nuve API is running'})
 
 router = DefaultRouter()
 router.register(r'categorias', CategoriaViewSet)
@@ -21,7 +25,13 @@ router.register(r'movimientos', MovimientoInventarioViewSet)
 router.register(r'proveedores', ProveedorViewSet)
 
 urlpatterns = [
+    path('', health_check, name='health'),
     path('api/', include(router.urls)),
     path('api/login/', login_view, name='login'),
     path('api/logout/', logout_view, name='logout'),
 ]
+
+
+
+
+
