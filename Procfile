@@ -1,1 +1,1 @@
-web: cd backend/almacen && python manage.py migrate && gunicorn almacen.wsgi --log-file -
+web: python backend/almacen/manage.py migrate --noinput && cd backend/almacen && gunicorn almacen.wsgi --log-file -
