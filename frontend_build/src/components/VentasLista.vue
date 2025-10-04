@@ -125,6 +125,110 @@
         No hay ventas registradas.
       </div>
     </div>
+
+    <!-- Modal de confirmación para cancelar venta -->
+    <div v-if="mostrarModalCancelar" class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-warning text-dark">
+            <h5 class="modal-title">⚠️ Cancelar Venta</h5>
+            <button type="button" class="close" @click="cerrarModalCancelar" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p class="mb-3"><strong>¿Estás seguro de cancelar esta venta?</strong></p>
+            <div class="alert alert-info" v-if="ventaSeleccionada">
+              <p class="mb-1"><strong>N° Venta:</strong> {{ ventaSeleccionada.numero_venta }}</p>
+              <p class="mb-1"><strong>Cliente:</strong> {{ ventaSeleccionada.cliente_nombre }}</p>
+              <p class="mb-1"><strong>Total:</strong> ${{ Number(ventaSeleccionada.total).toFixed(2) }}</p>
+              <p class="mb-0"><strong>Tipo:</strong>
+                <span class="badge" :class="ventaSeleccionada.tipo_movimiento === 'INGRESO' ? 'bg-success' : 'bg-danger'">
+                  {{ ventaSeleccionada.tipo_movimiento === 'INGRESO' ? '💰 Ingreso' : '💸 Egreso' }}
+                </span>
+              </p>
+            </div>
+            <div class="alert alert-warning">
+              <strong>⚠️ Importante:</strong> El stock NO se restaurará automáticamente. Si es necesario, deberás hacer un ajuste de inventario manual.
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="cerrarModalCancelar">No, mantener venta</button>
+            <button type="button" class="btn btn-warning" @click="confirmarCancelarVenta">Sí, cancelar venta</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de confirmación para eliminar venta -->
+    <div v-if="mostrarModalEliminar" class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-danger text-white">
+            <h5 class="modal-title">🗑️ Eliminar Venta</h5>
+            <button type="button" class="close" @click="cerrarModalEliminar" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p class="mb-3"><strong>¿Estás seguro de eliminar esta venta?</strong></p>
+            <div class="alert alert-danger">
+              <strong>⚠️ ADVERTENCIA:</strong> Esta acción NO se puede deshacer y eliminará:
+              <ul class="mb-0 mt-2">
+                <li>La venta completa</li>
+                <li>Los detalles de productos</li>
+                <li>Los movimientos de inventario relacionados</li>
+              </ul>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="cerrarModalEliminar">No, cancelar</button>
+            <button type="button" class="btn btn-danger" @click="confirmarEliminarVenta">Sí, eliminar permanentemente</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de éxito -->
+    <div v-if="mostrarModalExito" class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-success text-white">
+            <h5 class="modal-title">✅ {{ mensajeExito }}</h5>
+          </div>
+          <div class="modal-body text-center py-4">
+            <div style="font-size: 4rem;">✅</div>
+            <p class="mt-3 mb-0">Operación completada exitosamente</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-success" @click="cerrarModalExito">Aceptar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de error -->
+    <div v-if="mostrarModalError" class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-danger text-white">
+            <h5 class="modal-title">❌ Error</h5>
+            <button type="button" class="close" @click="cerrarModalError" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="text-center py-3">
+              <div style="font-size: 4rem;">❌</div>
+              <p class="mt-3 mb-0">{{ mensajeError }}</p>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="cerrarModalError">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -142,7 +246,15 @@ export default {
         estado: '',
         fecha_desde: '',
         fecha_hasta: ''
-      }
+      },
+      mostrarModalCancelar: false,
+      mostrarModalEliminar: false,
+      mostrarModalExito: false,
+      mostrarModalError: false,
+      ventaSeleccionada: null,
+      ventaIdEliminar: null,
+      mensajeExito: '',
+      mensajeError: ''
     }
   },
   computed: {
@@ -211,51 +323,65 @@ export default {
       if (!fecha) return ''
       return new Date(fecha).toLocaleString('es-ES')
     },
-    async cancelarVenta(venta) {
+    cancelarVenta(venta) {
       if (venta.estado === 'CANCELADO') {
-        alert('⚠️ Esta venta ya está cancelada')
+        this.mensajeError = 'Esta venta ya está cancelada'
+        this.mostrarModalError = true
         return
       }
-
-      const mensaje = `⚠️ ¿Estás seguro de cancelar esta venta?\n\n` +
-        `Venta: ${venta.numero_venta}\n` +
-        `Cliente: ${venta.cliente_nombre}\n` +
-        `Total: $${Number(venta.total).toFixed(2)}\n` +
-        `Tipo: ${venta.tipo_movimiento === 'INGRESO' ? 'Ingreso' : 'Egreso'}\n\n` +
-        `Nota: El stock NO se restaurará automáticamente. Si es necesario, deberás hacer un ajuste de inventario manual.`
-
-      if (!confirm(mensaje)) {
-        return
-      }
-
+      this.ventaSeleccionada = venta
+      this.mostrarModalCancelar = true
+    },
+    cerrarModalCancelar() {
+      this.mostrarModalCancelar = false
+      this.ventaSeleccionada = null
+    },
+    async confirmarCancelarVenta() {
       try {
-        // Actualizar solo el estado a CANCELADO
-        await api.updateVenta(venta.id, {
-          ...venta,
+        await api.updateVenta(this.ventaSeleccionada.id, {
+          ...this.ventaSeleccionada,
           estado: 'CANCELADO'
         })
-        alert('✅ Venta cancelada correctamente')
+        this.cerrarModalCancelar()
+        this.mensajeExito = 'Venta cancelada correctamente'
+        this.mostrarModalExito = true
         await this.cargarVentas()
       } catch (error) {
         console.error('Error al cancelar venta:', error)
-        console.error('Detalles:', error.response?.data)
-        alert('❌ Error al cancelar la venta: ' + (error.response?.data?.detail || error.message))
+        this.cerrarModalCancelar()
+        this.mensajeError = error.response?.data?.detail || error.message || 'Error al cancelar la venta'
+        this.mostrarModalError = true
       }
     },
-    async eliminarVenta(ventaId) {
-      if (!confirm('⚠️ ¿Estás seguro de eliminar esta venta?\n\nEsta acción NO se puede deshacer y eliminará:\n- La venta\n- Los detalles de productos\n- Los movimientos de inventario relacionados')) {
-        return
-      }
-
+    eliminarVenta(ventaId) {
+      this.ventaIdEliminar = ventaId
+      this.mostrarModalEliminar = true
+    },
+    cerrarModalEliminar() {
+      this.mostrarModalEliminar = false
+      this.ventaIdEliminar = null
+    },
+    async confirmarEliminarVenta() {
       try {
-        await api.deleteVenta(ventaId)
-        alert('✅ Venta eliminada correctamente')
+        await api.deleteVenta(this.ventaIdEliminar)
+        this.cerrarModalEliminar()
+        this.mensajeExito = 'Venta eliminada correctamente'
+        this.mostrarModalExito = true
         await this.cargarVentas()
       } catch (error) {
         console.error('Error al eliminar venta:', error)
-        console.error('Detalles:', error.response?.data)
-        alert('❌ Error al eliminar la venta: ' + (error.response?.data?.detail || error.message))
+        this.cerrarModalEliminar()
+        this.mensajeError = error.response?.data?.detail || error.message || 'Error al eliminar la venta'
+        this.mostrarModalError = true
       }
+    },
+    cerrarModalExito() {
+      this.mostrarModalExito = false
+      this.mensajeExito = ''
+    },
+    cerrarModalError() {
+      this.mostrarModalError = false
+      this.mensajeError = ''
     }
   }
 }
