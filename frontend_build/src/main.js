@@ -13,4 +13,16 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 import 'popper.js'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
-createApp(App).use(router).mount('#app')
+// Importar componente modal y mixin global
+import ModalConfirm from './components/ModalConfirm.vue'
+import modalMixin from './mixins/modalMixin'
+
+const app = createApp(App)
+
+// Registrar componente modal globalmente
+app.component('ModalConfirm', ModalConfirm)
+
+// Registrar mixin globalmente
+app.mixin(modalMixin)
+
+app.use(router).mount('#app')
