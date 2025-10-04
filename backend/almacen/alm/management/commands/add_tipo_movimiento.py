@@ -9,19 +9,31 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         with connection.cursor() as cursor:
+            # Verificar si la columna ya existe
+            cursor.execute("""
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_name='alm_venta' AND column_name='tipo_movimiento';
+            """)
+
+            if cursor.fetchone():
+                self.stdout.write(
+                    self.style.WARNING('La columna tipo_movimiento ya existe')
+                )
+                return
+
+            # Si no existe, agregarla
             try:
-                # Intentar agregar la columna
                 cursor.execute("""
                     ALTER TABLE alm_venta
-                    ADD COLUMN IF NOT EXISTS tipo_movimiento VARCHAR(10)
-                    DEFAULT 'INGRESO' NOT NULL;
+                    ADD COLUMN tipo_movimiento VARCHAR(10) DEFAULT 'INGRESO' NOT NULL;
                 """)
 
                 self.stdout.write(
-                    self.style.SUCCESS('✓ Columna tipo_movimiento verificada/agregada exitosamente')
+                    self.style.SUCCESS('✓ Columna tipo_movimiento agregada exitosamente')
                 )
             except Exception as e:
-                # Si ya existe o hay otro error, solo reportar
                 self.stdout.write(
-                    self.style.WARNING(f'Columna tipo_movimiento: {str(e)}')
+                    self.style.ERROR(f'Error al agregar columna: {str(e)}')
                 )
+                raise
