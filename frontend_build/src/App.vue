@@ -145,8 +145,9 @@ export default {
     async logout() {
       try {
         const token = localStorage.getItem('token')
+        const API_URL = process.env.VUE_APP_API_URL || 'https://nuve-sistema-production.up.railway.app/api'
         if (token) {
-          await axios.post('http://localhost:8000/api/logout/', {}, {
+          await axios.post(`${API_URL}/logout/`, {}, {
             headers: {
               'Authorization': `Token ${token}`
             }

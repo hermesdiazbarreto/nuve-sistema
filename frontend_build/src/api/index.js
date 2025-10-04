@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Usa variable de entorno para producción, o localhost para desarrollo
-const BASE_URL = process.env.VUE_APP_API_URL || "http://localhost:8000/api";
+const BASE_URL = process.env.VUE_APP_API_URL || "https://nuve-sistema-production.up.railway.app/api";
 
 export default axios.create({
     baseURL: BASE_URL,

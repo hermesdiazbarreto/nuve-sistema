@@ -76,7 +76,7 @@ export default {
       this.loading = true
 
       try {
-        const API_URL = process.env.VUE_APP_API_URL || 'http://localhost:8000/api'
+        const API_URL = process.env.VUE_APP_API_URL || 'https://nuve-sistema-production.up.railway.app/api'
         const response = await axios.post(`${API_URL}/login/`, {
           username: this.username,
           password: this.password
