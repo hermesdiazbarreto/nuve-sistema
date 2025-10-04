@@ -124,6 +124,7 @@
                 <thead>
                   <tr>
                     <th>N° Venta</th>
+                    <th>Tipo</th>
                     <th>Cliente</th>
                     <th>Total</th>
                     <th>Estado</th>
@@ -132,15 +133,20 @@
                 </thead>
                 <tbody>
                   <tr v-for="venta in ultimasVentas" :key="venta.id">
-                    <td>{{ venta.numero_venta }}</td>
-                    <td>{{ venta.cliente_nombre }}</td>
-                    <td>${{ Number(venta.total).toFixed(2) }}</td>
+                    <td><small>{{ venta.numero_venta }}</small></td>
                     <td>
-                      <span class="badge" :class="getBadgeClass(venta.estado)">
-                        {{ venta.estado }}
+                      <span class="badge" :class="venta.tipo_movimiento === 'INGRESO' ? 'bg-success' : 'bg-danger'">
+                        {{ venta.tipo_movimiento === 'INGRESO' ? '💰' : '💸' }}
                       </span>
                     </td>
-                    <td>{{ formatFecha(venta.fecha_venta) }}</td>
+                    <td><small>{{ venta.cliente_nombre }}</small></td>
+                    <td><small><strong>${{ Number(venta.total).toFixed(2) }}</strong></small></td>
+                    <td>
+                      <span class="badge" :class="getBadgeClass(venta.estado)">
+                        <small>{{ venta.estado }}</small>
+                      </span>
+                    </td>
+                    <td><small>{{ formatFecha(venta.fecha_venta) }}</small></td>
                   </tr>
                 </tbody>
               </table>
