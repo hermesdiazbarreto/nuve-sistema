@@ -91,30 +91,38 @@ class VentaViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
 
-        with transaction.atomic():
-            venta = serializer.save()
+        try:
+            with transaction.atomic():
+                venta = serializer.save()
 
-            # Si la venta cambió a CANCELADO y es un INGRESO, restaurar stock
-            if (venta.estado == 'CANCELADO' and
-                estado_anterior != 'CANCELADO' and
-                venta.tipo_movimiento == 'INGRESO'):
+                # Si la venta cambió a CANCELADO y es un INGRESO, restaurar stock
+                if (venta.estado == 'CANCELADO' and
+                    estado_anterior != 'CANCELADO' and
+                    venta.tipo_movimiento == 'INGRESO'):
 
-                # Restaurar stock de cada detalle
-                for detalle in venta.detalles.all():
-                    variante = detalle.producto_variante
-                    variante.stock_actual += detalle.cantidad
-                    variante.save()
+                    detalles = venta.detalles.all()
 
-                    # Crear movimiento de inventario de ENTRADA (reversión)
-                    MovimientoInventario.objects.create(
-                        producto_variante=variante,
-                        tipo_movimiento='ENTRADA',
-                        cantidad=detalle.cantidad,
-                        referencia=f'Cancelación de venta {venta.numero_venta}',
-                        usuario=request.user if request.user.is_authenticated else None
-                    )
+                    # Restaurar stock de cada detalle
+                    for detalle in detalles:
+                        variante = detalle.producto_variante
+                        variante.stock_actual += detalle.cantidad
+                        variante.save()
 
-        return Response(serializer.data)
+                        # Crear movimiento de inventario de ENTRADA (reversión)
+                        MovimientoInventario.objects.create(
+                            producto_variante=variante,
+                            tipo_movimiento='ENTRADA',
+                            cantidad=detalle.cantidad,
+                            referencia=f'Cancelación de venta {venta.numero_venta}',
+                            usuario=request.user if request.user.is_authenticated else None
+                        )
+
+            return Response(serializer.data)
+        except Exception as e:
+            return Response(
+                {'error': f'Error al actualizar venta: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     def destroy(self, request, *args, **kwargs):
         """
@@ -124,30 +132,38 @@ class VentaViewSet(viewsets.ModelViewSet):
 
         instance = self.get_object()
 
-        with transaction.atomic():
-            # Si es un INGRESO y no está cancelado, restaurar stock
-            if instance.tipo_movimiento == 'INGRESO' and instance.estado != 'CANCELADO':
-                for detalle in instance.detalles.all():
-                    variante = detalle.producto_variante
-                    variante.stock_actual += detalle.cantidad
-                    variante.save()
+        try:
+            with transaction.atomic():
+                # Solo restaurar stock si es un INGRESO con productos y no está cancelado
+                if instance.tipo_movimiento == 'INGRESO' and instance.estado != 'CANCELADO':
+                    detalles = instance.detalles.all()
 
-                    # Crear movimiento de inventario de ENTRADA (reversión)
-                    MovimientoInventario.objects.create(
-                        producto_variante=variante,
-                        tipo_movimiento='ENTRADA',
-                        cantidad=detalle.cantidad,
-                        referencia=f'Eliminación de venta {instance.numero_venta}',
-                        usuario=request.user if request.user.is_authenticated else None
-                    )
+                    for detalle in detalles:
+                        variante = detalle.producto_variante
+                        variante.stock_actual += detalle.cantidad
+                        variante.save()
 
-            # Eliminar la venta (los detalles se eliminarán en cascada)
-            instance.delete()
+                        # Crear movimiento de inventario de ENTRADA (reversión)
+                        MovimientoInventario.objects.create(
+                            producto_variante=variante,
+                            tipo_movimiento='ENTRADA',
+                            cantidad=detalle.cantidad,
+                            referencia=f'Eliminación de venta {instance.numero_venta}',
+                            usuario=request.user if request.user.is_authenticated else None
+                        )
 
-        return Response(
-            {'message': 'Venta eliminada correctamente. Stock restaurado.'},
-            status=status.HTTP_204_NO_CONTENT
-        )
+                # Eliminar la venta (los detalles se eliminarán en cascada)
+                instance.delete()
+
+            return Response(
+                {'message': 'Venta eliminada correctamente. Stock restaurado.'},
+                status=status.HTTP_204_NO_CONTENT
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Error al eliminar venta: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class DetalleVentaViewSet(viewsets.ModelViewSet):
     queryset = DetalleVenta.objects.all()
