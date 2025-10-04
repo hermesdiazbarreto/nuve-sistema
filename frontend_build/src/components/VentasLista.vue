@@ -99,9 +99,17 @@
                 </span>
               </td>
               <td>
-                <router-link :to="`/ventas/${venta.id}`" class="btn btn-sm btn-info">
-                  👁️ Ver
-                </router-link>
+                <div class="btn-group btn-group-sm" role="group">
+                  <router-link :to="`/ventas/${venta.id}`" class="btn btn-info" title="Ver detalles">
+                    👁️
+                  </router-link>
+                  <button @click="editarVenta(venta)" class="btn btn-warning" title="Editar">
+                    ✏️
+                  </button>
+                  <button @click="eliminarVenta(venta.id)" class="btn btn-danger" title="Eliminar">
+                    🗑️
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -197,6 +205,26 @@ export default {
     formatFecha(fecha) {
       if (!fecha) return ''
       return new Date(fecha).toLocaleString('es-ES')
+    },
+    editarVenta(venta) {
+      // Por ahora, mostrar alerta indicando que la edición no está implementada
+      // TODO: Implementar formulario de edición de ventas
+      alert(`Edición de ventas no implementada aún.\n\nVenta: ${venta.numero_venta}\nTotal: $${venta.total}\n\nPara editar una venta, contacta al administrador del sistema.`)
+    },
+    async eliminarVenta(ventaId) {
+      if (!confirm('⚠️ ¿Estás seguro de eliminar esta venta?\n\nEsta acción NO se puede deshacer y eliminará:\n- La venta\n- Los detalles de productos\n- Los movimientos de inventario relacionados')) {
+        return
+      }
+
+      try {
+        await api.deleteVenta(ventaId)
+        alert('✅ Venta eliminada correctamente')
+        await this.cargarVentas()
+      } catch (error) {
+        console.error('Error al eliminar venta:', error)
+        console.error('Detalles:', error.response?.data)
+        alert('❌ Error al eliminar la venta: ' + (error.response?.data?.detail || error.message))
+      }
     }
   }
 }
