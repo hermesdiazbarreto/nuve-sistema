@@ -110,8 +110,11 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CORS Configuration
-CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:8080').split(',')
+# Permitir orígenes dinámicos desde variable de entorno
+cors_origins = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:8080,http://localhost:8084')
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins.split(',')]
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = False
 
 # Security settings for production
 if not DEBUG:
