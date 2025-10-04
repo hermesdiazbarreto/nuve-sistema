@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate Cloud Icon</title>
+    <style>
+        canvas { border: 1px solid black; }
+    </style>
+</head>
+<body>
+    <canvas id="canvas" width="32" height="32"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Fondo transparente
+        ctx.clearRect(0, 0, 32, 32);
+
+        // Crear gradiente para la nube
+        const gradient = ctx.createLinearGradient(0, 0, 0, 32);
+        gradient.addColorStop(0, '#64B5F6');
+        gradient.addColorStop(1, '#42A5F5');
+
+        ctx.fillStyle = gradient;
+
+        // Dibujar nube con círculos
+        ctx.beginPath();
+        ctx.arc(16, 16, 8, 0, Math.PI * 2);
+        ctx.arc(10, 16, 6, 0, Math.PI * 2);
+        ctx.arc(22, 16, 6, 0, Math.PI * 2);
+        ctx.arc(16, 11, 7, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Agregar brillo
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.beginPath();
+        ctx.ellipse(13, 11, 3, 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        console.log('PNG Data URL:', canvas.toDataURL('image/png'));
+    </script>
+</body>
+</html>
