@@ -133,8 +133,8 @@
     </div>
 
     <!-- Modal para agregar/editar variante -->
-    <div v-if="mostrarModalVariante" class="modal" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5);">
-      <div class="modal-dialog">
+    <div v-if="mostrarModalVariante" class="modal" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; overflow-y: auto;">
+      <div class="modal-dialog" style="margin: 50px auto;">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">{{ varianteEditando ? 'Editar' : 'Nueva' }} Variante</h5>
