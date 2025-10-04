@@ -3,7 +3,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "python backend/almacen/manage.py migrate --noinput && python backend/almacen/manage.py collectstatic --noinput && cd backend/almacen && gunicorn almacen.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 2 --timeout 120",
+    "startCommand": "python backend/almacen/manage.py migrate --noinput && python backend/almacen/manage.py create_superuser && python backend/almacen/manage.py collectstatic --noinput && cd backend/almacen && gunicorn almacen.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 2 --timeout 120",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }
