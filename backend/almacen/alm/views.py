@@ -108,6 +108,7 @@ class VentaViewSet(viewsets.ModelViewSet):
                     # Restaurar stock de cada detalle
                     for detalle in detalles:
                         variante = detalle.producto_variante
+                        stock_anterior = variante.stock_actual
                         variante.stock_actual += detalle.cantidad
                         variante.save()
 
@@ -116,8 +117,10 @@ class VentaViewSet(viewsets.ModelViewSet):
                             producto_variante=variante,
                             tipo_movimiento='ENTRADA',
                             cantidad=detalle.cantidad,
-                            referencia=f'Cancelación de venta {venta.numero_venta}',
-                            usuario=request.user if request.user.is_authenticated else None
+                            stock_anterior=stock_anterior,
+                            stock_nuevo=variante.stock_actual,
+                            motivo=f'Cancelación de venta {venta.numero_venta}',
+                            usuario=request.user
                         )
 
             return Response(serializer.data)
@@ -147,6 +150,7 @@ class VentaViewSet(viewsets.ModelViewSet):
 
                     for detalle in detalles:
                         variante = detalle.producto_variante
+                        stock_anterior = variante.stock_actual
                         variante.stock_actual += detalle.cantidad
                         variante.save()
 
@@ -155,8 +159,10 @@ class VentaViewSet(viewsets.ModelViewSet):
                             producto_variante=variante,
                             tipo_movimiento='ENTRADA',
                             cantidad=detalle.cantidad,
-                            referencia=f'Eliminación de venta {instance.numero_venta}',
-                            usuario=request.user if request.user.is_authenticated else None
+                            stock_anterior=stock_anterior,
+                            stock_nuevo=variante.stock_actual,
+                            motivo=f'Eliminación de venta {instance.numero_venta}',
+                            usuario=request.user
                         )
 
                 # Eliminar la venta (los detalles se eliminarán en cascada)
