@@ -75,11 +75,13 @@
             <h5 class="modal-title">
               Variantes de: {{ productoSeleccionado.nombre }}
             </h5>
-            <button type="button" class="btn-close" @click="cerrarVariantes"></button>
+            <button type="button" class="close" @click="cerrarVariantes" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
           </div>
           <div class="modal-body">
-            <router-link :to="`/variantes/nueva/${productoSeleccionado.id}`" class="btn btn-sm btn-primary mb-3">
-              ➕ Agregar Variante
+            <router-link :to="`/productos/editar/${productoSeleccionado.id}`" class="btn btn-sm btn-primary mb-3" @click="cerrarVariantes">
+              ➕ Agregar Variante (Ir a Editar Producto)
             </router-link>
 
             <div v-if="cargandoVariantes" class="text-center">
