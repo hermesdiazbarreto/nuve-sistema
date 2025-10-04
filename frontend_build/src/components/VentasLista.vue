@@ -66,6 +66,7 @@
           <thead class="table-dark">
             <tr>
               <th>N° Venta</th>
+              <th>Tipo</th>
               <th>Cliente</th>
               <th>Vendedor</th>
               <th>Fecha</th>
@@ -80,6 +81,11 @@
           <tbody>
             <tr v-for="venta in ventasFiltradas" :key="venta.id">
               <td><strong>{{ venta.numero_venta }}</strong></td>
+              <td>
+                <span class="badge" :class="venta.tipo_movimiento === 'INGRESO' ? 'bg-success' : 'bg-danger'">
+                  {{ venta.tipo_movimiento === 'INGRESO' ? '💰 Ingreso' : '💸 Egreso' }}
+                </span>
+              </td>
               <td>{{ venta.cliente_nombre }}</td>
               <td>{{ venta.vendedor_nombre }}</td>
               <td>{{ formatFecha(venta.fecha_venta) }}</td>

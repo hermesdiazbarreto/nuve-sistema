@@ -69,6 +69,15 @@
             <h5 class="mb-0">🛒 Carrito de Compra</h5>
           </div>
           <div class="card-body">
+            <!-- Selector de Tipo de Movimiento -->
+            <div class="mb-3">
+              <label class="form-label">Tipo de Movimiento *</label>
+              <select v-model="venta.tipo_movimiento" class="form-select">
+                <option value="INGRESO">💰 Ingreso (Venta)</option>
+                <option value="EGRESO">💸 Egreso (Gasto)</option>
+              </select>
+            </div>
+
             <!-- Selector de Cliente -->
             <div class="mb-3">
               <label class="form-label">Cliente (Opcional)</label>
@@ -195,6 +204,7 @@ export default {
       clientes: [],
       carrito: [],
       venta: {
+        tipo_movimiento: 'INGRESO', // Por defecto es Ingreso
         cliente_id: '',
         descuento: 0,
         impuesto_porcentaje: 0,
@@ -318,6 +328,7 @@ export default {
       if (confirm('¿Confirmar la venta?')) {
         try {
           const ventaData = {
+            tipo_movimiento: this.venta.tipo_movimiento,
             cliente: this.venta.cliente_id || null,
             vendedor: this.venta.vendedor,
             subtotal: this.subtotal.toFixed(2),

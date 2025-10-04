@@ -102,15 +102,21 @@ class Venta(models.Model):
         ('PAGADO', 'Pagado'),
         ('CANCELADO', 'Cancelado'),
     ]
-    
+
     TIPO_PAGO_CHOICES = [
         ('EFECTIVO', 'Efectivo'),
         ('TARJETA', 'Tarjeta'),
         ('TRANSFERENCIA', 'Transferencia'),
         ('MIXTO', 'Mixto'),
     ]
-    
+
+    TIPO_MOVIMIENTO_CHOICES = [
+        ('INGRESO', 'Ingreso'),
+        ('EGRESO', 'Egreso'),
+    ]
+
     numero_venta = models.CharField(max_length=20, unique=True)
+    tipo_movimiento = models.CharField(max_length=10, choices=TIPO_MOVIMIENTO_CHOICES, default='INGRESO')
     cliente = models.ForeignKey(Cliente, on_delete=models.SET_NULL, null=True, blank=True)
     vendedor = models.ForeignKey(User, on_delete=models.CASCADE)
     fecha_venta = models.DateTimeField(auto_now_add=True)
