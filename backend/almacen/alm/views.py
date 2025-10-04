@@ -95,10 +95,13 @@ class VentaViewSet(viewsets.ModelViewSet):
             with transaction.atomic():
                 venta = serializer.save()
 
+                # Verificar si tiene el atributo tipo_movimiento (por compatibilidad)
+                tipo_movimiento = getattr(venta, 'tipo_movimiento', 'INGRESO')
+
                 # Si la venta cambió a CANCELADO y es un INGRESO, restaurar stock
                 if (venta.estado == 'CANCELADO' and
                     estado_anterior != 'CANCELADO' and
-                    venta.tipo_movimiento == 'INGRESO'):
+                    tipo_movimiento == 'INGRESO'):
 
                     detalles = venta.detalles.all()
 
@@ -134,8 +137,11 @@ class VentaViewSet(viewsets.ModelViewSet):
 
         try:
             with transaction.atomic():
+                # Verificar si tiene el atributo tipo_movimiento (por compatibilidad)
+                tipo_movimiento = getattr(instance, 'tipo_movimiento', 'INGRESO')
+
                 # Solo restaurar stock si es un INGRESO con productos y no está cancelado
-                if instance.tipo_movimiento == 'INGRESO' and instance.estado != 'CANCELADO':
+                if tipo_movimiento == 'INGRESO' and instance.estado != 'CANCELADO':
                     detalles = instance.detalles.all()
 
                     for detalle in detalles:
