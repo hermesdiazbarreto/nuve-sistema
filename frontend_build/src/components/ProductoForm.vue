@@ -133,12 +133,14 @@
     </div>
 
     <!-- Modal para agregar/editar variante -->
-    <div v-if="mostrarModalVariante" class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+    <div v-if="mostrarModalVariante" class="modal" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5);">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">{{ varianteEditando ? 'Editar' : 'Nueva' }} Variante</h5>
-            <button type="button" class="btn-close" @click="cerrarModalVariante"></button>
+            <button type="button" class="close" @click="cerrarModalVariante" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
           </div>
           <div class="modal-body">
             <form @submit.prevent="guardarVariante">
