@@ -1,59 +1,73 @@
 <template>
   <div class="login-container">
-    <div class="login-card">
-      <div class="login-header">
-        <div class="login-logo">✨</div>
-        <h2>Nuve</h2>
-        <p class="text-muted">Inicia sesión en tu cuenta</p>
-      </div>
+    <v-card class="login-card" elevation="24">
+      <v-card-text class="pa-8">
+        <div class="login-header">
+          <div class="login-logo">✨</div>
+          <h2 class="text-h3 font-weight-bold">Nuve</h2>
+          <p class="text-medium-emphasis">Inicia sesión en tu cuenta</p>
+        </div>
 
-      <div v-if="error" class="alert alert-danger" role="alert">
-        {{ error }}
-      </div>
+        <v-alert
+          v-if="error"
+          type="error"
+          variant="tonal"
+          closable
+          class="mb-4"
+        >
+          {{ error }}
+        </v-alert>
 
-      <form @submit.prevent="handleLogin">
-        <div class="mb-3">
-          <label for="username" class="form-label">Usuario</label>
-          <input
-            type="text"
-            class="form-control"
-            id="username"
+        <v-form @submit.prevent="handleLogin">
+          <v-text-field
             v-model="username"
+            label="Usuario"
+            variant="outlined"
+            density="comfortable"
+            prepend-inner-icon="mdi-account"
             required
             autocomplete="username"
             placeholder="Ingresa tu usuario"
-          >
-        </div>
+            class="mb-3"
+          ></v-text-field>
 
-        <div class="mb-3">
-          <label for="password" class="form-label">Contraseña</label>
-          <input
-            type="password"
-            class="form-control"
-            id="password"
+          <v-text-field
             v-model="password"
+            type="password"
+            label="Contraseña"
+            variant="outlined"
+            density="comfortable"
+            prepend-inner-icon="mdi-lock"
             required
             autocomplete="current-password"
             placeholder="Ingresa tu contraseña"
+            class="mb-4"
+          ></v-text-field>
+
+          <v-btn
+            type="submit"
+            color="primary"
+            size="large"
+            :loading="loading"
+            :disabled="loading"
+            block
+            class="login-btn"
           >
+            {{ loading ? 'Iniciando sesión...' : 'Iniciar Sesión' }}
+          </v-btn>
+        </v-form>
+
+        <div class="login-footer">
+          <small class="text-medium-emphasis">
+            Usuario de prueba: <strong>admin</strong> / Contraseña: <strong>admin123</strong>
+          </small>
         </div>
+      </v-card-text>
+    </v-card>
 
-        <button
-          type="submit"
-          class="btn btn-primary w-100"
-          :disabled="loading"
-        >
-          <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
-          {{ loading ? 'Iniciando sesión...' : 'Iniciar Sesión' }}
-        </button>
-      </form>
-
-      <div class="login-footer">
-        <small class="text-muted">
-          Usuario de prueba: <strong>admin</strong> / Contraseña: <strong>admin123</strong>
-        </small>
-      </div>
-    </div>
+    <v-snackbar v-model="snackbar" :color="snackbarColor" :timeout="3000">
+      {{ snackbarText }}
+    </v-snackbar>
   </div>
 </template>
 
@@ -67,10 +81,18 @@ export default {
       username: '',
       password: '',
       loading: false,
-      error: ''
+      error: '',
+      snackbar: false,
+      snackbarText: '',
+      snackbarColor: 'success'
     }
   },
   methods: {
+    showSnackbar(text, color = 'success') {
+      this.snackbarText = text
+      this.snackbarColor = color
+      this.snackbar = true
+    },
     async handleLogin() {
       this.error = ''
       this.loading = true
@@ -145,8 +167,6 @@ export default {
 .login-card {
   background: white;
   border-radius: 20px;
-  box-shadow: 0 20px 60px rgba(255, 107, 213, 0.4);
-  padding: 50px 40px;
   width: 100%;
   max-width: 420px;
   position: relative;
@@ -185,51 +205,21 @@ export default {
   border-top: 1px solid #dee2e6;
 }
 
-.form-label {
+.login-btn {
+  background: linear-gradient(135deg, #FF6BD5 0%, #A855F7 50%, #EC4899 100%) !important;
   font-weight: 600;
-  color: #333;
-  margin-bottom: 8px;
-}
-
-.form-control {
-  border: 2px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 12px 15px;
-  transition: all 0.3s ease;
-}
-
-.form-control:focus {
-  border-color: #FF6BD5;
-  box-shadow: 0 0 0 0.25rem rgba(255, 107, 213, 0.25);
-  transform: translateY(-2px);
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #FF6BD5 0%, #A855F7 50%, #EC4899 100%);
-  border: none;
-  padding: 14px;
-  font-weight: 600;
-  border-radius: 10px;
-  font-size: 1.05rem;
   letter-spacing: 0.5px;
   transition: all 0.3s ease;
 }
 
-.btn-primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, #EC4899 0%, #FF6BD5 50%, #A855F7 100%);
+.login-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #EC4899 0%, #FF6BD5 50%, #A855F7 100%) !important;
   transform: translateY(-3px);
   box-shadow: 0 8px 20px rgba(255, 107, 213, 0.5);
 }
 
-.btn-primary:disabled {
+.login-btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
-}
-
-.alert-danger {
-  border-radius: 10px;
-  border: none;
-  background: linear-gradient(90deg, #fee2e2, #fecaca);
-  color: #991b1b;
 }
 </style>

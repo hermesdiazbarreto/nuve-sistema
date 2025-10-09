@@ -1,104 +1,155 @@
 <template>
-  <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2>🏢 Proveedores</h2>
-      <button @click="mostrarModal = true" class="btn btn-primary">➕ Nuevo Proveedor</button>
+  <v-container class="mt-4">
+    <div class="d-flex justify-space-between align-center mb-4">
+      <h2>Proveedores</h2>
+      <v-btn @click="mostrarModal = true" color="primary">
+        <v-icon left>mdi-plus</v-icon> Nuevo Proveedor
+      </v-btn>
     </div>
 
     <div v-if="loading" class="text-center">
-      <div class="spinner-border"></div>
+      <v-progress-circular indeterminate color="primary"></v-progress-circular>
     </div>
 
     <div v-else>
-      <div class="table-responsive">
-        <table class="table table-striped table-hover">
-          <thead class="table-dark">
-            <tr>
-              <th>Código</th>
-              <th>Nombre</th>
-              <th>RUC</th>
-              <th>Teléfono</th>
-              <th>Email</th>
-              <th>Contacto</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="prov in proveedores" :key="prov.id">
-              <td><strong>{{ prov.codigo }}</strong></td>
-              <td>{{ prov.nombre }}</td>
-              <td>{{ prov.ruc }}</td>
-              <td>{{ prov.telefono || '-' }}</td>
-              <td>{{ prov.email || '-' }}</td>
-              <td>{{ prov.contacto || '-' }}</td>
-              <td>
-                <span class="badge" :class="prov.activo ? 'bg-success' : 'bg-secondary'">
-                  {{ prov.activo ? 'Activo' : 'Inactivo' }}
-                </span>
-              </td>
-              <td>
-                <button @click="editarProveedor(prov)" class="btn btn-sm btn-warning me-1">✏️</button>
-                <button @click="eliminarProveedor(prov.id)" class="btn btn-sm btn-danger">🗑️</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <v-table hover>
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>RUC</th>
+            <th>Teléfono</th>
+            <th>Email</th>
+            <th>Contacto</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="prov in proveedores" :key="prov.id">
+            <td><strong>{{ prov.codigo }}</strong></td>
+            <td>{{ prov.nombre }}</td>
+            <td>{{ prov.ruc }}</td>
+            <td>{{ prov.telefono || '-' }}</td>
+            <td>{{ prov.email || '-' }}</td>
+            <td>{{ prov.contacto || '-' }}</td>
+            <td>
+              <v-chip
+                :color="prov.activo ? 'success' : 'secondary'"
+                size="small"
+                variant="flat"
+              >
+                {{ prov.activo ? 'Activo' : 'Inactivo' }}
+              </v-chip>
+            </td>
+            <td>
+              <v-btn @click="editarProveedor(prov)" icon="mdi-pencil" size="small" color="warning" class="me-1"></v-btn>
+              <v-btn @click="eliminarProveedor(prov.id)" icon="mdi-delete" size="small" color="error"></v-btn>
+            </td>
+          </tr>
+        </tbody>
+      </v-table>
     </div>
 
     <!-- Modal -->
-    <div v-if="mostrarModal" class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">{{ proveedorEditando ? 'Editar' : 'Nuevo' }} Proveedor</h5>
-            <button type="button" class="btn-close" @click="cerrarModal"></button>
-          </div>
-          <div class="modal-body">
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label class="form-label">Código *</label>
-                <input v-model="form.codigo" type="text" class="form-control" required>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label">RUC *</label>
-                <input v-model="form.ruc" type="text" class="form-control" required>
-              </div>
-              <div class="col-md-12 mb-3">
-                <label class="form-label">Nombre *</label>
-                <input v-model="form.nombre" type="text" class="form-control" required>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label">Teléfono</label>
-                <input v-model="form.telefono" type="text" class="form-control">
-              </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label">Email</label>
-                <input v-model="form.email" type="email" class="form-control">
-              </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label">Contacto</label>
-                <input v-model="form.contacto" type="text" class="form-control">
-              </div>
-              <div class="col-md-12 mb-3">
-                <label class="form-label">Dirección</label>
-                <textarea v-model="form.direccion" class="form-control" rows="2"></textarea>
-              </div>
-              <div class="col-md-12 form-check">
-                <input v-model="form.activo" type="checkbox" class="form-check-input" id="activo">
-                <label class="form-check-label" for="activo">Activo</label>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="cerrarModal">Cancelar</button>
-            <button type="button" class="btn btn-primary" @click="guardarProveedor">Guardar</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+    <v-dialog v-model="mostrarModal" max-width="800">
+      <v-card>
+        <v-card-title class="text-h6">{{ proveedorEditando ? 'Editar' : 'Nuevo' }} Proveedor</v-card-title>
+        <v-card-text>
+          <v-row>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="form.codigo"
+                label="Código *"
+                variant="outlined"
+                density="comfortable"
+                required
+              ></v-text-field>
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="form.ruc"
+                label="RUC *"
+                variant="outlined"
+                density="comfortable"
+                required
+              ></v-text-field>
+            </v-col>
+            <v-col cols="12">
+              <v-text-field
+                v-model="form.nombre"
+                label="Nombre *"
+                variant="outlined"
+                density="comfortable"
+                required
+              ></v-text-field>
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="form.telefono"
+                label="Teléfono"
+                variant="outlined"
+                density="comfortable"
+              ></v-text-field>
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="form.email"
+                type="email"
+                label="Email"
+                variant="outlined"
+                density="comfortable"
+              ></v-text-field>
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="form.contacto"
+                label="Contacto"
+                variant="outlined"
+                density="comfortable"
+              ></v-text-field>
+            </v-col>
+            <v-col cols="12">
+              <v-textarea
+                v-model="form.direccion"
+                label="Dirección"
+                variant="outlined"
+                rows="2"
+              ></v-textarea>
+            </v-col>
+            <v-col cols="12">
+              <v-checkbox
+                v-model="form.activo"
+                label="Activo"
+                color="primary"
+              ></v-checkbox>
+            </v-col>
+          </v-row>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="secondary" @click="cerrarModal">Cancelar</v-btn>
+          <v-btn color="primary" @click="guardarProveedor">Guardar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-snackbar v-model="snackbar" :color="snackbarColor" :timeout="3000">
+      {{ snackbarText }}
+    </v-snackbar>
+
+    <v-dialog v-model="dialogConfirm" max-width="400">
+      <v-card>
+        <v-card-title class="text-h6">Confirmar eliminación</v-card-title>
+        <v-card-text>¿Eliminar este proveedor?</v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="secondary" @click="dialogConfirm = false">No</v-btn>
+          <v-btn color="error" @click="confirmarEliminar">Sí</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </v-container>
 </template>
 
 <script>
@@ -121,13 +172,23 @@ export default {
         email: '',
         contacto: '',
         activo: true
-      }
+      },
+      snackbar: false,
+      snackbarText: '',
+      snackbarColor: 'success',
+      dialogConfirm: false,
+      proveedorIdToDelete: null
     }
   },
   async created() {
     await this.cargarProveedores()
   },
   methods: {
+    showSnackbar(text, color = 'success') {
+      this.snackbarText = text
+      this.snackbarColor = color
+      this.snackbar = true
+    },
     async cargarProveedores() {
       try {
         this.loading = true
@@ -135,7 +196,7 @@ export default {
         this.proveedores = response.data.results || response.data
       } catch (error) {
         console.error('Error:', error)
-        alert('Error al cargar proveedores')
+        this.showSnackbar('Error al cargar proveedores', 'error')
       } finally {
         this.loading = false
       }
@@ -154,21 +215,26 @@ export default {
         }
         await this.cargarProveedores()
         this.cerrarModal()
-        alert('Proveedor guardado correctamente')
+        this.showSnackbar('Proveedor guardado correctamente', 'success')
       } catch (error) {
         console.error('Error:', error)
-        alert('Error al guardar el proveedor')
+        this.showSnackbar('Error al guardar el proveedor', 'error')
       }
     },
-    async eliminarProveedor(id) {
-      if (confirm('¿Eliminar este proveedor?')) {
-        try {
-          await api.deleteProveedor(id)
-          await this.cargarProveedores()
-          alert('Proveedor eliminado')
-        } catch (error) {
-          alert('Error al eliminar')
-        }
+    eliminarProveedor(id) {
+      this.proveedorIdToDelete = id
+      this.dialogConfirm = true
+    },
+    async confirmarEliminar() {
+      try {
+        await api.deleteProveedor(this.proveedorIdToDelete)
+        await this.cargarProveedores()
+        this.showSnackbar('Proveedor eliminado', 'success')
+      } catch (error) {
+        this.showSnackbar('Error al eliminar', 'error')
+      } finally {
+        this.dialogConfirm = false
+        this.proveedorIdToDelete = null
       }
     },
     cerrarModal() {

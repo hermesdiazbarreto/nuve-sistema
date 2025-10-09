@@ -1,253 +1,360 @@
 <template>
-  <div class="container-fluid mt-4">
-    <h2>💳 Nueva Venta</h2>
+  <v-container fluid class="mt-4">
+    <h2>Nueva Venta</h2>
 
-    <div class="row mt-4">
+    <v-row class="mt-4">
       <!-- Columna Izquierda: Selector de Productos (solo para INGRESO) -->
-      <div class="col-md-7" v-if="venta.tipo_movimiento === 'INGRESO'">
-        <div class="card">
-          <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">Seleccionar Productos</h5>
-          </div>
-          <div class="card-body">
-            <div class="mb-3">
-              <input
-                v-model="busqueda"
-                type="text"
-                class="form-control"
-                placeholder="Buscar producto, código o variante..."
-                @input="filtrarVariantes"
-              >
-            </div>
+      <v-col cols="12" md="7" v-if="venta.tipo_movimiento === 'INGRESO'">
+        <v-card elevation="3">
+          <v-card-title class="bg-primary">
+            <span class="text-white">Seleccionar Productos</span>
+          </v-card-title>
+          <v-card-text>
+            <v-text-field
+              v-model="busqueda"
+              variant="outlined"
+              density="comfortable"
+              placeholder="Buscar producto, código o variante..."
+              prepend-inner-icon="mdi-magnify"
+              @input="filtrarVariantes"
+              class="mb-3"
+            ></v-text-field>
 
             <div style="max-height: 500px; overflow-y: auto;">
-              <div class="table-responsive">
-                <table class="table table-sm table-hover">
-                  <thead class="table-dark sticky-top">
-                    <tr>
-                      <th>Producto</th>
-                      <th>Talla</th>
-                      <th>Color</th>
-                      <th>Precio</th>
-                      <th>Stock</th>
-                      <th>Acción</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="variante in variantesFiltradas" :key="variante.id">
-                      <td>{{ variante.producto_nombre }}</td>
-                      <td>{{ variante.talla_nombre }}</td>
-                      <td>{{ variante.color_nombre }}</td>
-                      <td>${{ Number(variante.precio_venta).toFixed(2) }}</td>
-                      <td>
-                        <span :class="variante.stock_actual > 0 ? 'badge bg-success' : 'badge bg-danger'">
-                          {{ variante.stock_actual }}
-                        </span>
-                      </td>
-                      <td>
-                        <button
-                          @click="agregarAlCarrito(variante)"
-                          :disabled="variante.stock_actual === 0"
-                          class="btn btn-sm btn-primary"
-                        >
-                          ➕ Agregar
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              <v-table density="compact" hover>
+                <thead>
+                  <tr>
+                    <th>Producto</th>
+                    <th>Talla</th>
+                    <th>Color</th>
+                    <th>Precio</th>
+                    <th>Stock</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="variante in variantesFiltradas" :key="variante.id">
+                    <td>{{ variante.producto_nombre }}</td>
+                    <td>{{ variante.talla_nombre }}</td>
+                    <td>{{ variante.color_nombre }}</td>
+                    <td>${{ Number(variante.precio_venta).toFixed(2) }}</td>
+                    <td>
+                      <v-chip
+                        :color="variante.stock_actual > 0 ? 'success' : 'error'"
+                        size="small"
+                        variant="flat"
+                      >
+                        {{ variante.stock_actual }}
+                      </v-chip>
+                    </td>
+                    <td>
+                      <v-btn
+                        @click="agregarAlCarrito(variante)"
+                        :disabled="variante.stock_actual === 0"
+                        color="primary"
+                        size="small"
+                      >
+                        <v-icon left>mdi-plus</v-icon> Agregar
+                      </v-btn>
+                    </td>
+                  </tr>
+                </tbody>
+              </v-table>
             </div>
-          </div>
-        </div>
-      </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
 
       <!-- Formulario para EGRESO -->
-      <div class="col-md-12" v-if="venta.tipo_movimiento === 'EGRESO'">
-        <div class="card">
-          <div class="card-header bg-danger text-white">
-            <h5 class="mb-0">💸 Registrar Egreso (Gasto)</h5>
-          </div>
-          <div class="card-body">
+      <v-col cols="12" v-if="venta.tipo_movimiento === 'EGRESO'">
+        <v-card elevation="3">
+          <v-card-title class="bg-error">
+            <span class="text-white">Registrar Egreso (Gasto)</span>
+          </v-card-title>
+          <v-card-text>
             <!-- Selector de Tipo de Movimiento -->
-            <div class="mb-3">
-              <label class="form-label">Tipo de Movimiento *</label>
-              <select v-model="venta.tipo_movimiento" class="form-select">
-                <option value="INGRESO">💰 Ingreso (Venta)</option>
-                <option value="EGRESO">💸 Egreso (Gasto)</option>
-              </select>
-            </div>
+            <v-select
+              v-model="venta.tipo_movimiento"
+              :items="[
+                { title: 'Ingreso (Venta)', value: 'INGRESO' },
+                { title: 'Egreso (Gasto)', value: 'EGRESO' }
+              ]"
+              label="Tipo de Movimiento *"
+              variant="outlined"
+              density="comfortable"
+              class="mb-3"
+            ></v-select>
 
-            <div class="row">
-              <div class="col-md-6">
-                <div class="mb-3">
-                  <label class="form-label">Monto del Egreso *</label>
-                  <input v-model.number="venta.monto_egreso" type="number" step="0.01" class="form-control form-control-lg" min="0.01" required placeholder="0.00">
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="mb-3">
-                  <label class="form-label">Tipo de Pago *</label>
-                  <select v-model="venta.tipo_pago" class="form-select" required>
-                    <option value="">Seleccione...</option>
-                    <option value="EFECTIVO">Efectivo</option>
-                    <option value="TARJETA">Tarjeta</option>
-                    <option value="TRANSFERENCIA">Transferencia</option>
-                  </select>
-                </div>
-              </div>
-            </div>
+            <v-row>
+              <v-col cols="12" md="6">
+                <v-text-field
+                  v-model.number="venta.monto_egreso"
+                  type="number"
+                  step="0.01"
+                  label="Monto del Egreso *"
+                  variant="outlined"
+                  density="comfortable"
+                  min="0.01"
+                  required
+                  placeholder="0.00"
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-select
+                  v-model="venta.tipo_pago"
+                  :items="[
+                    { title: 'Seleccione...', value: '' },
+                    { title: 'Efectivo', value: 'EFECTIVO' },
+                    { title: 'Tarjeta', value: 'TARJETA' },
+                    { title: 'Transferencia', value: 'TRANSFERENCIA' }
+                  ]"
+                  label="Tipo de Pago *"
+                  variant="outlined"
+                  density="comfortable"
+                  required
+                ></v-select>
+              </v-col>
+            </v-row>
 
-            <div class="mb-3">
-              <label class="form-label">Descripción del Egreso *</label>
-              <textarea v-model="venta.observaciones" class="form-control" rows="3" required placeholder="Ej: Pago de servicios, compra de suministros, etc."></textarea>
-            </div>
+            <v-textarea
+              v-model="venta.observaciones"
+              label="Descripción del Egreso *"
+              variant="outlined"
+              rows="3"
+              required
+              placeholder="Ej: Pago de servicios, compra de suministros, etc."
+            ></v-textarea>
 
-            <hr>
+            <v-divider class="my-4"></v-divider>
 
-            <div class="mb-3 d-flex justify-content-between fs-3">
+            <div class="d-flex justify-space-between mb-3 text-h5">
               <span><strong>TOTAL A EGRESAR:</strong></span>
-              <strong class="text-danger">${{ Number(venta.monto_egreso || 0).toFixed(2) }}</strong>
+              <strong class="text-error">${{ Number(venta.monto_egreso || 0).toFixed(2) }}</strong>
             </div>
 
-            <div class="d-grid gap-2">
-              <button @click="procesarEgreso" class="btn btn-danger btn-lg" :disabled="!puedeRegistrarEgreso">
-                💸 Registrar Egreso
-              </button>
-              <router-link to="/ventas" class="btn btn-secondary">
-                ❌ Cancelar
-              </router-link>
+            <div class="d-flex flex-column ga-2">
+              <v-btn
+                @click="procesarEgreso"
+                color="error"
+                size="large"
+                :disabled="!puedeRegistrarEgreso"
+                block
+              >
+                <v-icon left>mdi-cash-multiple</v-icon> Registrar Egreso
+              </v-btn>
+              <v-btn
+                :to="'/ventas'"
+                color="secondary"
+                variant="outlined"
+                block
+              >
+                <v-icon left>mdi-cancel</v-icon> Cancelar
+              </v-btn>
             </div>
-          </div>
-        </div>
-      </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
 
       <!-- Columna Derecha: Carrito y Resumen (solo para INGRESO) -->
-      <div class="col-md-5" v-if="venta.tipo_movimiento === 'INGRESO'">
-        <div class="card">
-          <div class="card-header bg-success text-white">
-            <h5 class="mb-0">🛒 Carrito de Compra</h5>
-          </div>
-          <div class="card-body">
+      <v-col cols="12" md="5" v-if="venta.tipo_movimiento === 'INGRESO'">
+        <v-card elevation="3">
+          <v-card-title class="bg-success">
+            <span class="text-white">Carrito de Compra</span>
+          </v-card-title>
+          <v-card-text>
             <!-- Selector de Tipo de Movimiento -->
-            <div class="mb-3">
-              <label class="form-label">Tipo de Movimiento *</label>
-              <select v-model="venta.tipo_movimiento" class="form-select">
-                <option value="INGRESO">💰 Ingreso (Venta)</option>
-                <option value="EGRESO">💸 Egreso (Gasto)</option>
-              </select>
-            </div>
+            <v-select
+              v-model="venta.tipo_movimiento"
+              :items="[
+                { title: 'Ingreso (Venta)', value: 'INGRESO' },
+                { title: 'Egreso (Gasto)', value: 'EGRESO' }
+              ]"
+              label="Tipo de Movimiento *"
+              variant="outlined"
+              density="comfortable"
+              class="mb-3"
+            ></v-select>
 
             <!-- Selector de Cliente -->
-            <div class="mb-3">
-              <label class="form-label">Cliente (Opcional)</label>
-              <select v-model="venta.cliente_id" class="form-select">
-                <option value="">Cliente General</option>
-                <option v-for="cliente in clientes" :key="cliente.id" :value="cliente.id">
-                  {{ cliente.nombre_completo }} - {{ cliente.numero_documento }}
-                </option>
-              </select>
-            </div>
+            <v-select
+              v-model="venta.cliente_id"
+              :items="[
+                { title: 'Cliente General', value: '' },
+                ...clientes.map(c => ({
+                  title: `${c.nombre_completo} - ${c.numero_documento}`,
+                  value: c.id
+                }))
+              ]"
+              label="Cliente (Opcional)"
+              variant="outlined"
+              density="comfortable"
+              class="mb-3"
+            ></v-select>
 
             <!-- Items del Carrito -->
             <div class="mb-3">
               <h6>Productos Seleccionados:</h6>
-              <div v-if="carrito.length === 0" class="alert alert-info">
+              <v-alert
+                v-if="carrito.length === 0"
+                type="info"
+                variant="tonal"
+              >
                 Carrito vacío
-              </div>
+              </v-alert>
               <div v-else>
-                <div v-for="(item, index) in carrito" :key="index" class="border p-2 mb-2">
-                  <div class="d-flex justify-content-between align-items-center">
+                <v-card
+                  v-for="(item, index) in carrito"
+                  :key="index"
+                  variant="outlined"
+                  class="mb-2 pa-2"
+                >
+                  <div class="d-flex justify-space-between align-center">
                     <div class="flex-grow-1">
                       <strong>{{ item.nombre }}</strong><br>
-                      <small class="text-muted">
+                      <small class="text-medium-emphasis">
                         {{ item.talla }} - {{ item.color }}
                       </small><br>
                       <small>${{ Number(item.precio).toFixed(2) }} x {{ item.cantidad }}</small>
                     </div>
-                    <div class="d-flex align-items-center">
-                      <button @click="modificarCantidad(index, -1)" class="btn btn-sm btn-outline-secondary">-</button>
-                      <input
+                    <div class="d-flex align-center">
+                      <v-btn
+                        @click="modificarCantidad(index, -1)"
+                        icon="mdi-minus"
+                        size="small"
+                        variant="outlined"
+                      ></v-btn>
+                      <v-text-field
                         v-model.number="item.cantidad"
                         type="number"
-                        class="form-control form-control-sm mx-1"
+                        variant="outlined"
+                        density="compact"
+                        hide-details
+                        class="mx-1"
                         style="width: 60px;"
                         min="1"
                         :max="item.stock_max"
                         @change="validarCantidad(index)"
-                      >
-                      <button @click="modificarCantidad(index, 1)" class="btn btn-sm btn-outline-secondary">+</button>
-                      <button @click="eliminarDelCarrito(index)" class="btn btn-sm btn-danger ms-2">🗑️</button>
+                      ></v-text-field>
+                      <v-btn
+                        @click="modificarCantidad(index, 1)"
+                        icon="mdi-plus"
+                        size="small"
+                        variant="outlined"
+                      ></v-btn>
+                      <v-btn
+                        @click="eliminarDelCarrito(index)"
+                        icon="mdi-delete"
+                        size="small"
+                        color="error"
+                        class="ms-2"
+                      ></v-btn>
                     </div>
                   </div>
-                  <div class="text-end mt-1">
+                  <div class="text-right mt-1">
                     <strong>Subtotal: ${{ (item.precio * item.cantidad).toFixed(2) }}</strong>
                   </div>
-                </div>
+                </v-card>
               </div>
             </div>
 
             <!-- Resumen de la Venta -->
-            <div class="border-top pt-3">
-              <div class="mb-2">
-                <label class="form-label">Descuento ($)</label>
-                <input v-model.number="venta.descuento" type="number" step="0.01" class="form-control" min="0" :max="subtotal">
-              </div>
+            <v-divider class="mb-3"></v-divider>
 
-              <div class="mb-2">
-                <label class="form-label">Impuesto (%) </label>
-                <input v-model.number="venta.impuesto_porcentaje" type="number" step="0.01" class="form-control" min="0" max="100">
-              </div>
+            <v-text-field
+              v-model.number="venta.descuento"
+              type="number"
+              step="0.01"
+              label="Descuento ($)"
+              variant="outlined"
+              density="comfortable"
+              min="0"
+              :max="subtotal"
+              class="mb-2"
+            ></v-text-field>
 
-              <div class="mb-2">
-                <label class="form-label">Tipo de Pago *</label>
-                <select v-model="venta.tipo_pago" class="form-select" required>
-                  <option value="">Seleccione...</option>
-                  <option value="EFECTIVO">Efectivo</option>
-                  <option value="TARJETA">Tarjeta</option>
-                  <option value="TRANSFERENCIA">Transferencia</option>
-                  <option value="MIXTO">Mixto</option>
-                </select>
-              </div>
+            <v-text-field
+              v-model.number="venta.impuesto_porcentaje"
+              type="number"
+              step="0.01"
+              label="Impuesto (%)"
+              variant="outlined"
+              density="comfortable"
+              min="0"
+              max="100"
+              class="mb-2"
+            ></v-text-field>
 
-              <div class="mb-3">
-                <label class="form-label">Observaciones</label>
-                <textarea v-model="venta.observaciones" class="form-control" rows="2"></textarea>
-              </div>
+            <v-select
+              v-model="venta.tipo_pago"
+              :items="[
+                { title: 'Seleccione...', value: '' },
+                { title: 'Efectivo', value: 'EFECTIVO' },
+                { title: 'Tarjeta', value: 'TARJETA' },
+                { title: 'Transferencia', value: 'TRANSFERENCIA' },
+                { title: 'Mixto', value: 'MIXTO' }
+              ]"
+              label="Tipo de Pago *"
+              variant="outlined"
+              density="comfortable"
+              required
+              class="mb-2"
+            ></v-select>
 
-              <hr>
+            <v-textarea
+              v-model="venta.observaciones"
+              label="Observaciones"
+              variant="outlined"
+              rows="2"
+              class="mb-3"
+            ></v-textarea>
 
-              <div class="mb-2 d-flex justify-content-between">
-                <span>Subtotal:</span>
-                <strong>${{ subtotal.toFixed(2) }}</strong>
-              </div>
-              <div class="mb-2 d-flex justify-content-between text-danger">
-                <span>Descuento:</span>
-                <strong>-${{ Number(venta.descuento).toFixed(2) }}</strong>
-              </div>
-              <div class="mb-2 d-flex justify-content-between">
-                <span>Impuesto ({{ venta.impuesto_porcentaje }}%):</span>
-                <strong>${{ impuesto.toFixed(2) }}</strong>
-              </div>
-              <div class="mb-3 d-flex justify-content-between fs-4">
-                <span><strong>TOTAL:</strong></span>
-                <strong class="text-success">${{ total.toFixed(2) }}</strong>
-              </div>
+            <v-divider class="mb-3"></v-divider>
 
-              <div class="d-grid gap-2">
-                <button @click="procesarVenta" class="btn btn-success btn-lg" :disabled="!puedeVender">
-                  💰 Procesar Venta
-                </button>
-                <router-link to="/ventas" class="btn btn-secondary">
-                  ❌ Cancelar
-                </router-link>
-              </div>
+            <div class="mb-2 d-flex justify-space-between">
+              <span>Subtotal:</span>
+              <strong>${{ subtotal.toFixed(2) }}</strong>
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+            <div class="mb-2 d-flex justify-space-between text-error">
+              <span>Descuento:</span>
+              <strong>-${{ Number(venta.descuento).toFixed(2) }}</strong>
+            </div>
+            <div class="mb-2 d-flex justify-space-between">
+              <span>Impuesto ({{ venta.impuesto_porcentaje }}%):</span>
+              <strong>${{ impuesto.toFixed(2) }}</strong>
+            </div>
+            <div class="mb-3 d-flex justify-space-between text-h5">
+              <span><strong>TOTAL:</strong></span>
+              <strong class="text-success">${{ total.toFixed(2) }}</strong>
+            </div>
+
+            <div class="d-flex flex-column ga-2">
+              <v-btn
+                @click="procesarVenta"
+                color="success"
+                size="large"
+                :disabled="!puedeVender"
+                block
+              >
+                <v-icon left>mdi-cash-multiple</v-icon> Procesar Venta
+              </v-btn>
+              <v-btn
+                :to="'/ventas'"
+                color="secondary"
+                variant="outlined"
+                block
+              >
+                <v-icon left>mdi-cancel</v-icon> Cancelar
+              </v-btn>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <v-snackbar v-model="snackbar" :color="snackbarColor" :timeout="3000">
+      {{ snackbarText }}
+    </v-snackbar>
+  </v-container>
 </template>
 
 <script>
@@ -272,7 +379,10 @@ export default {
         observaciones: '',
         monto_egreso: 0,
         vendedor: 1 // TODO: Obtener del usuario autenticado
-      }
+      },
+      snackbar: false,
+      snackbarText: '',
+      snackbarColor: 'success'
     }
   },
   computed: {
@@ -296,6 +406,11 @@ export default {
     await this.cargarDatos()
   },
   methods: {
+    showSnackbar(text, color = 'success') {
+      this.snackbarText = text
+      this.snackbarColor = color
+      this.snackbar = true
+    },
     async cargarDatos() {
       try {
         const [variantesRes, productosRes, clientesRes] = await Promise.all([
@@ -325,7 +440,7 @@ export default {
       } catch (error) {
         console.error('Error al cargar datos:', error)
         console.error('Detalles:', error.response?.data)
-        alert('Error al cargar datos necesarios')
+        this.showSnackbar('Error al cargar datos necesarios', 'error')
       }
     },
     filtrarVariantes() {
@@ -344,7 +459,7 @@ export default {
         if (existe.cantidad < variante.stock_actual) {
           existe.cantidad++
         } else {
-          alert('No hay suficiente stock')
+          this.showSnackbar('No hay suficiente stock', 'warning')
         }
       } else {
         this.carrito.push({
@@ -367,14 +482,14 @@ export default {
       } else if (nuevaCantidad <= item.stock_max) {
         item.cantidad = nuevaCantidad
       } else {
-        alert('No hay suficiente stock')
+        this.showSnackbar('No hay suficiente stock', 'warning')
       }
     },
     validarCantidad(index) {
       const item = this.carrito[index]
       if (item.cantidad > item.stock_max) {
         item.cantidad = item.stock_max
-        alert('Cantidad ajustada al stock disponible')
+        this.showSnackbar('Cantidad ajustada al stock disponible', 'warning')
       }
       if (item.cantidad < 1) {
         item.cantidad = 1
@@ -385,7 +500,7 @@ export default {
     },
     async procesarVenta() {
       if (!this.puedeVender) {
-        alert('Complete todos los campos requeridos')
+        this.showSnackbar('Complete todos los campos requeridos', 'warning')
         return
       }
 
@@ -412,18 +527,18 @@ export default {
 
           console.log('Datos de venta a enviar:', ventaData)
           await api.createVenta(ventaData)
-          alert('Venta registrada correctamente!')
+          this.showSnackbar('Venta registrada correctamente!', 'success')
           this.$router.push('/ventas')
         } catch (error) {
           console.error('Error al procesar venta:', error)
           console.error('Respuesta del servidor:', error.response?.data)
-          alert('Error al procesar la venta: ' + JSON.stringify(error.response?.data || error.message))
+          this.showSnackbar('Error al procesar la venta: ' + JSON.stringify(error.response?.data || error.message), 'error')
         }
       }
     },
     async procesarEgreso() {
       if (!this.puedeRegistrarEgreso) {
-        alert('Complete todos los campos requeridos')
+        this.showSnackbar('Complete todos los campos requeridos', 'warning')
         return
       }
 
@@ -445,23 +560,15 @@ export default {
 
           console.log('Datos de egreso a enviar:', egresoData)
           await api.createVenta(egresoData)
-          alert('Egreso registrado correctamente!')
+          this.showSnackbar('Egreso registrado correctamente!', 'success')
           this.$router.push('/ventas')
         } catch (error) {
           console.error('Error al procesar egreso:', error)
           console.error('Respuesta del servidor:', error.response?.data)
-          alert('Error al procesar el egreso: ' + JSON.stringify(error.response?.data || error.message))
+          this.showSnackbar('Error al procesar el egreso: ' + JSON.stringify(error.response?.data || error.message), 'error')
         }
       }
     }
   }
 }
 </script>
-
-<style scoped>
-.sticky-top {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-</style>

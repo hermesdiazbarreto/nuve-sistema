@@ -1,78 +1,100 @@
 <template>
-  <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+  <v-container class="mt-4">
+    <div class="d-flex justify-space-between align-center mb-4">
       <h2>Marcas</h2>
-      <button @click="mostrarModal = true" class="btn btn-primary">
-        ➕ Nueva Marca
-      </button>
+      <v-btn @click="mostrarModal = true" color="primary">
+        <v-icon left>mdi-plus</v-icon> Nueva Marca
+      </v-btn>
     </div>
 
     <div v-if="loading" class="text-center">
-      <div class="spinner-border" role="status"></div>
+      <v-progress-circular indeterminate color="primary"></v-progress-circular>
     </div>
 
     <div v-else>
-      <div class="table-responsive">
-        <table class="table table-striped table-hover">
-          <thead class="table-dark">
-            <tr>
-              <th>ID</th>
-              <th>Nombre</th>
-              <th>Descripción</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="marca in marcas" :key="marca.id">
-              <td>{{ marca.id }}</td>
-              <td>{{ marca.nombre }}</td>
-              <td>{{ marca.descripcion || '-' }}</td>
-              <td>
-                <span class="badge" :class="marca.activo ? 'bg-success' : 'bg-secondary'">
-                  {{ marca.activo ? 'Activo' : 'Inactivo' }}
-                </span>
-              </td>
-              <td>
-                <button @click="editarMarca(marca)" class="btn btn-sm btn-warning me-2">✏️</button>
-                <button @click="eliminarMarca(marca.id)" class="btn btn-sm btn-danger">🗑️</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <v-table hover>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Descripción</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="marca in marcas" :key="marca.id">
+            <td>{{ marca.id }}</td>
+            <td>{{ marca.nombre }}</td>
+            <td>{{ marca.descripcion || '-' }}</td>
+            <td>
+              <v-chip
+                :color="marca.activo ? 'success' : 'secondary'"
+                size="small"
+                variant="flat"
+              >
+                {{ marca.activo ? 'Activo' : 'Inactivo' }}
+              </v-chip>
+            </td>
+            <td>
+              <v-btn @click="editarMarca(marca)" icon="mdi-pencil" size="small" color="warning" class="me-2"></v-btn>
+              <v-btn @click="eliminarMarca(marca.id)" icon="mdi-delete" size="small" color="error"></v-btn>
+            </td>
+          </tr>
+        </tbody>
+      </v-table>
     </div>
 
     <!-- Modal -->
-    <div v-if="mostrarModal" class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">{{ marcaEditando ? 'Editar' : 'Nueva' }} Marca</h5>
-            <button type="button" class="btn-close" @click="cerrarModal"></button>
-          </div>
-          <div class="modal-body">
-            <div class="mb-3">
-              <label class="form-label">Nombre *</label>
-              <input v-model="form.nombre" type="text" class="form-control" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Descripción</label>
-              <textarea v-model="form.descripcion" class="form-control" rows="2"></textarea>
-            </div>
-            <div class="mb-3 form-check">
-              <input v-model="form.activo" type="checkbox" class="form-check-input" id="activo">
-              <label class="form-check-label" for="activo">Activo</label>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="cerrarModal">Cancelar</button>
-            <button type="button" class="btn btn-primary" @click="guardarMarca">Guardar</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+    <v-dialog v-model="mostrarModal" max-width="600">
+      <v-card>
+        <v-card-title class="text-h6">{{ marcaEditando ? 'Editar' : 'Nueva' }} Marca</v-card-title>
+        <v-card-text>
+          <v-text-field
+            v-model="form.nombre"
+            label="Nombre *"
+            variant="outlined"
+            density="comfortable"
+            required
+            class="mb-3"
+          ></v-text-field>
+          <v-textarea
+            v-model="form.descripcion"
+            label="Descripción"
+            variant="outlined"
+            rows="2"
+            class="mb-3"
+          ></v-textarea>
+          <v-checkbox
+            v-model="form.activo"
+            label="Activo"
+            color="primary"
+          ></v-checkbox>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="secondary" @click="cerrarModal">Cancelar</v-btn>
+          <v-btn color="primary" @click="guardarMarca">Guardar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-snackbar v-model="snackbar" :color="snackbarColor" :timeout="3000">
+      {{ snackbarText }}
+    </v-snackbar>
+
+    <v-dialog v-model="dialogConfirm" max-width="400">
+      <v-card>
+        <v-card-title class="text-h6">Confirmar eliminación</v-card-title>
+        <v-card-text>¿Eliminar esta marca?</v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="secondary" @click="dialogConfirm = false">No</v-btn>
+          <v-btn color="error" @click="confirmarEliminar">Sí</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </v-container>
 </template>
 
 <script>
@@ -86,13 +108,23 @@ export default {
       loading: true,
       mostrarModal: false,
       marcaEditando: null,
-      form: { nombre: '', descripcion: '', activo: true }
+      form: { nombre: '', descripcion: '', activo: true },
+      snackbar: false,
+      snackbarText: '',
+      snackbarColor: 'success',
+      dialogConfirm: false,
+      marcaIdToDelete: null
     }
   },
   async created() {
     await this.cargarMarcas()
   },
   methods: {
+    showSnackbar(text, color = 'success') {
+      this.snackbarText = text
+      this.snackbarColor = color
+      this.snackbar = true
+    },
     async cargarMarcas() {
       try {
         this.loading = true
@@ -101,7 +133,7 @@ export default {
       } catch (error) {
         console.error('Error:', error)
         console.error('Detalles:', error.response?.data)
-        alert('Error al cargar las marcas')
+        this.showSnackbar('Error al cargar las marcas', 'error')
       } finally {
         this.loading = false
       }
@@ -120,21 +152,26 @@ export default {
         }
         await this.cargarMarcas()
         this.cerrarModal()
-        alert('Marca guardada correctamente')
+        this.showSnackbar('Marca guardada correctamente', 'success')
       } catch (error) {
         console.error('Error:', error)
-        alert('Error al guardar la marca')
+        this.showSnackbar('Error al guardar la marca', 'error')
       }
     },
-    async eliminarMarca(id) {
-      if (confirm('¿Eliminar esta marca?')) {
-        try {
-          await api.deleteMarca(id)
-          await this.cargarMarcas()
-          alert('Marca eliminada')
-        } catch (error) {
-          alert('Error al eliminar. Puede tener productos asociados.')
-        }
+    eliminarMarca(id) {
+      this.marcaIdToDelete = id
+      this.dialogConfirm = true
+    },
+    async confirmarEliminar() {
+      try {
+        await api.deleteMarca(this.marcaIdToDelete)
+        await this.cargarMarcas()
+        this.showSnackbar('Marca eliminada', 'success')
+      } catch (error) {
+        this.showSnackbar('Error al eliminar. Puede tener productos asociados.', 'error')
+      } finally {
+        this.dialogConfirm = false
+        this.marcaIdToDelete = null
       }
     },
     cerrarModal() {

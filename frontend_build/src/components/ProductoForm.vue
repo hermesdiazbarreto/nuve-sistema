@@ -1,188 +1,338 @@
 <template>
-  <div class="container mt-4">
-    <h2>{{ esEdicion ? 'Editar' : 'Nuevo' }} Producto</h2>
+  <div>
+    <!-- Header -->
+    <v-row align="center" class="mb-6">
+      <v-col cols="12">
+        <h1 class="text-h4 font-weight-bold">
+          <v-icon large color="primary" class="mr-2">
+            {{ esEdicion ? 'mdi-pencil' : 'mdi-plus-circle' }}
+          </v-icon>
+          {{ esEdicion ? 'Editar' : 'Nuevo' }} Producto
+        </h1>
+      </v-col>
+    </v-row>
 
-    <div class="card mt-4">
-      <div class="card-body">
-        <form @submit.prevent="guardarProducto">
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Código *</label>
-              <input v-model="form.codigo" type="text" class="form-control" required>
-            </div>
+    <!-- Formulario Principal -->
+    <v-card elevation="3" class="mb-4">
+      <v-card-title class="bg-primary">
+        <v-icon left color="white">mdi-form-select</v-icon>
+        <span class="text-white">Información del Producto</span>
+      </v-card-title>
+      <v-divider></v-divider>
+      <v-card-text class="pa-6">
+        <v-form @submit.prevent="guardarProducto">
+          <v-row>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="form.codigo"
+                label="Código *"
+                variant="outlined"
+                density="comfortable"
+                required
+                :rules="[v => !!v || 'Código es requerido']"
+              ></v-text-field>
+            </v-col>
 
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Nombre *</label>
-              <input v-model="form.nombre" type="text" class="form-control" required>
-            </div>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="form.nombre"
+                label="Nombre *"
+                variant="outlined"
+                density="comfortable"
+                required
+                :rules="[v => !!v || 'Nombre es requerido']"
+              ></v-text-field>
+            </v-col>
 
-            <div class="col-md-12 mb-3">
-              <label class="form-label">Descripción</label>
-              <textarea v-model="form.descripcion" class="form-control" rows="2"></textarea>
-            </div>
+            <v-col cols="12">
+              <v-textarea
+                v-model="form.descripcion"
+                label="Descripción"
+                variant="outlined"
+                density="comfortable"
+                rows="2"
+              ></v-textarea>
+            </v-col>
 
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Categoría *</label>
-              <select v-model="form.categoria" class="form-select" required>
-                <option value="">Seleccione...</option>
-                <option v-for="cat in categorias" :key="cat.id" :value="cat.id">
-                  {{ cat.nombre }}
-                </option>
-              </select>
-            </div>
+            <v-col cols="12" md="6">
+              <v-select
+                v-model="form.categoria"
+                :items="categorias"
+                item-title="nombre"
+                item-value="id"
+                label="Categoría *"
+                variant="outlined"
+                density="comfortable"
+                required
+                :rules="[v => !!v || 'Categoría es requerida']"
+              ></v-select>
+            </v-col>
 
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Marca *</label>
-              <select v-model="form.marca" class="form-select" required>
-                <option value="">Seleccione...</option>
-                <option v-for="marca in marcas" :key="marca.id" :value="marca.id">
-                  {{ marca.nombre }}
-                </option>
-              </select>
-            </div>
+            <v-col cols="12" md="6">
+              <v-select
+                v-model="form.marca"
+                :items="marcas"
+                item-title="nombre"
+                item-value="id"
+                label="Marca *"
+                variant="outlined"
+                density="comfortable"
+                required
+                :rules="[v => !!v || 'Marca es requerida']"
+              ></v-select>
+            </v-col>
 
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Precio de Compra *</label>
-              <input v-model.number="form.precio_compra" type="number" step="0.01" class="form-control" required>
-            </div>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model.number="form.precio_compra"
+                label="Precio de Compra *"
+                variant="outlined"
+                density="comfortable"
+                type="number"
+                step="0.01"
+                prefix="S/"
+                required
+                :rules="[v => !!v || 'Precio de compra es requerido']"
+              ></v-text-field>
+            </v-col>
 
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Precio de Venta *</label>
-              <input v-model.number="form.precio_venta" type="number" step="0.01" class="form-control" required>
-            </div>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model.number="form.precio_venta"
+                label="Precio de Venta *"
+                variant="outlined"
+                density="comfortable"
+                type="number"
+                step="0.01"
+                prefix="S/"
+                required
+                :rules="[v => !!v || 'Precio de venta es requerido']"
+              ></v-text-field>
+            </v-col>
 
-            <div class="col-md-12 mb-3 form-check">
-              <input v-model="form.activo" type="checkbox" class="form-check-input" id="activo">
-              <label class="form-check-label" for="activo">Producto Activo</label>
-            </div>
+            <v-col cols="12">
+              <v-checkbox
+                v-model="form.activo"
+                label="Producto Activo"
+                color="primary"
+              ></v-checkbox>
+            </v-col>
+          </v-row>
+
+          <v-divider class="my-4"></v-divider>
+
+          <div class="d-flex gap-2">
+            <v-btn type="submit" color="primary" size="large">
+              <v-icon left>mdi-content-save</v-icon>
+              Guardar Producto
+            </v-btn>
+            <v-btn :to="'/productos'" color="grey" variant="outlined" size="large">
+              <v-icon left>mdi-cancel</v-icon>
+              Cancelar
+            </v-btn>
           </div>
-
-          <div class="mt-3">
-            <button type="submit" class="btn btn-primary me-2">
-              💾 Guardar Producto
-            </button>
-            <router-link to="/productos" class="btn btn-secondary">
-              ❌ Cancelar
-            </router-link>
-          </div>
-        </form>
-      </div>
-    </div>
+        </v-form>
+      </v-card-text>
+    </v-card>
 
     <!-- Sección de Variantes (solo en modo edición) -->
-    <div v-if="esEdicion" class="card mt-4">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">📦 Variantes y Stock</h5>
-        <button @click="mostrarModalVariante = true" class="btn btn-sm btn-success">
-          ➕ Agregar Variante
-        </button>
-      </div>
-      <div class="card-body">
-        <div v-if="cargandoVariantes" class="text-center">
-          <div class="spinner-border spinner-border-sm"></div>
-        </div>
-        <div v-else-if="variantes.length === 0" class="alert alert-info">
+    <v-card v-if="esEdicion" elevation="3">
+      <v-card-title class="bg-secondary d-flex justify-space-between align-items-center">
+        <span class="text-white">
+          <v-icon left color="white">mdi-package-variant</v-icon>
+          Variantes y Stock
+        </span>
+        <v-btn color="success" size="small" @click="mostrarModalVariante = true">
+          <v-icon left>mdi-plus</v-icon>
+          Agregar Variante
+        </v-btn>
+      </v-card-title>
+      <v-divider></v-divider>
+      <v-card-text class="pa-0">
+        <v-progress-linear v-if="cargandoVariantes" indeterminate color="primary"></v-progress-linear>
+
+        <v-alert v-else-if="variantes.length === 0" type="info" variant="tonal" class="ma-4">
           Este producto no tiene variantes. Agrega tallas y colores con su stock.
-        </div>
-        <div v-else class="table-responsive">
-          <table class="table table-sm table-hover">
-            <thead class="table-light">
-              <tr>
-                <th>Código</th>
-                <th>Talla</th>
-                <th>Color</th>
-                <th>Stock Actual</th>
-                <th>Stock Mínimo</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="variante in variantes" :key="variante.id">
-                <td><small>{{ variante.codigo_variante }}</small></td>
-                <td>{{ variante.talla_nombre }}</td>
-                <td>
-                  <span class="badge" :style="{ backgroundColor: getColorHex(variante.color) }">
-                    {{ variante.color_nombre }}
-                  </span>
-                </td>
-                <td>
-                  <span :class="getStockClass(variante)">
-                    {{ variante.stock_actual }}
-                  </span>
-                </td>
-                <td>{{ variante.stock_minimo }}</td>
-                <td>
-                  <span class="badge" :class="variante.activo ? 'bg-success' : 'bg-secondary'">
-                    {{ variante.activo ? 'Activo' : 'Inactivo' }}
-                  </span>
-                </td>
-                <td>
-                  <button @click="editarVariante(variante)" class="btn btn-sm btn-warning me-1">
-                    ✏️
-                  </button>
-                  <button @click="eliminarVariante(variante.id)" class="btn btn-sm btn-danger">
-                    🗑️
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+        </v-alert>
+
+        <v-table v-else density="comfortable">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Talla</th>
+              <th>Color</th>
+              <th>Stock Actual</th>
+              <th>Stock Mínimo</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="variante in variantes" :key="variante.id">
+              <td><span class="text-caption">{{ variante.codigo_variante }}</span></td>
+              <td>{{ variante.talla_nombre }}</td>
+              <td>
+                <v-chip
+                  size="small"
+                  :style="{ backgroundColor: getColorHex(variante.color), color: '#fff' }"
+                >
+                  {{ variante.color_nombre }}
+                </v-chip>
+              </td>
+              <td>
+                <v-chip
+                  size="small"
+                  :color="getStockColor(variante)"
+                  variant="flat"
+                >
+                  {{ variante.stock_actual }}
+                </v-chip>
+              </td>
+              <td>{{ variante.stock_minimo }}</td>
+              <td>
+                <v-chip
+                  :color="variante.activo ? 'success' : 'grey'"
+                  size="small"
+                  variant="flat"
+                >
+                  {{ variante.activo ? 'Activo' : 'Inactivo' }}
+                </v-chip>
+              </td>
+              <td>
+                <v-btn
+                  icon
+                  size="small"
+                  color="warning"
+                  variant="text"
+                  @click="editarVariante(variante)"
+                >
+                  <v-icon>mdi-pencil</v-icon>
+                </v-btn>
+                <v-btn
+                  icon
+                  size="small"
+                  color="error"
+                  variant="text"
+                  @click="eliminarVariante(variante.id)"
+                >
+                  <v-icon>mdi-delete</v-icon>
+                </v-btn>
+              </td>
+            </tr>
+          </tbody>
+        </v-table>
+      </v-card-text>
+    </v-card>
 
     <!-- Modal para agregar/editar variante -->
-    <div v-if="mostrarModalVariante" class="modal" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; overflow-y: auto;">
-      <div class="modal-dialog" style="margin: 50px auto;">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">{{ varianteEditando ? 'Editar' : 'Nueva' }} Variante</h5>
-            <button type="button" class="close" @click="cerrarModalVariante" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            <form @submit.prevent="guardarVariante">
-              <div class="mb-3">
-                <label class="form-label">Talla *</label>
-                <select v-model="formVariante.talla" class="form-select" required :disabled="varianteEditando">
-                  <option value="">Seleccione...</option>
-                  <option v-for="talla in tallas" :key="talla.id" :value="talla.id">
-                    {{ talla.nombre }}
-                  </option>
-                </select>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Color *</label>
-                <select v-model="formVariante.color" class="form-select" required :disabled="varianteEditando">
-                  <option value="">Seleccione...</option>
-                  <option v-for="color in colores" :key="color.id" :value="color.id">
-                    {{ color.nombre }}
-                  </option>
-                </select>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Stock Actual *</label>
-                <input v-model.number="formVariante.stock_actual" type="number" class="form-control" required min="0">
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Stock Mínimo *</label>
-                <input v-model.number="formVariante.stock_minimo" type="number" class="form-control" required min="0">
-              </div>
-              <div class="mb-3 form-check">
-                <input v-model="formVariante.activo" type="checkbox" class="form-check-input" id="varianteActivo">
-                <label class="form-check-label" for="varianteActivo">Activo</label>
-              </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="cerrarModalVariante">Cancelar</button>
-            <button type="button" class="btn btn-primary" @click="guardarVariante">Guardar</button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <v-dialog v-model="mostrarModalVariante" max-width="600px">
+      <v-card>
+        <v-card-title class="text-h5 primary white--text">
+          <v-icon left color="white">mdi-package-variant</v-icon>
+          {{ varianteEditando ? 'Editar' : 'Nueva' }} Variante
+        </v-card-title>
+        <v-card-text class="pa-6">
+          <v-form @submit.prevent="guardarVariante">
+            <v-select
+              v-model="formVariante.talla"
+              :items="tallas"
+              item-title="nombre"
+              item-value="id"
+              label="Talla *"
+              variant="outlined"
+              density="comfortable"
+              required
+              :disabled="!!varianteEditando"
+            ></v-select>
+
+            <v-select
+              v-model="formVariante.color"
+              :items="colores"
+              item-title="nombre"
+              item-value="id"
+              label="Color *"
+              variant="outlined"
+              density="comfortable"
+              required
+              :disabled="!!varianteEditando"
+              class="mt-4"
+            ></v-select>
+
+            <v-text-field
+              v-model.number="formVariante.stock_actual"
+              label="Stock Actual *"
+              variant="outlined"
+              density="comfortable"
+              type="number"
+              min="0"
+              required
+              class="mt-4"
+            ></v-text-field>
+
+            <v-text-field
+              v-model.number="formVariante.stock_minimo"
+              label="Stock Mínimo *"
+              variant="outlined"
+              density="comfortable"
+              type="number"
+              min="0"
+              required
+              class="mt-4"
+            ></v-text-field>
+
+            <v-checkbox
+              v-model="formVariante.activo"
+              label="Activo"
+              color="primary"
+              class="mt-4"
+            ></v-checkbox>
+          </v-form>
+        </v-card-text>
+        <v-divider></v-divider>
+        <v-card-actions class="pa-4">
+          <v-btn color="grey" variant="text" @click="cerrarModalVariante">
+            Cancelar
+          </v-btn>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" @click="guardarVariante">
+            Guardar
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Snackbar para notificaciones -->
+    <v-snackbar v-model="snackbar" :color="snackbarColor" timeout="3000" top>
+      {{ snackbarText }}
+      <template #actions>
+        <v-btn variant="text" @click="snackbar = false">
+          Cerrar
+        </v-btn>
+      </template>
+    </v-snackbar>
+
+    <!-- Dialog de confirmación para eliminar -->
+    <v-dialog v-model="dialogEliminar" max-width="500px">
+      <v-card>
+        <v-card-title class="text-h5 error white--text">
+          <v-icon left color="white">mdi-delete</v-icon>
+          Confirmar Eliminación
+        </v-card-title>
+        <v-card-text class="pa-6">
+          <p class="text-h6">¿Estás seguro de eliminar esta variante?</p>
+        </v-card-text>
+        <v-divider></v-divider>
+        <v-card-actions class="pa-4">
+          <v-btn color="grey" variant="text" @click="dialogEliminar = false">
+            No, cancelar
+          </v-btn>
+          <v-spacer></v-spacer>
+          <v-btn color="error" @click="confirmarEliminarVariante">
+            Sí, eliminar
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -220,7 +370,12 @@ export default {
         stock_actual: 0,
         stock_minimo: 5,
         activo: true
-      }
+      },
+      snackbar: false,
+      snackbarText: '',
+      snackbarColor: 'success',
+      dialogEliminar: false,
+      varianteIdEliminar: null
     }
   },
   async created() {
@@ -262,7 +417,7 @@ export default {
         this.form = { ...response.data }
       } catch (error) {
         console.error('Error al cargar producto:', error)
-        alert('Error al cargar el producto')
+        this.showSnackbar('Error al cargar el producto', 'error')
         this.$router.push('/productos')
       }
     },
@@ -270,15 +425,17 @@ export default {
       try {
         if (this.esEdicion) {
           await api.updateProducto(this.productoId, this.form)
-          alert('Producto actualizado correctamente')
+          this.showSnackbar('Producto actualizado correctamente', 'success')
         } else {
           await api.createProducto(this.form)
-          alert('Producto creado correctamente')
+          this.showSnackbar('Producto creado correctamente', 'success')
         }
-        this.$router.push('/productos')
+        setTimeout(() => {
+          this.$router.push('/productos')
+        }, 1000)
       } catch (error) {
         console.error('Error al guardar producto:', error)
-        alert('Error al guardar el producto')
+        this.showSnackbar('Error al guardar el producto', 'error')
       }
     },
     async cargarVariantes() {
@@ -320,29 +477,33 @@ export default {
 
         if (this.varianteEditando) {
           await api.updateProductoVariante(this.varianteEditando.id, data)
-          alert('Variante actualizada correctamente')
+          this.showSnackbar('Variante actualizada correctamente', 'success')
         } else {
           await api.createProductoVariante(data)
-          alert('Variante creada correctamente')
+          this.showSnackbar('Variante creada correctamente', 'success')
         }
         await this.cargarVariantes()
         this.cerrarModalVariante()
       } catch (error) {
         console.error('Error al guardar variante:', error)
         console.error('Detalles:', error.response?.data)
-        alert('Error al guardar la variante. Verifica que la combinación talla/color no exista.')
+        this.showSnackbar('Error al guardar la variante. Verifica que la combinación talla/color no exista.', 'error')
       }
     },
-    async eliminarVariante(id) {
-      if (confirm('¿Estás seguro de eliminar esta variante?')) {
-        try {
-          await api.deleteProductoVariante(id)
-          alert('Variante eliminada correctamente')
-          await this.cargarVariantes()
-        } catch (error) {
-          console.error('Error al eliminar variante:', error)
-          alert('Error al eliminar la variante')
-        }
+    eliminarVariante(id) {
+      this.varianteIdEliminar = id
+      this.dialogEliminar = true
+    },
+    async confirmarEliminarVariante() {
+      try {
+        await api.deleteProductoVariante(this.varianteIdEliminar)
+        this.showSnackbar('Variante eliminada correctamente', 'success')
+        await this.cargarVariantes()
+        this.dialogEliminar = false
+        this.varianteIdEliminar = null
+      } catch (error) {
+        console.error('Error al eliminar variante:', error)
+        this.showSnackbar('Error al eliminar la variante', 'error')
       }
     },
     cerrarModalVariante() {
@@ -357,15 +518,26 @@ export default {
         activo: true
       }
     },
-    getStockClass(variante) {
-      if (variante.stock_actual === 0) return 'badge bg-danger'
-      if (variante.stock_actual <= variante.stock_minimo) return 'badge bg-warning text-dark'
-      return 'badge bg-success'
+    getStockColor(variante) {
+      if (variante.stock_actual === 0) return 'error'
+      if (variante.stock_actual <= variante.stock_minimo) return 'warning'
+      return 'success'
     },
     getColorHex(colorId) {
       const color = this.colores.find(c => c.id === colorId)
       return color ? color.codigo_hex : '#999999'
+    },
+    showSnackbar(text, color = 'success') {
+      this.snackbarText = text
+      this.snackbarColor = color
+      this.snackbar = true
     }
   }
 }
 </script>
+
+<style scoped>
+.gap-2 {
+  gap: 8px;
+}
+</style>

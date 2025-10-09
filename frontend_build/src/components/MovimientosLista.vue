@@ -1,87 +1,107 @@
 <template>
-  <div class="container mt-4">
-    <h2>📋 Movimientos de Inventario</h2>
+  <v-container class="mt-4">
+    <h2>Movimientos de Inventario</h2>
 
-    <div class="card mb-4">
-      <div class="card-header bg-primary text-white">
-        <h6 class="mb-0">🔍 Filtros</h6>
-      </div>
-      <div class="card-body">
-        <div class="row align-items-end g-3">
-          <div class="col-md-3">
-            <label class="form-label fw-bold">Tipo de Movimiento</label>
-            <select v-model="filtro.tipo" @change="aplicarFiltros" class="form-select">
-              <option value="">Todos</option>
-              <option value="ENTRADA">Entrada</option>
-              <option value="SALIDA">Salida</option>
-              <option value="AJUSTE">Ajuste</option>
-              <option value="DEVOLUCION">Devolución</option>
-            </select>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label fw-bold">Fecha Desde</label>
-            <input v-model="filtro.fecha_desde" type="date" class="form-control" @change="aplicarFiltros">
-          </div>
-          <div class="col-md-3">
-            <label class="form-label fw-bold">Fecha Hasta</label>
-            <input v-model="filtro.fecha_hasta" type="date" class="form-control" @change="aplicarFiltros">
-          </div>
-          <div class="col-md-3">
-            <button @click="limpiarFiltros" class="btn btn-secondary w-100">
-              🔄 Limpiar Filtros
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <v-card elevation="3" class="mb-4">
+      <v-card-title class="bg-primary">
+        <span class="text-white">Filtros</span>
+      </v-card-title>
+      <v-card-text>
+        <v-row align="end">
+          <v-col cols="12" md="3">
+            <v-select
+              v-model="filtro.tipo"
+              @change="aplicarFiltros"
+              :items="[
+                { title: 'Todos', value: '' },
+                { title: 'Entrada', value: 'ENTRADA' },
+                { title: 'Salida', value: 'SALIDA' },
+                { title: 'Ajuste', value: 'AJUSTE' },
+                { title: 'Devolución', value: 'DEVOLUCION' }
+              ]"
+              label="Tipo de Movimiento"
+              variant="outlined"
+              density="comfortable"
+            ></v-select>
+          </v-col>
+          <v-col cols="12" md="3">
+            <v-text-field
+              v-model="filtro.fecha_desde"
+              type="date"
+              label="Fecha Desde"
+              variant="outlined"
+              density="comfortable"
+              @change="aplicarFiltros"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="12" md="3">
+            <v-text-field
+              v-model="filtro.fecha_hasta"
+              type="date"
+              label="Fecha Hasta"
+              variant="outlined"
+              density="comfortable"
+              @change="aplicarFiltros"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="12" md="3">
+            <v-btn @click="limpiarFiltros" color="secondary" block>
+              <v-icon left>mdi-refresh</v-icon> Limpiar Filtros
+            </v-btn>
+          </v-col>
+        </v-row>
+      </v-card-text>
+    </v-card>
 
     <div v-if="loading" class="text-center mt-4">
-      <div class="spinner-border"></div>
+      <v-progress-circular indeterminate color="primary"></v-progress-circular>
     </div>
 
     <div v-else class="mt-4">
-      <div class="table-responsive">
-        <table class="table table-striped table-hover table-sm">
-          <thead class="table-dark">
-            <tr>
-              <th>ID</th>
-              <th>Fecha</th>
-              <th>Tipo</th>
-              <th>Producto</th>
-              <th>Cantidad</th>
-              <th>Stock Anterior</th>
-              <th>Stock Nuevo</th>
-              <th>Motivo</th>
-              <th>Usuario</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="mov in movimientosFiltrados" :key="mov.id">
-              <td>{{ mov.id }}</td>
-              <td>{{ formatFecha(mov.fecha_movimiento) }}</td>
-              <td>
-                <span class="badge" :class="getBadgeClass(mov.tipo_movimiento)">
-                  {{ mov.tipo_movimiento }}
-                </span>
-              </td>
-              <td>{{ mov.producto_info }}</td>
-              <td :class="getCantidadClass(mov.tipo_movimiento)">
-                {{ getTipoMovimiento(mov.tipo_movimiento) }}{{ mov.cantidad }}
-              </td>
-              <td>{{ mov.stock_anterior }}</td>
-              <td>{{ mov.stock_nuevo }}</td>
-              <td>{{ mov.motivo }}</td>
-              <td>{{ mov.usuario_nombre }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <v-table density="compact" hover>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Fecha</th>
+            <th>Tipo</th>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Stock Anterior</th>
+            <th>Stock Nuevo</th>
+            <th>Motivo</th>
+            <th>Usuario</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="mov in movimientosFiltrados" :key="mov.id">
+            <td>{{ mov.id }}</td>
+            <td>{{ formatFecha(mov.fecha_movimiento) }}</td>
+            <td>
+              <v-chip
+                :color="getBadgeClass(mov.tipo_movimiento)"
+                size="small"
+                variant="flat"
+              >
+                {{ mov.tipo_movimiento }}
+              </v-chip>
+            </td>
+            <td>{{ mov.producto_info }}</td>
+            <td :class="getCantidadClass(mov.tipo_movimiento)">
+              {{ getTipoMovimiento(mov.tipo_movimiento) }}{{ mov.cantidad }}
+            </td>
+            <td>{{ mov.stock_anterior }}</td>
+            <td>{{ mov.stock_nuevo }}</td>
+            <td>{{ mov.motivo }}</td>
+            <td>{{ mov.usuario_nombre }}</td>
+          </tr>
+        </tbody>
+      </v-table>
 
-      <div v-if="movimientosFiltrados.length === 0" class="alert alert-info">
+      <v-alert v-if="movimientosFiltrados.length === 0" type="info" variant="tonal" class="mt-3">
         No hay movimientos de inventario.
-      </div>
+      </v-alert>
     </div>
-  </div>
+  </v-container>
 </template>
 
 <script>
@@ -114,7 +134,6 @@ export default {
         this.movimientosFiltrados = this.movimientos
       } catch (error) {
         console.error('Error:', error)
-        alert('Error al cargar movimientos')
       } finally {
         this.loading = false
       }
@@ -152,15 +171,15 @@ export default {
     },
     getBadgeClass(tipo) {
       const classes = {
-        'ENTRADA': 'bg-success',
-        'SALIDA': 'bg-danger',
-        'AJUSTE': 'bg-warning',
-        'DEVOLUCION': 'bg-info'
+        'ENTRADA': 'success',
+        'SALIDA': 'error',
+        'AJUSTE': 'warning',
+        'DEVOLUCION': 'info'
       }
-      return classes[tipo] || 'bg-secondary'
+      return classes[tipo] || 'secondary'
     },
     getCantidadClass(tipo) {
-      return tipo === 'ENTRADA' || tipo === 'DEVOLUCION' ? 'text-success fw-bold' : 'text-danger fw-bold'
+      return tipo === 'ENTRADA' || tipo === 'DEVOLUCION' ? 'text-success font-weight-bold' : 'text-error font-weight-bold'
     },
     getTipoMovimiento(tipo) {
       return tipo === 'ENTRADA' || tipo === 'DEVOLUCION' ? '+' : '-'

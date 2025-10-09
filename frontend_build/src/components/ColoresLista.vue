@@ -1,70 +1,96 @@
 <template>
-  <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+  <v-container class="mt-4">
+    <div class="d-flex justify-space-between align-center mb-4">
       <h2>Colores</h2>
-      <button @click="mostrarModal = true" class="btn btn-primary">➕ Nuevo Color</button>
+      <v-btn @click="mostrarModal = true" color="primary">
+        <v-icon left>mdi-plus</v-icon> Nuevo Color
+      </v-btn>
     </div>
 
     <div v-if="loading" class="text-center">
-      <div class="spinner-border" role="status"></div>
+      <v-progress-circular indeterminate color="primary"></v-progress-circular>
     </div>
 
     <div v-else>
-      <div class="row">
-        <div v-for="color in colores" :key="color.id" class="col-md-3 mb-3">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex align-items-center mb-2">
+      <v-row>
+        <v-col v-for="color in colores" :key="color.id" cols="12" sm="6" md="3">
+          <v-card elevation="3" class="color-card">
+            <v-card-text>
+              <div class="d-flex align-center mb-2">
                 <div
                   class="color-preview me-2"
                   :style="{ backgroundColor: color.codigo_hex || '#cccccc' }"
                 ></div>
                 <h5 class="mb-0">{{ color.nombre }}</h5>
               </div>
-              <p class="text-muted small mb-2">{{ color.codigo_hex || 'Sin código' }}</p>
-              <div class="btn-group btn-group-sm w-100">
-                <button @click="editarColor(color)" class="btn btn-warning">✏️ Editar</button>
-                <button @click="eliminarColor(color.id)" class="btn btn-danger">🗑️</button>
+              <p class="text-medium-emphasis text-body-2 mb-2">{{ color.codigo_hex || 'Sin código' }}</p>
+              <div class="d-flex ga-2">
+                <v-btn @click="editarColor(color)" color="warning" size="small" block>
+                  <v-icon>mdi-pencil</v-icon> Editar
+                </v-btn>
+                <v-btn @click="eliminarColor(color.id)" color="error" size="small" icon="mdi-delete"></v-btn>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
     </div>
 
     <!-- Modal -->
-    <div v-if="mostrarModal" class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">{{ colorEditando ? 'Editar' : 'Nuevo' }} Color</h5>
-            <button type="button" class="btn-close" @click="cerrarModal"></button>
-          </div>
-          <div class="modal-body">
-            <div class="mb-3">
-              <label class="form-label">Nombre * (ej: Rojo, Azul, Negro)</label>
-              <input v-model="form.nombre" type="text" class="form-control" required>
+    <v-dialog v-model="mostrarModal" max-width="600">
+      <v-card>
+        <v-card-title class="text-h6">{{ colorEditando ? 'Editar' : 'Nuevo' }} Color</v-card-title>
+        <v-card-text>
+          <v-text-field
+            v-model="form.nombre"
+            label="Nombre * (ej: Rojo, Azul, Negro)"
+            variant="outlined"
+            density="comfortable"
+            required
+            class="mb-3"
+          ></v-text-field>
+          <div class="mb-3">
+            <label class="text-body-2 mb-2 d-block">Código Hex (ej: #FF0000)</label>
+            <div class="d-flex ga-2">
+              <v-text-field
+                v-model="form.codigo_hex"
+                variant="outlined"
+                density="comfortable"
+                placeholder="#000000"
+                class="flex-grow-1"
+              ></v-text-field>
+              <input v-model="form.codigo_hex" type="color" class="color-picker">
             </div>
-            <div class="mb-3">
-              <label class="form-label">Código Hex (ej: #FF0000)</label>
-              <div class="input-group">
-                <input v-model="form.codigo_hex" type="text" class="form-control" placeholder="#000000">
-                <input v-model="form.codigo_hex" type="color" class="form-control form-control-color">
-              </div>
-            </div>
-            <div v-if="form.codigo_hex" class="mb-3">
-              <label class="form-label">Vista Previa:</label>
-              <div class="color-preview-large" :style="{ backgroundColor: form.codigo_hex }"></div>
-            </div>
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="cerrarModal">Cancelar</button>
-            <button type="button" class="btn btn-primary" @click="guardarColor">Guardar</button>
+          <div v-if="form.codigo_hex" class="mb-3">
+            <label class="text-body-2 mb-2 d-block">Vista Previa:</label>
+            <div class="color-preview-large" :style="{ backgroundColor: form.codigo_hex }"></div>
           </div>
-        </div>
-      </div>
-    </div>
-  </div>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="secondary" @click="cerrarModal">Cancelar</v-btn>
+          <v-btn color="primary" @click="guardarColor">Guardar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-snackbar v-model="snackbar" :color="snackbarColor" :timeout="3000">
+      {{ snackbarText }}
+    </v-snackbar>
+
+    <v-dialog v-model="dialogConfirm" max-width="400">
+      <v-card>
+        <v-card-title class="text-h6">Confirmar eliminación</v-card-title>
+        <v-card-text>¿Eliminar este color?</v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="secondary" @click="dialogConfirm = false">No</v-btn>
+          <v-btn color="error" @click="confirmarEliminar">Sí</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </v-container>
 </template>
 
 <script>
@@ -78,13 +104,23 @@ export default {
       loading: true,
       mostrarModal: false,
       colorEditando: null,
-      form: { nombre: '', codigo_hex: '#000000' }
+      form: { nombre: '', codigo_hex: '#000000' },
+      snackbar: false,
+      snackbarText: '',
+      snackbarColor: 'success',
+      dialogConfirm: false,
+      colorIdToDelete: null
     }
   },
   async created() {
     await this.cargarColores()
   },
   methods: {
+    showSnackbar(text, color = 'success') {
+      this.snackbarText = text
+      this.snackbarColor = color
+      this.snackbar = true
+    },
     async cargarColores() {
       try {
         this.loading = true
@@ -93,7 +129,7 @@ export default {
       } catch (error) {
         console.error('Error:', error)
         console.error('Detalles:', error.response?.data)
-        alert('Error al cargar colores')
+        this.showSnackbar('Error al cargar colores', 'error')
       } finally {
         this.loading = false
       }
@@ -112,21 +148,26 @@ export default {
         }
         await this.cargarColores()
         this.cerrarModal()
-        alert('Color guardado correctamente')
+        this.showSnackbar('Color guardado correctamente', 'success')
       } catch (error) {
         console.error('Error:', error)
-        alert('Error al guardar el color')
+        this.showSnackbar('Error al guardar el color', 'error')
       }
     },
-    async eliminarColor(id) {
-      if (confirm('¿Eliminar este color?')) {
-        try {
-          await api.deleteColor(id)
-          await this.cargarColores()
-          alert('Color eliminado')
-        } catch (error) {
-          alert('Error al eliminar. Puede tener variantes asociadas.')
-        }
+    eliminarColor(id) {
+      this.colorIdToDelete = id
+      this.dialogConfirm = true
+    },
+    async confirmarEliminar() {
+      try {
+        await api.deleteColor(this.colorIdToDelete)
+        await this.cargarColores()
+        this.showSnackbar('Color eliminado', 'success')
+      } catch (error) {
+        this.showSnackbar('Error al eliminar. Puede tener variantes asociadas.', 'error')
+      } finally {
+        this.dialogConfirm = false
+        this.colorIdToDelete = null
       }
     },
     cerrarModal() {
@@ -153,12 +194,20 @@ export default {
   border: 2px solid #ddd;
 }
 
-.card {
+.color-card {
   transition: transform 0.2s;
 }
 
-.card:hover {
+.color-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.color-picker {
+  width: 60px;
+  height: 40px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
 </style>
