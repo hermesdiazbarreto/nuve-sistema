@@ -74,7 +74,7 @@
 
         <!-- Precio -->
         <template #item.precio_venta="{ item }">
-          <span class="font-weight-medium">S/ {{ formatPrecio(item.precio_venta) }}</span>
+          <span class="font-weight-medium">{{ formatPrecio(item.precio_venta) }}</span>
         </template>
 
         <!-- Variantes -->
