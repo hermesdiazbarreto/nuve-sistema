@@ -213,11 +213,19 @@ class Venta(models.Model):
         self.saldo_pendiente = self.total - self.monto_abonado
 
         # Actualizar estado según el monto abonado
-        if self.saldo_pendiente <= 0:
+        # Si monto_abonado = 0, significa que es una venta pagada completa (no es abono)
+        if self.monto_abonado == 0:
+            # Venta pagada completa (sin abono)
+            self.estado = 'PAGADO'
+            self.monto_abonado = self.total
+            self.saldo_pendiente = 0
+        elif self.saldo_pendiente <= 0:
+            # Abono que cubre el total
             self.estado = 'PAGADO'
             self.monto_abonado = self.total  # Asegurar que no sobrepase el total
             self.saldo_pendiente = 0
         elif self.monto_abonado > 0:
+            # Abono parcial
             self.estado = 'ABONO'
 
         super().save(*args, **kwargs)
