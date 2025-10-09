@@ -895,10 +895,11 @@ export default {
             }))
           }
 
-          // Si es abono: enviar el monto que el usuario ingresó
+          // Si es abono: enviar el monto que el usuario ingresó y marcar como ABONO
           // Si NO es abono: enviar el total completo y marcar como PAGADO
           if (this.venta.es_abono) {
             ventaData.monto_abonado = Number(this.venta.monto_abonado).toFixed(2)
+            ventaData.estado = 'ABONO'
           } else {
             ventaData.monto_abonado = this.total.toFixed(2)
             ventaData.estado = 'PAGADO'
