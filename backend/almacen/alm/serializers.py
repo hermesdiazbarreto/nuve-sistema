@@ -71,8 +71,8 @@ class VentaSerializer(serializers.ModelSerializer):
     detalles = DetalleVentaSerializer(many=True, read_only=True)
     pagos = PagoVentaSerializer(many=True, read_only=True)
     numero_venta = serializers.CharField(read_only=True)
-    monto_abonado = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
-    saldo_pendiente = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    # monto_abonado y saldo_pendiente NO son read_only para permitir que el frontend los envíe
+    # El modelo Venta.save() se encargará de calcular saldo_pendiente si es necesario
 
     class Meta:
         model = Venta
