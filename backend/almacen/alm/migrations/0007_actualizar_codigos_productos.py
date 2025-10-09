@@ -23,11 +23,20 @@ def actualizar_codigos_productos(apps, schema_editor):
         productos = Producto.objects.filter(categoria=categoria).order_by('id')
 
         # Asignar códigos correlativos
-        for index, producto in enumerate(productos, start=1):
-            nuevo_codigo = f"{prefijo}-{index:03d}"
+        contador = 1
+        for producto in productos:
+            # Buscar un código único (por si ya existe)
+            while True:
+                nuevo_codigo = f"{prefijo}-{contador:03d}"
+                # Verificar si el código ya existe
+                if not Producto.objects.filter(codigo=nuevo_codigo).exists():
+                    break
+                contador += 1
+
             producto.codigo = nuevo_codigo
-            producto.save()
+            producto.save(update_fields=['codigo'])
             print(f"Producto actualizado: {producto.nombre} -> {nuevo_codigo}")
+            contador += 1
 
 
 def revertir_actualizacion(apps, schema_editor):
