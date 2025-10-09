@@ -886,7 +886,6 @@ export default {
             impuesto: this.impuesto.toFixed(2),
             total: this.total.toFixed(2),
             monto_abonado: this.venta.es_abono ? Number(this.venta.monto_abonado).toFixed(2) : this.total.toFixed(2),
-            estado: this.venta.es_abono ? undefined : 'PAGADO',
             tipo_pago: this.venta.tipo_pago,
             observaciones: this.venta.observaciones || '',
             detalles: this.carrito.map(item => ({
@@ -895,6 +894,11 @@ export default {
               precio_unitario: item.precio.toFixed(2),
               subtotal: (item.precio * item.cantidad).toFixed(2)
             }))
+          }
+
+          // Agregar estado solo si NO es abono
+          if (!this.venta.es_abono) {
+            ventaData.estado = 'PAGADO'
           }
 
           console.log('Datos de venta a enviar:', ventaData)
