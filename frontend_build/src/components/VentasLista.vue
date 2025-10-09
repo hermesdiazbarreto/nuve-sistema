@@ -1,237 +1,312 @@
 <template>
-  <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2>💰 Ventas</h2>
-      <router-link to="/ventas/nueva" class="btn btn-primary">
-        ➕ Nueva Venta
-      </router-link>
-    </div>
+  <div>
+    <!-- Header -->
+    <v-row align="center" class="mb-6">
+      <v-col cols="12" md="6">
+        <h1 class="text-h4 font-weight-bold">
+          <v-icon large color="success" class="mr-2">mdi-cash-multiple</v-icon>
+          Ventas
+        </h1>
+      </v-col>
+      <v-col cols="12" md="6" class="text-md-right">
+        <v-btn color="primary" :to="'/ventas/nueva'">
+          <v-icon left>mdi-plus</v-icon>
+          Nueva Venta
+        </v-btn>
+      </v-col>
+    </v-row>
 
-    <div class="card mb-4">
-      <div class="card-header bg-primary text-white">
-        <h6 class="mb-0">🔍 Filtros</h6>
-      </div>
-      <div class="card-body">
-        <div class="row align-items-end g-3">
-          <div class="col-md-3">
-            <label class="form-label fw-bold">Estado</label>
-            <select v-model="filtro.estado" @change="aplicarFiltros" class="form-select">
-              <option value="">Todos</option>
-              <option value="PAGADO">Pagado</option>
-              <option value="PENDIENTE">Pendiente</option>
-              <option value="CANCELADO">Cancelado</option>
-            </select>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label fw-bold">Fecha Desde</label>
-            <input v-model="filtro.fecha_desde" type="date" class="form-control" @change="aplicarFiltros">
-          </div>
-          <div class="col-md-3">
-            <label class="form-label fw-bold">Fecha Hasta</label>
-            <input v-model="filtro.fecha_hasta" type="date" class="form-control" @change="aplicarFiltros">
-          </div>
-          <div class="col-md-3">
-            <button @click="limpiarFiltros" class="btn btn-secondary w-100">🔄 Limpiar Filtros</button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- Filtros Card -->
+    <v-card elevation="3" class="mb-4">
+      <v-card-title class="bg-primary">
+        <v-icon left color="white">mdi-filter</v-icon>
+        <span class="text-white">Filtros</span>
+      </v-card-title>
+      <v-divider></v-divider>
+      <v-card-text>
+        <v-row>
+          <v-col cols="12" sm="6" md="3">
+            <v-select
+              v-model="filtro.estado"
+              :items="['Todos', 'PAGADO', 'PENDIENTE', 'CANCELADO']"
+              label="Estado"
+              variant="outlined"
+              density="compact"
+              @update:model-value="aplicarFiltros"
+            ></v-select>
+          </v-col>
+          <v-col cols="12" sm="6" md="3">
+            <v-text-field
+              v-model="filtro.fecha_desde"
+              type="date"
+              label="Fecha Desde"
+              variant="outlined"
+              density="compact"
+              @change="aplicarFiltros"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="12" sm="6" md="3">
+            <v-text-field
+              v-model="filtro.fecha_hasta"
+              type="date"
+              label="Fecha Hasta"
+              variant="outlined"
+              density="compact"
+              @change="aplicarFiltros"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="12" sm="6" md="3">
+            <v-btn color="grey" variant="outlined" block @click="limpiarFiltros">
+              <v-icon left>mdi-refresh</v-icon>
+              Limpiar Filtros
+            </v-btn>
+          </v-col>
+        </v-row>
+      </v-card-text>
+    </v-card>
 
-    <div v-if="loading" class="text-center">
-      <div class="spinner-border"></div>
-    </div>
+    <!-- Progress bar -->
+    <v-progress-linear v-if="loading" indeterminate color="primary"></v-progress-linear>
 
-    <div v-else>
-      <div class="row mb-3">
-        <div class="col-md-3">
-          <div class="card bg-success text-white">
-            <div class="card-body">
-              <h6>Total Ventas</h6>
-              <h4>${{ totalVentas.toFixed(2) }}</h4>
+    <!-- Stats Cards -->
+    <v-row v-if="!loading" class="mb-4">
+      <v-col cols="12" sm="6">
+        <v-card color="success" dark elevation="3">
+          <v-card-text>
+            <div class="d-flex justify-space-between align-center">
+              <div>
+                <div class="text-subtitle-2">Total Ventas</div>
+                <div class="text-h4 font-weight-bold">S/ {{ totalVentas.toFixed(2) }}</div>
+              </div>
+              <v-icon size="48">mdi-currency-usd</v-icon>
             </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card bg-info text-white">
-            <div class="card-body">
-              <h6>Cantidad</h6>
-              <h4>{{ ventasFiltradas.length }}</h4>
+          </v-card-text>
+        </v-card>
+      </v-col>
+      <v-col cols="12" sm="6">
+        <v-card color="info" dark elevation="3">
+          <v-card-text>
+            <div class="d-flex justify-space-between align-center">
+              <div>
+                <div class="text-subtitle-2">Cantidad de Ventas</div>
+                <div class="text-h4 font-weight-bold">{{ ventasFiltradas.length }}</div>
+              </div>
+              <v-icon size="48">mdi-counter</v-icon>
             </div>
-          </div>
-        </div>
-      </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
 
-      <div class="table-responsive">
-        <table class="table table-striped table-hover">
-          <thead class="table-dark">
-            <tr>
-              <th>N° Venta</th>
-              <th>Tipo</th>
-              <th>Cliente</th>
-              <th>Vendedor</th>
-              <th>Fecha</th>
-              <th>Subtotal</th>
-              <th>Descuento</th>
-              <th>Total</th>
-              <th>Tipo Pago</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="venta in ventasFiltradas" :key="venta.id">
-              <td><strong>{{ venta.numero_venta }}</strong></td>
-              <td>
-                <span class="badge" :class="venta.tipo_movimiento === 'INGRESO' ? 'bg-success' : 'bg-danger'">
-                  {{ venta.tipo_movimiento === 'INGRESO' ? '💰 Ingreso' : '💸 Egreso' }}
-                </span>
-              </td>
-              <td>{{ venta.cliente_nombre }}</td>
-              <td>{{ venta.vendedor_nombre }}</td>
-              <td>{{ formatFecha(venta.fecha_venta) }}</td>
-              <td>${{ Number(venta.subtotal).toFixed(2) }}</td>
-              <td>${{ Number(venta.descuento).toFixed(2) }}</td>
-              <td><strong>${{ Number(venta.total).toFixed(2) }}</strong></td>
-              <td>{{ venta.tipo_pago }}</td>
-              <td>
-                <span class="badge" :class="getBadgeClass(venta.estado)">
-                  {{ venta.estado }}
-                </span>
-              </td>
-              <td>
-                <div class="btn-group btn-group-sm" role="group">
-                  <router-link :to="`/ventas/${venta.id}`" class="btn btn-info" title="Ver detalles">
-                    👁️
-                  </router-link>
-                  <button
-                    @click="cancelarVenta(venta)"
-                    class="btn btn-warning"
-                    title="Cancelar venta"
-                    :disabled="venta.estado === 'CANCELADO'"
-                  >
-                    ❌
-                  </button>
-                  <button @click="eliminarVenta(venta.id)" class="btn btn-danger" title="Eliminar">
-                    🗑️
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <!-- Data Table -->
+    <v-card v-if="!loading" elevation="3">
+      <v-card-title class="d-flex align-center pa-4">
+        <v-icon class="mr-2">mdi-table</v-icon>
+        Listado de Ventas
+      </v-card-title>
+      <v-divider></v-divider>
 
-      <div v-if="ventasFiltradas.length === 0" class="alert alert-info">
-        No hay ventas registradas.
-      </div>
-    </div>
+      <v-data-table
+        :headers="headers"
+        :items="ventasFiltradas"
+        :items-per-page="10"
+        items-per-page-text="Ventas por página"
+        no-data-text="No hay ventas registradas"
+        class="elevation-0"
+      >
+        <!-- N° Venta -->
+        <template #item.numero_venta="{ item }">
+          <span class="font-weight-bold">{{ item.numero_venta }}</span>
+        </template>
 
-    <!-- Modal de confirmación para cancelar venta -->
-    <div v-if="mostrarModalCancelar" class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header bg-warning text-dark">
-            <h5 class="modal-title">⚠️ Cancelar Venta</h5>
-            <button type="button" class="close" @click="cerrarModalCancelar" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            <p class="mb-3"><strong>¿Estás seguro de cancelar esta venta?</strong></p>
-            <div class="alert alert-info" v-if="ventaSeleccionada">
-              <p class="mb-1"><strong>N° Venta:</strong> {{ ventaSeleccionada.numero_venta }}</p>
-              <p class="mb-1"><strong>Cliente:</strong> {{ ventaSeleccionada.cliente_nombre }}</p>
-              <p class="mb-1"><strong>Total:</strong> ${{ Number(ventaSeleccionada.total).toFixed(2) }}</p>
-              <p class="mb-0"><strong>Tipo:</strong>
-                <span class="badge" :class="ventaSeleccionada.tipo_movimiento === 'INGRESO' ? 'bg-success' : 'bg-danger'">
-                  {{ ventaSeleccionada.tipo_movimiento === 'INGRESO' ? '💰 Ingreso' : '💸 Egreso' }}
-                </span>
-              </p>
+        <!-- Tipo Movimiento -->
+        <template #item.tipo_movimiento="{ item }">
+          <v-chip
+            :color="item.tipo_movimiento === 'INGRESO' ? 'success' : 'error'"
+            size="small"
+            variant="flat"
+          >
+            <v-icon left size="small">
+              {{ item.tipo_movimiento === 'INGRESO' ? 'mdi-cash-plus' : 'mdi-cash-minus' }}
+            </v-icon>
+            {{ item.tipo_movimiento === 'INGRESO' ? 'Ingreso' : 'Egreso' }}
+          </v-chip>
+        </template>
+
+        <!-- Subtotal -->
+        <template #item.subtotal="{ item }">
+          <span>S/ {{ Number(item.subtotal).toFixed(2) }}</span>
+        </template>
+
+        <!-- Descuento -->
+        <template #item.descuento="{ item }">
+          <span>S/ {{ Number(item.descuento).toFixed(2) }}</span>
+        </template>
+
+        <!-- Total -->
+        <template #item.total="{ item }">
+          <span class="font-weight-bold">S/ {{ Number(item.total).toFixed(2) }}</span>
+        </template>
+
+        <!-- Estado -->
+        <template #item.estado="{ item }">
+          <v-chip :color="getChipColor(item.estado)" size="small" variant="flat">
+            {{ item.estado }}
+          </v-chip>
+        </template>
+
+        <!-- Fecha -->
+        <template #item.fecha_venta="{ item }">
+          <span class="text-caption">{{ formatFecha(item.fecha_venta) }}</span>
+        </template>
+
+        <!-- Acciones -->
+        <template #item.actions="{ item }">
+          <v-btn
+            icon
+            size="small"
+            color="info"
+            variant="text"
+            :to="`/ventas/${item.id}`"
+            title="Ver detalles"
+          >
+            <v-icon>mdi-eye</v-icon>
+          </v-btn>
+          <v-btn
+            icon
+            size="small"
+            color="warning"
+            variant="text"
+            :disabled="item.estado === 'CANCELADO'"
+            @click="cancelarVenta(item)"
+            title="Cancelar venta"
+          >
+            <v-icon>mdi-cancel</v-icon>
+          </v-btn>
+          <v-btn
+            icon
+            size="small"
+            color="error"
+            variant="text"
+            @click="eliminarVenta(item.id)"
+            title="Eliminar"
+          >
+            <v-icon>mdi-delete</v-icon>
+          </v-btn>
+        </template>
+      </v-data-table>
+    </v-card>
+
+    <!-- Modal para Cancelar Venta -->
+    <v-dialog v-model="mostrarModalCancelar" max-width="600px">
+      <v-card>
+        <v-card-title class="text-h5 warning white--text">
+          <v-icon left color="white">mdi-alert</v-icon>
+          Cancelar Venta
+        </v-card-title>
+        <v-card-text class="pa-6">
+          <p class="text-h6 mb-4">¿Estás seguro de cancelar esta venta?</p>
+
+          <v-alert v-if="ventaSeleccionada" type="info" variant="tonal" class="mb-4">
+            <div><strong>N° Venta:</strong> {{ ventaSeleccionada.numero_venta }}</div>
+            <div><strong>Cliente:</strong> {{ ventaSeleccionada.cliente_nombre }}</div>
+            <div><strong>Total:</strong> S/ {{ Number(ventaSeleccionada.total).toFixed(2) }}</div>
+            <div>
+              <strong>Tipo:</strong>
+              <v-chip
+                :color="ventaSeleccionada.tipo_movimiento === 'INGRESO' ? 'success' : 'error'"
+                size="x-small"
+                class="ml-2"
+              >
+                {{ ventaSeleccionada.tipo_movimiento === 'INGRESO' ? 'Ingreso' : 'Egreso' }}
+              </v-chip>
             </div>
-            <div class="alert alert-success">
-              <strong>✅ Stock automático:</strong> Si esta es una venta de INGRESO, el stock se restaurará automáticamente y se crearán movimientos de inventario de reversión.
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="cerrarModalCancelar">No, mantener venta</button>
-            <button type="button" class="btn btn-warning" @click="confirmarCancelarVenta">Sí, cancelar venta</button>
-          </div>
-        </div>
-      </div>
-    </div>
+          </v-alert>
 
-    <!-- Modal de confirmación para eliminar venta -->
-    <div v-if="mostrarModalEliminar" class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header bg-danger text-white">
-            <h5 class="modal-title">🗑️ Eliminar Venta</h5>
-            <button type="button" class="close" @click="cerrarModalEliminar" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            <p class="mb-3"><strong>¿Estás seguro de eliminar esta venta?</strong></p>
-            <div class="alert alert-danger">
-              <strong>⚠️ ADVERTENCIA:</strong> Esta acción NO se puede deshacer y eliminará:
-              <ul class="mb-0 mt-2">
-                <li>La venta completa</li>
-                <li>Los detalles de productos</li>
-                <li>Los movimientos de inventario relacionados</li>
-              </ul>
-            </div>
-            <div class="alert alert-success">
-              <strong>✅ Stock automático:</strong> Si es una venta de INGRESO, el stock se restaurará automáticamente antes de eliminar.
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="cerrarModalEliminar">No, cancelar</button>
-            <button type="button" class="btn btn-danger" @click="confirmarEliminarVenta">Sí, eliminar permanentemente</button>
-          </div>
-        </div>
-      </div>
-    </div>
+          <v-alert type="success" variant="tonal">
+            <v-alert-title>
+              <v-icon left>mdi-check-circle</v-icon>
+              Stock automático
+            </v-alert-title>
+            Si esta es una venta de INGRESO, el stock se restaurará automáticamente y se crearán movimientos de inventario de reversión.
+          </v-alert>
+        </v-card-text>
+        <v-divider></v-divider>
+        <v-card-actions class="pa-4">
+          <v-btn color="grey" variant="text" @click="cerrarModalCancelar">
+            No, mantener venta
+          </v-btn>
+          <v-spacer></v-spacer>
+          <v-btn color="warning" @click="confirmarCancelarVenta">
+            Sí, cancelar venta
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
-    <!-- Modal de éxito -->
-    <div v-if="mostrarModalExito" class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header bg-success text-white">
-            <h5 class="modal-title">✅ {{ mensajeExito }}</h5>
-          </div>
-          <div class="modal-body text-center py-4">
-            <div style="font-size: 4rem;">✅</div>
-            <p class="mt-3 mb-0">Operación completada exitosamente</p>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-success" @click="cerrarModalExito">Aceptar</button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- Modal para Eliminar Venta -->
+    <v-dialog v-model="mostrarModalEliminar" max-width="600px">
+      <v-card>
+        <v-card-title class="text-h5 error white--text">
+          <v-icon left color="white">mdi-delete</v-icon>
+          Eliminar Venta
+        </v-card-title>
+        <v-card-text class="pa-6">
+          <p class="text-h6 mb-4">¿Estás seguro de eliminar esta venta?</p>
 
-    <!-- Modal de error -->
-    <div v-if="mostrarModalError" class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header bg-danger text-white">
-            <h5 class="modal-title">❌ Error</h5>
-            <button type="button" class="close" @click="cerrarModalError" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            <div class="text-center py-3">
-              <div style="font-size: 4rem;">❌</div>
-              <p class="mt-3 mb-0">{{ mensajeError }}</p>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="cerrarModalError">Cerrar</button>
-          </div>
-        </div>
-      </div>
-    </div>
+          <v-alert type="error" variant="tonal" class="mb-4">
+            <v-alert-title>
+              <v-icon left>mdi-alert</v-icon>
+              ADVERTENCIA
+            </v-alert-title>
+            Esta acción NO se puede deshacer y eliminará:
+            <ul class="mt-2">
+              <li>La venta completa</li>
+              <li>Los detalles de productos</li>
+              <li>Los movimientos de inventario relacionados</li>
+            </ul>
+          </v-alert>
+
+          <v-alert type="success" variant="tonal">
+            <v-alert-title>
+              <v-icon left>mdi-check-circle</v-icon>
+              Stock automático
+            </v-alert-title>
+            Si es una venta de INGRESO, el stock se restaurará automáticamente antes de eliminar.
+          </v-alert>
+        </v-card-text>
+        <v-divider></v-divider>
+        <v-card-actions class="pa-4">
+          <v-btn color="grey" variant="text" @click="cerrarModalEliminar">
+            No, cancelar
+          </v-btn>
+          <v-spacer></v-spacer>
+          <v-btn color="error" @click="confirmarEliminarVenta">
+            Sí, eliminar permanentemente
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Snackbar de Éxito -->
+    <v-snackbar v-model="mostrarModalExito" color="success" timeout="3000" top>
+      {{ mensajeExito }}
+      <template #actions>
+        <v-btn variant="text" @click="mostrarModalExito = false">
+          Cerrar
+        </v-btn>
+      </template>
+    </v-snackbar>
+
+    <!-- Snackbar de Error -->
+    <v-snackbar v-model="mostrarModalError" color="error" timeout="5000" top>
+      {{ mensajeError }}
+      <template #actions>
+        <v-btn variant="text" @click="mostrarModalError = false">
+          Cerrar
+        </v-btn>
+      </template>
+    </v-snackbar>
   </div>
 </template>
 
@@ -246,7 +321,7 @@ export default {
       ventasFiltradas: [],
       loading: true,
       filtro: {
-        estado: '',
+        estado: 'Todos',
         fecha_desde: '',
         fecha_hasta: ''
       },
@@ -257,7 +332,20 @@ export default {
       ventaSeleccionada: null,
       ventaIdEliminar: null,
       mensajeExito: '',
-      mensajeError: ''
+      mensajeError: '',
+      headers: [
+        { title: 'N° Venta', key: 'numero_venta', sortable: true },
+        { title: 'Tipo', key: 'tipo_movimiento', sortable: true },
+        { title: 'Cliente', key: 'cliente_nombre', sortable: true },
+        { title: 'Vendedor', key: 'vendedor_nombre', sortable: true },
+        { title: 'Fecha', key: 'fecha_venta', sortable: true },
+        { title: 'Subtotal', key: 'subtotal', sortable: true },
+        { title: 'Descuento', key: 'descuento', sortable: true },
+        { title: 'Total', key: 'total', sortable: true },
+        { title: 'Tipo Pago', key: 'tipo_pago', sortable: true },
+        { title: 'Estado', key: 'estado', sortable: true },
+        { title: 'Acciones', key: 'actions', sortable: false, align: 'center' },
+      ],
     }
   },
   computed: {
@@ -278,7 +366,8 @@ export default {
         this.ventasFiltradas = this.ventas
       } catch (error) {
         console.error('Error:', error)
-        alert('Error al cargar ventas')
+        this.mensajeError = 'Error al cargar ventas'
+        this.mostrarModalError = true
       } finally {
         this.loading = false
       }
@@ -286,7 +375,7 @@ export default {
     aplicarFiltros() {
       let filtradas = [...this.ventas]
 
-      if (this.filtro.estado) {
+      if (this.filtro.estado && this.filtro.estado !== 'Todos') {
         filtradas = filtradas.filter(v => v.estado === this.filtro.estado)
       }
 
@@ -308,19 +397,19 @@ export default {
     },
     limpiarFiltros() {
       this.filtro = {
-        estado: '',
+        estado: 'Todos',
         fecha_desde: '',
         fecha_hasta: ''
       }
       this.ventasFiltradas = this.ventas
     },
-    getBadgeClass(estado) {
-      const classes = {
-        'PAGADO': 'bg-success',
-        'PENDIENTE': 'bg-warning',
-        'CANCELADO': 'bg-danger'
+    getChipColor(estado) {
+      const colors = {
+        'PAGADO': 'success',
+        'PENDIENTE': 'warning',
+        'CANCELADO': 'error'
       }
-      return classes[estado] || 'bg-secondary'
+      return colors[estado] || 'grey'
     },
     formatFecha(fecha) {
       if (!fecha) return ''
@@ -377,15 +466,18 @@ export default {
         this.mensajeError = error.response?.data?.detail || error.message || 'Error al eliminar la venta'
         this.mostrarModalError = true
       }
-    },
-    cerrarModalExito() {
-      this.mostrarModalExito = false
-      this.mensajeExito = ''
-    },
-    cerrarModalError() {
-      this.mostrarModalError = false
-      this.mensajeError = ''
     }
   }
 }
 </script>
+
+<style scoped>
+/* Animaciones suaves para las filas */
+.v-data-table >>> tbody tr {
+  transition: background-color 0.2s;
+}
+
+.v-data-table >>> tbody tr:hover {
+  background-color: rgba(25, 118, 210, 0.05);
+}
+</style>

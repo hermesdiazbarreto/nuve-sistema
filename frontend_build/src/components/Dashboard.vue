@@ -1,195 +1,219 @@
 <template>
-  <div class="container-fluid mt-4">
-    <h2 class="mb-4">Dashboard - Sistema de Almacén</h2>
+  <div>
+    <!-- Header -->
+    <v-row align="center" class="mb-6">
+      <v-col cols="12">
+        <h1 class="text-h4 font-weight-bold">
+          <v-icon large color="primary" class="mr-2">mdi-view-dashboard</v-icon>
+          Dashboard - Sistema de Almacén
+        </h1>
+      </v-col>
+    </v-row>
 
     <!-- Tarjetas de estadísticas -->
-    <div class="row mb-4">
+    <v-row class="mb-6">
       <!-- Total Productos -->
-      <div class="col-md-3 mb-3">
-        <div class="card text-white bg-primary">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center">
+      <v-col cols="12" sm="6" md="3">
+        <v-card color="primary" dark elevation="3">
+          <v-card-text>
+            <div class="d-flex justify-space-between align-center">
               <div>
-                <h6 class="card-title">Total Productos</h6>
-                <h2 class="mb-0">{{ estadisticas.totalProductos }}</h2>
+                <div class="text-subtitle-2">Total Productos</div>
+                <div class="text-h4 font-weight-bold">{{ estadisticas.totalProductos }}</div>
               </div>
-              <div class="fs-1">📦</div>
+              <v-icon size="64" class="opacity-75">mdi-package-variant</v-icon>
             </div>
-          </div>
-        </div>
-      </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
 
       <!-- Total Clientes -->
-      <div class="col-md-3 mb-3">
-        <div class="card text-white bg-success">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center">
+      <v-col cols="12" sm="6" md="3">
+        <v-card color="success" dark elevation="3">
+          <v-card-text>
+            <div class="d-flex justify-space-between align-center">
               <div>
-                <h6 class="card-title">Total Clientes</h6>
-                <h2 class="mb-0">{{ estadisticas.totalClientes }}</h2>
+                <div class="text-subtitle-2">Total Clientes</div>
+                <div class="text-h4 font-weight-bold">{{ estadisticas.totalClientes }}</div>
               </div>
-              <div class="fs-1">👥</div>
+              <v-icon size="64" class="opacity-75">mdi-account-group</v-icon>
             </div>
-          </div>
-        </div>
-      </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
 
       <!-- Ventas Hoy -->
-      <div class="col-md-3 mb-3">
-        <div class="card text-white bg-info">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center">
+      <v-col cols="12" sm="6" md="3">
+        <v-card color="info" dark elevation="3">
+          <v-card-text>
+            <div class="d-flex justify-space-between align-center">
               <div>
-                <h6 class="card-title">Ventas Hoy</h6>
-                <h2 class="mb-0">{{ estadisticas.ventasHoy }}</h2>
+                <div class="text-subtitle-2">Ventas Hoy</div>
+                <div class="text-h4 font-weight-bold">{{ estadisticas.ventasHoy }}</div>
               </div>
-              <div class="fs-1">💰</div>
+              <v-icon size="64" class="opacity-75">mdi-cash-multiple</v-icon>
             </div>
-          </div>
-        </div>
-      </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
 
       <!-- Productos Stock Bajo -->
-      <div class="col-md-3 mb-3">
-        <div class="card text-white bg-warning">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center">
+      <v-col cols="12" sm="6" md="3">
+        <v-card color="warning" dark elevation="3">
+          <v-card-text>
+            <div class="d-flex justify-space-between align-center">
               <div>
-                <h6 class="card-title">Stock Bajo</h6>
-                <h2 class="mb-0">{{ estadisticas.productosStockBajo }}</h2>
+                <div class="text-subtitle-2">Stock Bajo</div>
+                <div class="text-h4 font-weight-bold">{{ estadisticas.productosStockBajo }}</div>
               </div>
-              <div class="fs-1">⚠️</div>
+              <v-icon size="64" class="opacity-75">mdi-alert</v-icon>
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
 
     <!-- Sección de dos columnas -->
-    <div class="row">
+    <v-row>
       <!-- Productos con stock bajo -->
-      <div class="col-md-6 mb-4">
-        <div class="card">
-          <div class="card-header">
-            <h5 class="mb-0">⚠️ Productos con Stock Bajo</h5>
-          </div>
-          <div class="card-body">
-            <div v-if="loading" class="text-center">
-              <div class="spinner-border spinner-border-sm" role="status"></div>
-            </div>
-            <div v-else-if="productosStockBajo.length === 0" class="text-muted text-center py-3">
+      <v-col cols="12" md="6">
+        <v-card elevation="3">
+          <v-card-title class="bg-warning">
+            <v-icon left color="white">mdi-alert-circle</v-icon>
+            <span class="text-white">Productos con Stock Bajo</span>
+          </v-card-title>
+          <v-divider></v-divider>
+          <v-card-text class="pa-0">
+            <v-progress-linear v-if="loading" indeterminate color="warning"></v-progress-linear>
+
+            <v-alert v-else-if="productosStockBajo.length === 0" type="success" variant="tonal" class="ma-4">
               No hay productos con stock bajo
-            </div>
-            <div v-else class="table-responsive">
-              <table class="table table-sm table-hover">
-                <thead>
-                  <tr>
-                    <th>Producto</th>
-                    <th>Talla</th>
-                    <th>Color</th>
-                    <th>Stock</th>
-                    <th>Mínimo</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="variante in productosStockBajo" :key="variante.id">
-                    <td>{{ variante.producto_nombre }}</td>
-                    <td>{{ variante.talla_nombre }}</td>
-                    <td>{{ variante.color_nombre }}</td>
-                    <td><span class="badge bg-danger">{{ variante.stock_actual }}</span></td>
-                    <td>{{ variante.stock_minimo }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
+            </v-alert>
+
+            <v-table v-else density="compact" class="stock-bajo-table">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Talla</th>
+                  <th>Color</th>
+                  <th>Stock</th>
+                  <th>Mínimo</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="variante in productosStockBajo" :key="variante.id">
+                  <td>{{ variante.producto_nombre }}</td>
+                  <td>{{ variante.talla_nombre }}</td>
+                  <td>{{ variante.color_nombre }}</td>
+                  <td>
+                    <v-chip color="error" size="small" variant="flat">
+                      {{ variante.stock_actual }}
+                    </v-chip>
+                  </td>
+                  <td>{{ variante.stock_minimo }}</td>
+                </tr>
+              </tbody>
+            </v-table>
+          </v-card-text>
+        </v-card>
+      </v-col>
 
       <!-- Últimas ventas -->
-      <div class="col-md-6 mb-4">
-        <div class="card">
-          <div class="card-header">
-            <h5 class="mb-0">📊 Últimas Ventas</h5>
-          </div>
-          <div class="card-body">
-            <div v-if="loading" class="text-center">
-              <div class="spinner-border spinner-border-sm" role="status"></div>
-            </div>
-            <div v-else-if="ultimasVentas.length === 0" class="text-muted text-center py-3">
+      <v-col cols="12" md="6">
+        <v-card elevation="3">
+          <v-card-title class="bg-primary">
+            <v-icon left color="white">mdi-chart-line</v-icon>
+            <span class="text-white">Últimas Ventas</span>
+          </v-card-title>
+          <v-divider></v-divider>
+          <v-card-text class="pa-0">
+            <v-progress-linear v-if="loading" indeterminate color="primary"></v-progress-linear>
+
+            <v-alert v-else-if="ultimasVentas.length === 0" type="info" variant="tonal" class="ma-4">
               No hay ventas registradas
-            </div>
-            <div v-else class="table-responsive">
-              <table class="table table-sm table-hover">
-                <thead>
-                  <tr>
-                    <th>N° Venta</th>
-                    <th>Tipo</th>
-                    <th>Cliente</th>
-                    <th>Total</th>
-                    <th>Estado</th>
-                    <th>Fecha</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="venta in ultimasVentas" :key="venta.id">
-                    <td><small>{{ venta.numero_venta }}</small></td>
-                    <td>
-                      <span class="badge" :class="venta.tipo_movimiento === 'INGRESO' ? 'bg-success' : 'bg-danger'">
-                        {{ venta.tipo_movimiento === 'INGRESO' ? '💰' : '💸' }}
-                      </span>
-                    </td>
-                    <td><small>{{ venta.cliente_nombre }}</small></td>
-                    <td><small><strong>${{ Number(venta.total).toFixed(2) }}</strong></small></td>
-                    <td>
-                      <span class="badge" :class="getBadgeClass(venta.estado)">
-                        <small>{{ venta.estado }}</small>
-                      </span>
-                    </td>
-                    <td><small>{{ formatFecha(venta.fecha_venta) }}</small></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+            </v-alert>
+
+            <v-table v-else density="compact">
+              <thead>
+                <tr>
+                  <th>N° Venta</th>
+                  <th>Tipo</th>
+                  <th>Cliente</th>
+                  <th>Total</th>
+                  <th>Estado</th>
+                  <th>Fecha</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="venta in ultimasVentas" :key="venta.id">
+                  <td><span class="text-caption">{{ venta.numero_venta }}</span></td>
+                  <td>
+                    <v-chip
+                      :color="venta.tipo_movimiento === 'INGRESO' ? 'success' : 'error'"
+                      size="x-small"
+                      variant="flat"
+                    >
+                      <v-icon left size="x-small">
+                        {{ venta.tipo_movimiento === 'INGRESO' ? 'mdi-cash-plus' : 'mdi-cash-minus' }}
+                      </v-icon>
+                    </v-chip>
+                  </td>
+                  <td><span class="text-caption">{{ venta.cliente_nombre }}</span></td>
+                  <td><span class="text-caption font-weight-bold">S/ {{ Number(venta.total).toFixed(2) }}</span></td>
+                  <td>
+                    <v-chip :color="getChipColor(venta.estado)" size="x-small" variant="flat">
+                      {{ venta.estado }}
+                    </v-chip>
+                  </td>
+                  <td><span class="text-caption">{{ formatFecha(venta.fecha_venta) }}</span></td>
+                </tr>
+              </tbody>
+            </v-table>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
 
     <!-- Accesos rápidos -->
-    <div class="row">
-      <div class="col-12">
-        <div class="card">
-          <div class="card-header">
-            <h5 class="mb-0">🚀 Accesos Rápidos</h5>
-          </div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-md-3 mb-2">
-                <router-link to="/ventas/nueva" class="btn btn-primary w-100">
-                  💳 Nueva Venta
-                </router-link>
-              </div>
-              <div class="col-md-3 mb-2">
-                <router-link to="/productos/nuevo" class="btn btn-success w-100">
-                  ➕ Nuevo Producto
-                </router-link>
-              </div>
-              <div class="col-md-3 mb-2">
-                <router-link to="/adicionar-cliente" class="btn btn-info w-100">
-                  👤 Nuevo Cliente
-                </router-link>
-              </div>
-              <div class="col-md-3 mb-2">
-                <router-link to="/productos" class="btn btn-warning w-100">
-                  📦 Ver Productos
-                </router-link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <v-row class="mt-6">
+      <v-col cols="12">
+        <v-card elevation="3">
+          <v-card-title>
+            <v-icon left>mdi-rocket-launch</v-icon>
+            Accesos Rápidos
+          </v-card-title>
+          <v-divider></v-divider>
+          <v-card-text>
+            <v-row>
+              <v-col cols="12" sm="6" md="3">
+                <v-btn color="primary" block size="large" :to="'/ventas/nueva'">
+                  <v-icon left>mdi-point-of-sale</v-icon>
+                  Nueva Venta
+                </v-btn>
+              </v-col>
+              <v-col cols="12" sm="6" md="3">
+                <v-btn color="success" block size="large" :to="'/productos/nuevo'">
+                  <v-icon left>mdi-plus-circle</v-icon>
+                  Nuevo Producto
+                </v-btn>
+              </v-col>
+              <v-col cols="12" sm="6" md="3">
+                <v-btn color="info" block size="large" :to="'/adicionar-cliente'">
+                  <v-icon left>mdi-account-plus</v-icon>
+                  Nuevo Cliente
+                </v-btn>
+              </v-col>
+              <v-col cols="12" sm="6" md="3">
+                <v-btn color="warning" block size="large" :to="'/productos'">
+                  <v-icon left>mdi-package-variant</v-icon>
+                  Ver Productos
+                </v-btn>
+              </v-col>
+            </v-row>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
   </div>
 </template>
 
@@ -256,13 +280,13 @@ export default {
         this.loading = false
       }
     },
-    getBadgeClass(estado) {
-      const classes = {
-        'PAGADO': 'bg-success',
-        'PENDIENTE': 'bg-warning',
-        'CANCELADO': 'bg-danger'
+    getChipColor(estado) {
+      const colors = {
+        'PAGADO': 'success',
+        'PENDIENTE': 'warning',
+        'CANCELADO': 'error'
       }
-      return classes[estado] || 'bg-secondary'
+      return colors[estado] || 'grey'
     },
     formatFecha(fecha) {
       if (!fecha) return ''
@@ -280,31 +304,12 @@ export default {
 </script>
 
 <style scoped>
-.card {
-  border-radius: 0.5rem;
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-}
-
-.card-header {
-  background-color: #f8f9fa;
-  border-bottom: 1px solid #dee2e6;
-}
-
-.fs-1 {
-  font-size: 2.5rem;
-}
-
-.table-responsive {
-  max-height: 300px;
+.stock-bajo-table {
+  max-height: 400px;
   overflow-y: auto;
 }
 
-.btn {
-  transition: all 0.3s ease;
-}
-
-.btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+.opacity-75 {
+  opacity: 0.75;
 }
 </style>
