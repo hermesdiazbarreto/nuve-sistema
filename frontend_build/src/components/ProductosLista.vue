@@ -182,6 +182,7 @@
                 <th>Stock</th>
                 <th>Mín</th>
                 <th>Estado</th>
+                <th class="text-center">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -206,6 +207,18 @@
                     {{ variante.activo ? 'Activo' : 'Inactivo' }}
                   </v-chip>
                 </td>
+                <td class="text-center">
+                  <v-btn
+                    icon
+                    size="small"
+                    color="info"
+                    variant="text"
+                    @click="abrirModalDuplicar(variante)"
+                    title="Duplicar variante"
+                  >
+                    <v-icon>mdi-content-copy</v-icon>
+                  </v-btn>
+                </td>
               </tr>
             </tbody>
           </v-table>
@@ -217,6 +230,80 @@
           <v-spacer></v-spacer>
           <v-btn color="primary" variant="text" @click="cerrarVariantes">
             Cerrar
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Modal para Duplicar Variante -->
+    <v-dialog v-model="mostrarModalDuplicar" max-width="600px">
+      <v-card>
+        <v-card-title class="text-h5 info white--text">
+          <v-icon left color="white">mdi-content-copy</v-icon>
+          Duplicar Variante
+        </v-card-title>
+        <v-card-text class="pa-6">
+          <v-alert v-if="varianteADuplicar" type="info" variant="tonal" class="mb-4">
+            <div><strong>Variante Original:</strong></div>
+            <div>Código: {{ varianteADuplicar.codigo_variante }}</div>
+            <div>Talla: {{ varianteADuplicar.talla_nombre }} / Color: {{ varianteADuplicar.color_nombre }}</div>
+            <div>Stock Actual: {{ varianteADuplicar.stock_actual }}</div>
+          </v-alert>
+
+          <v-form ref="formDuplicar">
+            <v-select
+              v-model="duplicarData.talla"
+              :items="tallas"
+              item-title="nombre"
+              item-value="id"
+              label="Talla *"
+              variant="outlined"
+              :rules="[v => !!v || 'Seleccione una talla']"
+              class="mb-3"
+            ></v-select>
+
+            <v-select
+              v-model="duplicarData.color"
+              :items="colores"
+              item-title="nombre"
+              item-value="id"
+              label="Color *"
+              variant="outlined"
+              :rules="[v => !!v || 'Seleccione un color']"
+              class="mb-3"
+            ></v-select>
+
+            <v-text-field
+              v-model.number="duplicarData.stock_actual"
+              type="number"
+              label="Stock Inicial *"
+              variant="outlined"
+              :rules="[v => v >= 0 || 'El stock debe ser mayor o igual a 0']"
+              class="mb-3"
+            ></v-text-field>
+
+            <v-text-field
+              v-model.number="duplicarData.stock_minimo"
+              type="number"
+              label="Stock Mínimo *"
+              variant="outlined"
+              :rules="[v => v >= 0 || 'El stock mínimo debe ser mayor o igual a 0']"
+            ></v-text-field>
+
+            <v-alert type="success" variant="tonal" class="mt-4">
+              Se creará una nueva variante con las características especificadas, manteniendo los demás datos del producto original.
+            </v-alert>
+          </v-form>
+        </v-card-text>
+        <v-divider></v-divider>
+        <v-card-actions class="pa-4">
+          <v-btn color="grey" variant="text" @click="cerrarModalDuplicar">
+            Cancelar
+          </v-btn>
+          <v-spacer></v-spacer>
+          <v-btn color="info" @click="confirmarDuplicarVariante">
+            <v-icon left>mdi-check</v-icon>
+            Duplicar Variante
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -256,6 +343,16 @@ export default {
       productoSeleccionado: null,
       variantesProducto: [],
       cargandoVariantes: false,
+      mostrarModalDuplicar: false,
+      varianteADuplicar: null,
+      tallas: [],
+      colores: [],
+      duplicarData: {
+        talla: null,
+        color: null,
+        stock_actual: 0,
+        stock_minimo: 0
+      },
       snackbar: false,
       snackbarText: '',
       snackbarColor: 'success',
@@ -274,6 +371,7 @@ export default {
   },
   async created() {
     await this.cargarProductos()
+    await this.cargarTallasYColores()
   },
   methods: {
     async cargarProductos() {
@@ -355,6 +453,74 @@ export default {
       this.snackbarText = text
       this.snackbarColor = color
       this.snackbar = true
+    },
+    async cargarTallasYColores() {
+      try {
+        const [tallasRes, coloresRes] = await Promise.all([
+          api.getTallas(),
+          api.getColores()
+        ])
+        this.tallas = tallasRes.data.results || tallasRes.data || []
+        this.colores = coloresRes.data.results || coloresRes.data || []
+      } catch (error) {
+        console.error('Error al cargar tallas y colores:', error)
+      }
+    },
+    abrirModalDuplicar(variante) {
+      this.varianteADuplicar = variante
+      this.duplicarData = {
+        talla: variante.talla,
+        color: variante.color,
+        stock_actual: 0,
+        stock_minimo: variante.stock_minimo
+      }
+      this.mostrarModalDuplicar = true
+    },
+    cerrarModalDuplicar() {
+      this.mostrarModalDuplicar = false
+      this.varianteADuplicar = null
+      this.duplicarData = {
+        talla: null,
+        color: null,
+        stock_actual: 0,
+        stock_minimo: 0
+      }
+      if (this.$refs.formDuplicar) {
+        this.$refs.formDuplicar.reset()
+      }
+    },
+    async confirmarDuplicarVariante() {
+      // Validate form
+      const { valid } = await this.$refs.formDuplicar.validate()
+      if (!valid) {
+        return
+      }
+
+      try {
+        await api.duplicarProductoVariante(this.varianteADuplicar.id, {
+          talla: this.duplicarData.talla,
+          color: this.duplicarData.color,
+          stock_actual: this.duplicarData.stock_actual,
+          stock_minimo: this.duplicarData.stock_minimo
+        })
+
+        this.showSnackbar('Variante duplicada correctamente', 'success')
+        this.cerrarModalDuplicar()
+
+        // Recargar variantes del producto actual
+        if (this.productoSeleccionado) {
+          await this.verVariantes(this.productoSeleccionado)
+        }
+
+        // Recargar productos para actualizar contadores
+        await this.cargarProductos()
+      } catch (error) {
+        console.error('Error al duplicar variante:', error)
+        this.showSnackbar(
+          error.response?.data?.error || 'Error al duplicar la variante',
+          'error'
+        )
+      }
     }
   }
 }

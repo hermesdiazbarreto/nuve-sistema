@@ -94,12 +94,81 @@
                 <strong>S/ {{ formatPrecio(venta.impuesto) }}</strong>
               </div>
               <v-divider class="my-2"></v-divider>
-              <div class="d-flex justify-space-between text-h5">
+              <div class="d-flex justify-space-between text-h5 mb-3">
                 <span><strong>TOTAL:</strong></span>
-                <strong class="text-success">S/ {{ formatPrecio(venta.total) }}</strong>
+                <strong class="text-primary">S/ {{ formatPrecio(venta.total) }}</strong>
+              </div>
+
+              <!-- Información de Pagos (si hay abono o pendiente) -->
+              <div v-if="venta.estado === 'ABONO' || venta.saldo_pendiente > 0">
+                <v-divider class="my-3"></v-divider>
+                <div class="d-flex justify-space-between mb-2">
+                  <span class="text-success">
+                    <v-icon size="small" color="success">mdi-cash-check</v-icon>
+                    Monto Abonado:
+                  </span>
+                  <strong class="text-success">S/ {{ formatPrecio(venta.monto_abonado || 0) }}</strong>
+                </div>
+                <div class="d-flex justify-space-between mb-2">
+                  <span :class="venta.saldo_pendiente > 0 ? 'text-warning' : 'text-grey'">
+                    <v-icon size="small" :color="venta.saldo_pendiente > 0 ? 'warning' : 'grey'">
+                      mdi-cash-clock
+                    </v-icon>
+                    Saldo Pendiente:
+                  </span>
+                  <strong :class="venta.saldo_pendiente > 0 ? 'text-warning text-h6' : 'text-grey'">
+                    S/ {{ formatPrecio(venta.saldo_pendiente || 0) }}
+                  </strong>
+                </div>
               </div>
             </v-col>
           </v-row>
+        </v-card-text>
+      </v-card>
+
+      <!-- Historial de Pagos (si existen) -->
+      <v-card v-if="venta.pagos && venta.pagos.length > 0" elevation="3" class="mb-4">
+        <v-card-title class="bg-success">
+          <span class="text-white">
+            <v-icon left color="white">mdi-cash-multiple</v-icon>
+            Historial de Pagos
+          </span>
+        </v-card-title>
+        <v-card-text>
+          <v-table hover>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Monto</th>
+                <th>Tipo de Pago</th>
+                <th>Usuario</th>
+                <th>Observaciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="pago in venta.pagos" :key="pago.id">
+                <td>{{ formatFecha(pago.fecha_pago) }}</td>
+                <td class="text-success font-weight-bold">S/ {{ formatPrecio(pago.monto) }}</td>
+                <td>
+                  <v-chip size="small" variant="outlined">{{ pago.tipo_pago }}</v-chip>
+                </td>
+                <td>{{ pago.usuario_nombre }}</td>
+                <td>{{ pago.observaciones || '-' }}</td>
+              </tr>
+            </tbody>
+          </v-table>
+
+          <!-- Resumen de pagos -->
+          <v-alert type="info" variant="tonal" class="mt-4">
+            <div class="d-flex justify-space-between">
+              <span><strong>Total de Pagos Registrados:</strong></span>
+              <span><strong>{{ venta.pagos.length }}</strong></span>
+            </div>
+            <div class="d-flex justify-space-between mt-2">
+              <span><strong>Monto Total Abonado:</strong></span>
+              <span class="text-success"><strong>S/ {{ formatPrecio(venta.monto_abonado || 0) }}</strong></span>
+            </div>
+          </v-alert>
         </v-card-text>
       </v-card>
     </div>
@@ -140,6 +209,7 @@ export default {
     getBadgeClass(estado) {
       const classes = {
         'PAGADO': 'success',
+        'ABONO': 'info',
         'PENDIENTE': 'warning',
         'CANCELADO': 'error'
       }

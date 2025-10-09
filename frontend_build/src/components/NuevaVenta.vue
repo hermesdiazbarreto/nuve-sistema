@@ -1,8 +1,25 @@
 <template>
   <v-container fluid class="mt-4">
-    <h2>Nueva Venta</h2>
+    <h2 class="mb-4">Nueva Venta</h2>
 
-    <v-row class="mt-4">
+    <!-- Selector de Tipo de Movimiento (arriba de todo) -->
+    <v-card elevation="2" class="mb-4">
+      <v-card-text class="pa-4">
+        <v-select
+          v-model="venta.tipo_movimiento"
+          :items="[
+            { title: 'Ingreso (Venta)', value: 'INGRESO' },
+            { title: 'Egreso (Gasto)', value: 'EGRESO' }
+          ]"
+          label="Tipo de Movimiento *"
+          variant="outlined"
+          density="comfortable"
+          prepend-inner-icon="mdi-swap-horizontal"
+        ></v-select>
+      </v-card-text>
+    </v-card>
+
+    <v-row>
       <!-- Columna Izquierda: Selector de Productos (solo para INGRESO) -->
       <v-col cols="12" md="7" v-if="venta.tipo_movimiento === 'INGRESO'">
         <v-card elevation="3">
@@ -24,6 +41,7 @@
               <v-table density="compact" hover>
                 <thead>
                   <tr>
+                    <th>Código</th>
                     <th>Producto</th>
                     <th>Talla</th>
                     <th>Color</th>
@@ -34,6 +52,7 @@
                 </thead>
                 <tbody>
                   <tr v-for="variante in variantesFiltradas" :key="variante.id">
+                    <td><span class="text-caption font-weight-bold">{{ variante.codigo_variante }}</span></td>
                     <td>{{ variante.producto_nombre }}</td>
                     <td>{{ variante.talla_nombre }}</td>
                     <td>{{ variante.color_nombre }}</td>
@@ -72,19 +91,6 @@
             <span class="text-white">Registrar Egreso (Gasto)</span>
           </v-card-title>
           <v-card-text>
-            <!-- Selector de Tipo de Movimiento -->
-            <v-select
-              v-model="venta.tipo_movimiento"
-              :items="[
-                { title: 'Ingreso (Venta)', value: 'INGRESO' },
-                { title: 'Egreso (Gasto)', value: 'EGRESO' }
-              ]"
-              label="Tipo de Movimiento *"
-              variant="outlined"
-              density="comfortable"
-              class="mb-3"
-            ></v-select>
-
             <v-row>
               <v-col cols="12" md="6">
                 <v-text-field
@@ -162,19 +168,6 @@
             <span class="text-white">Carrito de Compra</span>
           </v-card-title>
           <v-card-text>
-            <!-- Selector de Tipo de Movimiento -->
-            <v-select
-              v-model="venta.tipo_movimiento"
-              :items="[
-                { title: 'Ingreso (Venta)', value: 'INGRESO' },
-                { title: 'Egreso (Gasto)', value: 'EGRESO' }
-              ]"
-              label="Tipo de Movimiento *"
-              variant="outlined"
-              density="comfortable"
-              class="mb-3"
-            ></v-select>
-
             <!-- Selector de Cliente -->
             <v-select
               v-model="venta.cliente_id"
