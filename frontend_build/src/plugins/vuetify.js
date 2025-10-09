@@ -22,29 +22,29 @@ const vuetify = createVuetify({
       light: {
         dark: false,
         colors: {
-          primary: '#1976D2',      // Azul moderno
-          secondary: '#424242',    // Gris oscuro
-          accent: '#82B1FF',       // Azul claro
-          error: '#FF5252',        // Rojo
-          info: '#2196F3',         // Azul info
-          success: '#4CAF50',      // Verde
-          warning: '#FB8C00',      // Naranja
-          background: '#F5F5F5',   // Fondo gris claro
+          primary: '#FF6BD5',      // Rosa Nuve (antes era el color principal)
+          secondary: '#A855F7',    // Morado Nuve
+          accent: '#EC4899',       // Rosa accent
+          error: '#EF4444',        // Rojo
+          info: '#3B82F6',         // Azul info
+          success: '#10B981',      // Verde
+          warning: '#F59E0B',      // Naranja/Amarillo
+          background: '#FDF4FF',   // Fondo rosa muy claro
           surface: '#FFFFFF',      // Blanco
         },
       },
       dark: {
         dark: true,
         colors: {
-          primary: '#2196F3',
-          secondary: '#424242',
-          accent: '#FF4081',
-          error: '#FF5252',
-          info: '#2196F3',
-          success: '#4CAF50',
-          warning: '#FB8C00',
-          background: '#121212',
-          surface: '#212121',
+          primary: '#FF6BD5',
+          secondary: '#A855F7',
+          accent: '#EC4899',
+          error: '#EF4444',
+          info: '#3B82F6',
+          success: '#10B981',
+          warning: '#F59E0B',
+          background: '#1F1B24',
+          surface: '#2D2433',
         },
       },
     },

@@ -197,13 +197,31 @@ export default {
 /* Fuente personalizada */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
+/* Paleta de colores Nuve */
+:root {
+  --nuve-primary: #FF6BD5;
+  --nuve-secondary: #A855F7;
+  --nuve-accent: #EC4899;
+  --nuve-gradient: linear-gradient(135deg, #FF6BD5 0%, #A855F7 50%, #EC4899 100%);
+}
+
 * {
   font-family: 'Inter', 'Segoe UI', sans-serif;
 }
 
 /* Asegurar que v-main tenga el fondo correcto */
 .v-main {
-  background-color: #F5F5F5;
+  background-color: #FDF4FF;
+}
+
+/* Gradiente rosa/morado en navbar y footer */
+.v-app-bar {
+  background: var(--nuve-gradient) !important;
+  box-shadow: 0 2px 10px rgba(255, 107, 213, 0.3) !important;
+}
+
+.v-footer {
+  background: var(--nuve-gradient) !important;
 }
 
 /* Animaciones suaves */
@@ -215,13 +233,18 @@ export default {
   transform: translateY(-2px);
 }
 
-/* Cards con sombra bonita */
+/* Cards con sombra rosa */
 .v-card {
   transition: all 0.3s ease;
 }
 
 .v-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(25, 118, 210, 0.15) !important;
+  box-shadow: 0 8px 24px rgba(255, 107, 213, 0.2) !important;
+}
+
+/* Avatar del usuario */
+.v-avatar {
+  border: 2px solid white;
 }
 </style>
