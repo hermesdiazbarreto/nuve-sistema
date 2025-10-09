@@ -885,7 +885,6 @@ export default {
             descuento: Number(this.venta.descuento).toFixed(2),
             impuesto: this.impuesto.toFixed(2),
             total: this.total.toFixed(2),
-            monto_abonado: this.venta.es_abono ? Number(this.venta.monto_abonado).toFixed(2) : this.total.toFixed(2),
             tipo_pago: this.venta.tipo_pago,
             observaciones: this.venta.observaciones || '',
             detalles: this.carrito.map(item => ({
@@ -896,8 +895,12 @@ export default {
             }))
           }
 
-          // Agregar estado solo si NO es abono
-          if (!this.venta.es_abono) {
+          // Si es abono: enviar el monto que el usuario ingresó
+          // Si NO es abono: enviar el total completo y marcar como PAGADO
+          if (this.venta.es_abono) {
+            ventaData.monto_abonado = Number(this.venta.monto_abonado).toFixed(2)
+          } else {
+            ventaData.monto_abonado = this.total.toFixed(2)
             ventaData.estado = 'PAGADO'
           }
 
