@@ -159,6 +159,11 @@ export default {
   deleteProductoVariante(id) {
     return api.delete(`/producto-variantes/${id}/`)
   },
+  duplicarProductoVariante(id, data) {
+    // Duplicar una variante cambiando talla/color
+    // data puede contener: { talla, color, stock_actual, stock_minimo }
+    return api.post(`/producto-variantes/${id}/duplicar/`, data)
+  },
 
   // ============ CLIENTES ============
   getClientes() {
@@ -192,6 +197,11 @@ export default {
   },
   deleteVenta(id) {
     return api.delete(`/ventas/${id}/`)
+  },
+  registrarPagoVenta(ventaId, data) {
+    // Registrar un pago/abono a una venta
+    // data debe contener: { monto, tipo_pago, observaciones? }
+    return api.post(`/ventas/${ventaId}/registrar-pago/`, data)
   },
 
   // ============ DETALLE VENTAS ============

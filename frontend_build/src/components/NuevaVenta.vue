@@ -327,6 +327,59 @@
               <strong class="text-success">${{ total.toFixed(2) }}</strong>
             </div>
 
+            <!-- Opción de Abono -->
+            <v-divider class="mb-3"></v-divider>
+
+            <v-checkbox
+              v-model="venta.es_abono"
+              label="¿Es un abono? (Pago parcial)"
+              color="warning"
+              hide-details
+              class="mb-2"
+            ></v-checkbox>
+
+            <v-text-field
+              v-if="venta.es_abono"
+              v-model.number="venta.monto_abonado"
+              type="number"
+              step="0.01"
+              label="Monto a Abonar *"
+              variant="outlined"
+              density="comfortable"
+              min="0.01"
+              :max="total"
+              required
+              class="mb-2"
+              :rules="[
+                v => !!v || 'El monto es requerido',
+                v => v > 0 || 'El monto debe ser mayor a 0',
+                v => v <= total || 'El monto no puede exceder el total'
+              ]"
+            >
+              <template v-slot:prepend-inner>
+                $
+              </template>
+            </v-text-field>
+
+            <v-alert
+              v-if="venta.es_abono && venta.monto_abonado > 0"
+              type="warning"
+              variant="tonal"
+              density="compact"
+              class="mb-3"
+            >
+              <div class="d-flex justify-space-between align-center">
+                <span><strong>Abono:</strong></span>
+                <span>${{ Number(venta.monto_abonado || 0).toFixed(2) }}</span>
+              </div>
+              <div class="d-flex justify-space-between align-center">
+                <span><strong>Saldo Pendiente:</strong></span>
+                <span class="text-error">
+                  ${{ (total - Number(venta.monto_abonado || 0)).toFixed(2) }}
+                </span>
+              </div>
+            </v-alert>
+
             <div class="d-flex flex-column ga-2">
               <v-btn
                 @click="procesarVenta"
@@ -378,6 +431,8 @@ export default {
         tipo_pago: '',
         observaciones: '',
         monto_egreso: 0,
+        es_abono: false,
+        monto_abonado: 0,
         vendedor: 1 // TODO: Obtener del usuario autenticado
       },
       snackbar: false,
@@ -504,7 +559,23 @@ export default {
         return
       }
 
-      if (confirm('¿Confirmar la venta?')) {
+      // Validar monto de abono si está activado
+      if (this.venta.es_abono) {
+        if (!this.venta.monto_abonado || this.venta.monto_abonado <= 0) {
+          this.showSnackbar('Ingrese el monto del abono', 'warning')
+          return
+        }
+        if (this.venta.monto_abonado > this.total) {
+          this.showSnackbar('El monto del abono no puede ser mayor al total', 'warning')
+          return
+        }
+      }
+
+      const mensaje = this.venta.es_abono
+        ? `¿Confirmar venta con abono de $${Number(this.venta.monto_abonado).toFixed(2)}?`
+        : '¿Confirmar la venta?'
+
+      if (confirm(mensaje)) {
         try {
           const ventaData = {
             tipo_movimiento: this.venta.tipo_movimiento,
@@ -514,8 +585,8 @@ export default {
             descuento: Number(this.venta.descuento).toFixed(2),
             impuesto: this.impuesto.toFixed(2),
             total: this.total.toFixed(2),
+            monto_abonado: this.venta.es_abono ? Number(this.venta.monto_abonado).toFixed(2) : this.total.toFixed(2),
             tipo_pago: this.venta.tipo_pago,
-            estado: 'PAGADO',
             observaciones: this.venta.observaciones || '',
             detalles: this.carrito.map(item => ({
               producto_variante: item.variante_id,
@@ -526,9 +597,18 @@ export default {
           }
 
           console.log('Datos de venta a enviar:', ventaData)
-          await api.createVenta(ventaData)
-          this.showSnackbar('Venta registrada correctamente!', 'success')
-          this.$router.push('/ventas')
+          const response = await api.createVenta(ventaData)
+
+          const mensaje = this.venta.es_abono
+            ? `Venta registrada con abono de $${Number(this.venta.monto_abonado).toFixed(2)}. Saldo pendiente: $${(this.total - Number(this.venta.monto_abonado)).toFixed(2)}`
+            : 'Venta registrada correctamente!'
+
+          this.showSnackbar(mensaje, 'success')
+
+          // Esperar 2 segundos antes de redirigir para que el usuario vea el mensaje
+          setTimeout(() => {
+            this.$router.push('/ventas')
+          }, 2000)
         } catch (error) {
           console.error('Error al procesar venta:', error)
           console.error('Respuesta del servidor:', error.response?.data)

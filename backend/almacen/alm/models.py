@@ -163,6 +163,7 @@ class Cliente(models.Model):
 class Venta(models.Model):
     ESTADO_CHOICES = [
         ('PENDIENTE', 'Pendiente'),
+        ('ABONO', 'Abono'),
         ('PAGADO', 'Pagado'),
         ('CANCELADO', 'Cancelado'),
     ]
@@ -188,6 +189,8 @@ class Venta(models.Model):
     descuento = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     impuesto = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    monto_abonado = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    saldo_pendiente = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     tipo_pago = models.CharField(max_length=15, choices=TIPO_PAGO_CHOICES)
     estado = models.CharField(max_length=10, choices=ESTADO_CHOICES, default='PENDIENTE')
     observaciones = models.TextField(blank=True, null=True)
@@ -205,6 +208,18 @@ class Venta(models.Model):
                 self.numero_venta = f"V-{last_number + 1:06d}"
             else:
                 self.numero_venta = "V-000001"
+
+        # Calcular saldo pendiente
+        self.saldo_pendiente = self.total - self.monto_abonado
+
+        # Actualizar estado según el monto abonado
+        if self.saldo_pendiente <= 0:
+            self.estado = 'PAGADO'
+            self.monto_abonado = self.total  # Asegurar que no sobrepase el total
+            self.saldo_pendiente = 0
+        elif self.monto_abonado > 0:
+            self.estado = 'ABONO'
+
         super().save(*args, **kwargs)
 
 class DetalleVenta(models.Model):
@@ -365,3 +380,27 @@ class Gasto(models.Model):
 
     class Meta:
         ordering = ['-fecha']
+
+class PagoVenta(models.Model):
+    """Modelo para registrar el historial de pagos/abonos de una venta"""
+    TIPO_PAGO_CHOICES = [
+        ('EFECTIVO', 'Efectivo'),
+        ('TARJETA', 'Tarjeta'),
+        ('TRANSFERENCIA', 'Transferencia'),
+        ('MIXTO', 'Mixto'),
+    ]
+
+    venta = models.ForeignKey(Venta, on_delete=models.CASCADE, related_name='pagos')
+    monto = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0.01)])
+    tipo_pago = models.CharField(max_length=15, choices=TIPO_PAGO_CHOICES)
+    fecha_pago = models.DateTimeField(auto_now_add=True)
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    observaciones = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Pago {self.venta.numero_venta} - ${self.monto} - {self.fecha_pago.strftime('%d/%m/%Y')}"
+
+    class Meta:
+        ordering = ['-fecha_pago']
+        verbose_name = "Pago de Venta"
+        verbose_name_plural = "Pagos de Ventas"

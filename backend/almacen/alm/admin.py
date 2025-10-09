@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     Categoria, Marca, Talla, Color, Producto, ProductoVariante,
-    Cliente, Venta, DetalleVenta, MovimientoInventario, Proveedor
+    Cliente, Venta, DetalleVenta, MovimientoInventario, Proveedor, PagoVenta
 )
 
 @admin.register(Categoria)
@@ -49,13 +49,18 @@ class DetalleVentaInline(admin.TabularInline):
     model = DetalleVenta
     extra = 1
 
+class PagoVentaInline(admin.TabularInline):
+    model = PagoVenta
+    extra = 0
+    readonly_fields = ['fecha_pago', 'usuario']
+
 @admin.register(Venta)
 class VentaAdmin(admin.ModelAdmin):
-    list_display = ['numero_venta', 'cliente', 'vendedor', 'total', 'estado', 'fecha_venta']
+    list_display = ['numero_venta', 'cliente', 'vendedor', 'total', 'monto_abonado', 'saldo_pendiente', 'estado', 'fecha_venta']
     list_filter = ['estado', 'tipo_pago', 'fecha_venta']
     search_fields = ['numero_venta', 'cliente__nombres', 'cliente__apellidos']
-    inlines = [DetalleVentaInline]
-    readonly_fields = ['numero_venta', 'subtotal', 'total']
+    inlines = [DetalleVentaInline, PagoVentaInline]
+    readonly_fields = ['numero_venta', 'subtotal', 'total', 'monto_abonado', 'saldo_pendiente']
 
 @admin.register(DetalleVenta)
 class DetalleVentaAdmin(admin.ModelAdmin):
@@ -74,3 +79,10 @@ class ProveedorAdmin(admin.ModelAdmin):
     list_display = ['codigo', 'nombre', 'ruc', 'telefono', 'email', 'activo']
     list_filter = ['activo']
     search_fields = ['codigo', 'nombre', 'ruc']
+
+@admin.register(PagoVenta)
+class PagoVentaAdmin(admin.ModelAdmin):
+    list_display = ['venta', 'monto', 'tipo_pago', 'fecha_pago', 'usuario']
+    list_filter = ['tipo_pago', 'fecha_pago']
+    search_fields = ['venta__numero_venta']
+    readonly_fields = ['fecha_pago']

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import (
     Categoria, Marca, Talla, Color, Producto, ProductoVariante,
-    Cliente, Venta, DetalleVenta, MovimientoInventario, Proveedor
+    Cliente, Venta, DetalleVenta, MovimientoInventario, Proveedor, PagoVenta
 )
 
 class CategoriaSerializer(serializers.ModelSerializer):
@@ -52,16 +52,27 @@ class ClienteSerializer(serializers.ModelSerializer):
 
 class DetalleVentaSerializer(serializers.ModelSerializer):
     producto_info = serializers.CharField(source='producto_variante.__str__', read_only=True)
-    
+
     class Meta:
         model = DetalleVenta
         fields = '__all__'
+
+class PagoVentaSerializer(serializers.ModelSerializer):
+    usuario_nombre = serializers.CharField(source='usuario.username', read_only=True)
+
+    class Meta:
+        model = PagoVenta
+        fields = '__all__'
+        read_only_fields = ('fecha_pago', 'usuario')
 
 class VentaSerializer(serializers.ModelSerializer):
     cliente_nombre = serializers.SerializerMethodField(read_only=True)
     vendedor_nombre = serializers.CharField(source='vendedor.username', read_only=True)
     detalles = DetalleVentaSerializer(many=True, read_only=True)
+    pagos = PagoVentaSerializer(many=True, read_only=True)
     numero_venta = serializers.CharField(read_only=True)
+    monto_abonado = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    saldo_pendiente = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
 
     class Meta:
         model = Venta

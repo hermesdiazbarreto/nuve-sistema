@@ -9,13 +9,13 @@ from django.contrib.auth import authenticate
 from .models import (
     Categoria, Marca, Talla, Color, Producto, ProductoVariante,
     Cliente, Venta, DetalleVenta, MovimientoInventario, Proveedor,
-    DetalleCompra
+    DetalleCompra, PagoVenta
 )
 from .serializers import (
     CategoriaSerializer, MarcaSerializer, TallaSerializer, ColorSerializer,
     ProductoSerializer, ProductoVarianteSerializer, ClienteSerializer,
     VentaSerializer, DetalleVentaSerializer, MovimientoInventarioSerializer,
-    ProveedorSerializer
+    ProveedorSerializer, PagoVentaSerializer
 )
 
 class CategoriaViewSet(viewsets.ModelViewSet):
@@ -186,6 +186,87 @@ class ProductoVarianteViewSet(viewsets.ModelViewSet):
 
         return queryset
 
+    @action(detail=True, methods=['post'])
+    def duplicar(self, request, pk=None):
+        """
+        Duplicar una variante de producto. Útil para crear variantes similares
+        modificando solo talla o color.
+
+        Body params opcionales:
+        - talla: ID de la nueva talla (si no se proporciona, usa la misma)
+        - color: ID del nuevo color (si no se proporciona, usa el mismo)
+        - stock_actual: Stock inicial (default: 0)
+        - stock_minimo: Stock mínimo (si no se proporciona, usa el mismo que el original)
+        """
+        from django.db import transaction
+
+        variante_original = self.get_object()
+
+        # Obtener los datos del request
+        talla_id = request.data.get('talla', variante_original.talla.id)
+        color_id = request.data.get('color', variante_original.color.id)
+        stock_actual = request.data.get('stock_actual', 0)
+        stock_minimo = request.data.get('stock_minimo', variante_original.stock_minimo)
+
+        try:
+            with transaction.atomic():
+                # Verificar si ya existe esta combinación
+                if ProductoVariante.objects.filter(
+                    producto=variante_original.producto,
+                    talla_id=talla_id,
+                    color_id=color_id
+                ).exists():
+                    return Response(
+                        {'error': 'Ya existe una variante con esta combinación de talla y color'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                # Obtener los objetos de talla y color
+                talla = Talla.objects.get(id=talla_id)
+                color = Color.objects.get(id=color_id)
+
+                # Generar código de variante
+                codigo_variante = f"{variante_original.producto.codigo}-{talla.nombre}-{color.nombre}"
+
+                # Crear la nueva variante
+                nueva_variante = ProductoVariante.objects.create(
+                    producto=variante_original.producto,
+                    talla=talla,
+                    color=color,
+                    codigo_variante=codigo_variante,
+                    stock_actual=stock_actual,
+                    stock_minimo=stock_minimo,
+                    activo=True
+                )
+
+            return Response(
+                {
+                    'message': 'Variante duplicada exitosamente',
+                    'variante': ProductoVarianteSerializer(nueva_variante).data
+                },
+                status=status.HTTP_201_CREATED
+            )
+
+        except Talla.DoesNotExist:
+            return Response(
+                {'error': 'La talla especificada no existe'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Color.DoesNotExist:
+            return Response(
+                {'error': 'El color especificado no existe'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            import traceback
+            error_traceback = traceback.format_exc()
+            print(f"ERROR AL DUPLICAR VARIANTE: {error_traceback}")
+
+            return Response(
+                {'error': f'Error al duplicar variante: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 class ClienteViewSet(viewsets.ModelViewSet):
     queryset = Cliente.objects.all()
     serializer_class = ClienteSerializer
@@ -272,6 +353,110 @@ class VentaViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response(
                 {'error': f'Error al actualizar venta: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=True, methods=['post'])
+    def registrar_pago(self, request, pk=None):
+        """
+        Registrar un pago/abono a una venta.
+
+        Body params:
+        - monto: Monto del pago (requerido)
+        - tipo_pago: Tipo de pago (EFECTIVO, TARJETA, TRANSFERENCIA, MIXTO) (requerido)
+        - observaciones: Observaciones del pago (opcional)
+        """
+        from django.db import transaction
+        from decimal import Decimal
+
+        venta = self.get_object()
+
+        # Validar que la venta no esté cancelada
+        if venta.estado == 'CANCELADO':
+            return Response(
+                {'error': 'No se pueden registrar pagos en ventas canceladas'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Validar que la venta no esté completamente pagada
+        if venta.estado == 'PAGADO':
+            return Response(
+                {'error': 'Esta venta ya está completamente pagada'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Obtener datos del request
+        monto = request.data.get('monto')
+        tipo_pago = request.data.get('tipo_pago')
+        observaciones = request.data.get('observaciones', '')
+
+        # Validaciones
+        if not monto:
+            return Response(
+                {'error': 'El monto es requerido'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            monto = Decimal(str(monto))
+        except:
+            return Response(
+                {'error': 'El monto debe ser un número válido'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if monto <= 0:
+            return Response(
+                {'error': 'El monto debe ser mayor a 0'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not tipo_pago:
+            return Response(
+                {'error': 'El tipo de pago es requerido'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Validar que el monto no exceda el saldo pendiente
+        if monto > venta.saldo_pendiente:
+            return Response(
+                {'error': f'El monto excede el saldo pendiente (${venta.saldo_pendiente})'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            with transaction.atomic():
+                # Crear el registro de pago
+                pago = PagoVenta.objects.create(
+                    venta=venta,
+                    monto=monto,
+                    tipo_pago=tipo_pago,
+                    usuario=request.user,
+                    observaciones=observaciones
+                )
+
+                # Actualizar monto abonado en la venta
+                venta.monto_abonado += monto
+                venta.save()  # El método save() de Venta actualizará automáticamente el estado y saldo_pendiente
+
+            # Retornar la venta actualizada con el pago
+            venta_actualizada = Venta.objects.get(id=venta.id)
+            return Response(
+                {
+                    'message': 'Pago registrado exitosamente',
+                    'pago': PagoVentaSerializer(pago).data,
+                    'venta': VentaSerializer(venta_actualizada).data
+                },
+                status=status.HTTP_201_CREATED
+            )
+
+        except Exception as e:
+            import traceback
+            error_traceback = traceback.format_exc()
+            print(f"ERROR AL REGISTRAR PAGO: {error_traceback}")
+
+            return Response(
+                {'error': f'Error al registrar pago: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 

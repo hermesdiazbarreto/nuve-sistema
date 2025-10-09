@@ -28,7 +28,7 @@
           <v-col cols="12" sm="6" md="3">
             <v-select
               v-model="filtro.estado"
-              :items="['Todos', 'PAGADO', 'PENDIENTE', 'CANCELADO']"
+              :items="['Todos', 'PAGADO', 'ABONO', 'PENDIENTE', 'CANCELADO']"
               label="Estado"
               variant="outlined"
               density="compact"
@@ -148,6 +148,20 @@
           <span class="font-weight-bold">S/ {{ formatPrecio(item.total) }}</span>
         </template>
 
+        <!-- Monto Abonado -->
+        <template #item.monto_abonado="{ item }">
+          <span class="font-weight-medium text-success">S/ {{ formatPrecio(item.monto_abonado || 0) }}</span>
+        </template>
+
+        <!-- Saldo Pendiente -->
+        <template #item.saldo_pendiente="{ item }">
+          <span
+            :class="item.saldo_pendiente > 0 ? 'font-weight-medium text-warning' : 'text-grey'"
+          >
+            S/ {{ formatPrecio(item.saldo_pendiente || 0) }}
+          </span>
+        </template>
+
         <!-- Estado -->
         <template #item.estado="{ item }">
           <v-chip :color="getChipColor(item.estado)" size="small" variant="flat">
@@ -173,6 +187,17 @@
             <v-icon>mdi-eye</v-icon>
           </v-btn>
           <v-btn
+            v-if="item.estado === 'ABONO' || (item.estado === 'PENDIENTE' && item.saldo_pendiente > 0)"
+            icon
+            size="small"
+            color="success"
+            variant="text"
+            @click="abrirModalPago(item)"
+            title="Registrar pago"
+          >
+            <v-icon>mdi-cash-plus</v-icon>
+          </v-btn>
+          <v-btn
             icon
             size="small"
             color="warning"
@@ -196,6 +221,97 @@
         </template>
       </v-data-table>
     </v-card>
+
+    <!-- Modal para Registrar Pago -->
+    <v-dialog v-model="mostrarModalPago" max-width="600px">
+      <v-card>
+        <v-card-title class="text-h5 success white--text">
+          <v-icon left color="white">mdi-cash-plus</v-icon>
+          Registrar Pago
+        </v-card-title>
+        <v-card-text class="pa-6">
+          <v-alert v-if="ventaParaPago" type="info" variant="tonal" class="mb-4">
+            <div><strong>N° Venta:</strong> {{ ventaParaPago.numero_venta }}</div>
+            <div><strong>Cliente:</strong> {{ ventaParaPago.cliente_nombre }}</div>
+            <div><strong>Total:</strong> S/ {{ formatPrecio(ventaParaPago.total) }}</div>
+            <div class="mt-2">
+              <strong>Monto Abonado:</strong>
+              <span class="text-success ml-2">S/ {{ formatPrecio(ventaParaPago.monto_abonado || 0) }}</span>
+            </div>
+            <div class="mt-1">
+              <strong>Saldo Pendiente:</strong>
+              <span class="text-warning ml-2 font-weight-bold">
+                S/ {{ formatPrecio(ventaParaPago.saldo_pendiente || 0) }}
+              </span>
+            </div>
+          </v-alert>
+
+          <v-form ref="formPago">
+            <v-text-field
+              v-model.number="nuevoPago.monto"
+              type="number"
+              step="0.01"
+              label="Monto a Pagar *"
+              variant="outlined"
+              prefix="S/"
+              :max="ventaParaPago ? ventaParaPago.saldo_pendiente : 0"
+              :rules="[
+                v => !!v || 'El monto es requerido',
+                v => v > 0 || 'El monto debe ser mayor a 0',
+                v => v <= (ventaParaPago ? ventaParaPago.saldo_pendiente : 0) || 'El monto no puede exceder el saldo pendiente'
+              ]"
+              class="mb-3"
+            ></v-text-field>
+
+            <v-select
+              v-model="nuevoPago.tipo_pago"
+              :items="['EFECTIVO', 'TARJETA', 'TRANSFERENCIA', 'MIXTO']"
+              label="Tipo de Pago *"
+              variant="outlined"
+              :rules="[v => !!v || 'Seleccione un tipo de pago']"
+              class="mb-3"
+            ></v-select>
+
+            <v-textarea
+              v-model="nuevoPago.observaciones"
+              label="Observaciones (opcional)"
+              variant="outlined"
+              rows="3"
+              placeholder="Ingrese cualquier nota sobre este pago..."
+            ></v-textarea>
+
+            <v-alert
+              v-if="nuevoPago.monto > 0 && ventaParaPago"
+              type="success"
+              variant="tonal"
+              class="mt-3"
+            >
+              <div class="d-flex justify-space-between">
+                <span><strong>Nuevo Saldo Pendiente:</strong></span>
+                <span class="font-weight-bold">
+                  S/ {{ formatPrecio((ventaParaPago.saldo_pendiente || 0) - nuevoPago.monto) }}
+                </span>
+              </div>
+              <div v-if="(ventaParaPago.saldo_pendiente - nuevoPago.monto) <= 0" class="mt-2">
+                <v-icon color="success" size="small">mdi-check-circle</v-icon>
+                <span class="ml-1">¡La venta quedará totalmente pagada!</span>
+              </div>
+            </v-alert>
+          </v-form>
+        </v-card-text>
+        <v-divider></v-divider>
+        <v-card-actions class="pa-4">
+          <v-btn color="grey" variant="text" @click="cerrarModalPago">
+            Cancelar
+          </v-btn>
+          <v-spacer></v-spacer>
+          <v-btn color="success" @click="confirmarRegistrarPago">
+            <v-icon left>mdi-check</v-icon>
+            Registrar Pago
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <!-- Modal para Cancelar Venta -->
     <v-dialog v-model="mostrarModalCancelar" max-width="600px">
@@ -327,12 +443,19 @@ export default {
       },
       mostrarModalCancelar: false,
       mostrarModalEliminar: false,
+      mostrarModalPago: false,
       mostrarModalExito: false,
       mostrarModalError: false,
       ventaSeleccionada: null,
       ventaIdEliminar: null,
+      ventaParaPago: null,
       mensajeExito: '',
       mensajeError: '',
+      nuevoPago: {
+        monto: 0,
+        tipo_pago: '',
+        observaciones: ''
+      },
       headers: [
         { title: 'N° Venta', key: 'numero_venta', sortable: true },
         { title: 'Tipo', key: 'tipo_movimiento', sortable: true },
@@ -342,6 +465,8 @@ export default {
         { title: 'Subtotal', key: 'subtotal', sortable: true },
         { title: 'Descuento', key: 'descuento', sortable: true },
         { title: 'Total', key: 'total', sortable: true },
+        { title: 'Abonado', key: 'monto_abonado', sortable: true },
+        { title: 'Pendiente', key: 'saldo_pendiente', sortable: true },
         { title: 'Tipo Pago', key: 'tipo_pago', sortable: true },
         { title: 'Estado', key: 'estado', sortable: true },
         { title: 'Acciones', key: 'actions', sortable: false, align: 'center' },
@@ -406,6 +531,7 @@ export default {
     getChipColor(estado) {
       const colors = {
         'PAGADO': 'success',
+        'ABONO': 'info',
         'PENDIENTE': 'warning',
         'CANCELADO': 'error'
       }
@@ -474,6 +600,60 @@ export default {
         console.error('Error al eliminar venta:', error)
         this.cerrarModalEliminar()
         this.mensajeError = error.response?.data?.detail || error.message || 'Error al eliminar la venta'
+        this.mostrarModalError = true
+      }
+    },
+    abrirModalPago(venta) {
+      this.ventaParaPago = venta
+      this.nuevoPago = {
+        monto: venta.saldo_pendiente || 0,
+        tipo_pago: '',
+        observaciones: ''
+      }
+      this.mostrarModalPago = true
+    },
+    cerrarModalPago() {
+      this.mostrarModalPago = false
+      this.ventaParaPago = null
+      this.nuevoPago = {
+        monto: 0,
+        tipo_pago: '',
+        observaciones: ''
+      }
+      if (this.$refs.formPago) {
+        this.$refs.formPago.reset()
+      }
+    },
+    async confirmarRegistrarPago() {
+      // Validate form
+      const { valid } = await this.$refs.formPago.validate()
+      if (!valid) {
+        return
+      }
+
+      try {
+        const response = await api.registrarPagoVenta(this.ventaParaPago.id, {
+          monto: this.nuevoPago.monto,
+          tipo_pago: this.nuevoPago.tipo_pago,
+          observaciones: this.nuevoPago.observaciones
+        })
+
+        this.cerrarModalPago()
+
+        // Check if sale is now fully paid
+        const ventaActualizada = response.data.venta
+        if (ventaActualizada.estado === 'PAGADO') {
+          this.mensajeExito = `Pago registrado correctamente. ¡La venta está totalmente pagada!`
+        } else {
+          this.mensajeExito = `Pago registrado correctamente. Saldo pendiente: S/ ${this.formatPrecio(ventaActualizada.saldo_pendiente)}`
+        }
+
+        this.mostrarModalExito = true
+        await this.cargarVentas()
+      } catch (error) {
+        console.error('Error al registrar pago:', error)
+        this.cerrarModalPago()
+        this.mensajeError = error.response?.data?.error || error.response?.data?.detail || error.message || 'Error al registrar el pago'
         this.mostrarModalError = true
       }
     }
