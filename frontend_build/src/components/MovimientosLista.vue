@@ -13,10 +13,11 @@
     <!-- Filtros Card -->
     <v-card elevation="3" class="mb-4">
       <v-card-title class="bg-primary">
+        <v-icon left color="white">mdi-filter</v-icon>
         <span class="text-white">Filtros</span>
       </v-card-title>
-      <v-card-text>
-        <v-row align="end">
+      <v-card-text class="pt-4">
+        <v-row>
           <v-col cols="12" md="3">
             <v-select
               v-model="filtro.tipo"
@@ -53,8 +54,8 @@
               @change="aplicarFiltros"
             ></v-text-field>
           </v-col>
-          <v-col cols="12" md="3">
-            <v-btn @click="limpiarFiltros" color="secondary" block>
+          <v-col cols="12" md="3" class="d-flex align-end">
+            <v-btn @click="limpiarFiltros" color="secondary" block size="large">
               <v-icon left>mdi-refresh</v-icon> Limpiar Filtros
             </v-btn>
           </v-col>

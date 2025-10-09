@@ -1,13 +1,12 @@
 <template>
   <v-app>
-    <!-- Top App Bar (solo para mobile) -->
+    <!-- Top App Bar -->
     <v-app-bar
       v-if="isAuthenticated"
       app
       color="white"
       elevation="1"
       height="64"
-      class="d-lg-none"
     >
       <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
       <v-toolbar-title class="text-h6 font-weight-bold">
@@ -21,8 +20,6 @@
       v-if="isAuthenticated"
       v-model="drawer"
       app
-      :permanent="$vuetify.display.lgAndUp"
-      :temporary="!$vuetify.display.lgAndUp"
       width="280"
       color="white"
       elevation="2"
