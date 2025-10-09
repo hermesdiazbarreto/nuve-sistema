@@ -57,69 +57,97 @@
 
       <v-divider class="my-2"></v-divider>
 
-      <!-- Sección Maestros -->
+      <!-- Sección Maestros (Desplegable) -->
       <v-list nav class="py-2">
-        <v-list-subheader>MAESTROS</v-list-subheader>
-        <v-list-item
-          v-for="item in maestrosMenuItems"
-          :key="item.title"
-          :to="item.to"
-          link
-          rounded="xl"
-          class="mx-2 my-1"
-        >
-          <template #prepend>
-            <v-icon>{{ item.icon }}</v-icon>
+        <v-list-group value="maestros">
+          <template #activator="{ props }">
+            <v-list-item
+              v-bind="props"
+              rounded="xl"
+              class="mx-2 my-1"
+            >
+              <template #prepend>
+                <v-icon>mdi-database</v-icon>
+              </template>
+              <v-list-item-title>MAESTROS</v-list-item-title>
+            </v-list-item>
           </template>
-          <v-list-item-title>{{ item.title }}</v-list-item-title>
-        </v-list-item>
+
+          <v-list-item
+            v-for="item in maestrosMenuItems"
+            :key="item.title"
+            :to="item.to"
+            link
+            rounded="xl"
+            class="mx-2 my-1"
+          >
+            <template #prepend>
+              <v-icon>{{ item.icon }}</v-icon>
+            </template>
+            <v-list-item-title>{{ item.title }}</v-list-item-title>
+          </v-list-item>
+        </v-list-group>
       </v-list>
 
       <v-divider class="my-2"></v-divider>
 
-      <!-- Acceso Rápido -->
+      <!-- Acceso Rápido (Desplegable) -->
       <v-list nav class="py-2">
-        <v-list-subheader>ACCESO RÁPIDO</v-list-subheader>
-        <v-list-item
-          @click="$root.$emit('open-dialog-categoria')"
-          rounded="xl"
-          class="mx-2 my-1"
-        >
-          <template #prepend>
-            <v-icon color="primary">mdi-shape-plus</v-icon>
+        <v-list-group value="acceso-rapido">
+          <template #activator="{ props }">
+            <v-list-item
+              v-bind="props"
+              rounded="xl"
+              class="mx-2 my-1"
+            >
+              <template #prepend>
+                <v-icon>mdi-lightning-bolt</v-icon>
+              </template>
+              <v-list-item-title>ACCESO RÁPIDO</v-list-item-title>
+            </v-list-item>
           </template>
-          <v-list-item-title>Nueva Categoría</v-list-item-title>
-        </v-list-item>
-        <v-list-item
-          @click="$root.$emit('open-dialog-marca')"
-          rounded="xl"
-          class="mx-2 my-1"
-        >
-          <template #prepend>
-            <v-icon color="primary">mdi-tag-plus</v-icon>
-          </template>
-          <v-list-item-title>Nueva Marca</v-list-item-title>
-        </v-list-item>
-        <v-list-item
-          @click="$root.$emit('open-dialog-talla')"
-          rounded="xl"
-          class="mx-2 my-1"
-        >
-          <template #prepend>
-            <v-icon color="primary">mdi-resize</v-icon>
-          </template>
-          <v-list-item-title>Nueva Talla</v-list-item-title>
-        </v-list-item>
-        <v-list-item
-          @click="$root.$emit('open-dialog-color')"
-          rounded="xl"
-          class="mx-2 my-1"
-        >
-          <template #prepend>
-            <v-icon color="primary">mdi-palette-plus</v-icon>
-          </template>
-          <v-list-item-title>Nuevo Color</v-list-item-title>
-        </v-list-item>
+
+          <v-list-item
+            @click="$root.$emit('open-dialog-categoria')"
+            rounded="xl"
+            class="mx-2 my-1"
+          >
+            <template #prepend>
+              <v-icon color="primary">mdi-shape-plus</v-icon>
+            </template>
+            <v-list-item-title>Nueva Categoría</v-list-item-title>
+          </v-list-item>
+          <v-list-item
+            @click="$root.$emit('open-dialog-marca')"
+            rounded="xl"
+            class="mx-2 my-1"
+          >
+            <template #prepend>
+              <v-icon color="primary">mdi-tag-plus</v-icon>
+            </template>
+            <v-list-item-title>Nueva Marca</v-list-item-title>
+          </v-list-item>
+          <v-list-item
+            @click="$root.$emit('open-dialog-talla')"
+            rounded="xl"
+            class="mx-2 my-1"
+          >
+            <template #prepend>
+              <v-icon color="primary">mdi-resize</v-icon>
+            </template>
+            <v-list-item-title>Nueva Talla</v-list-item-title>
+          </v-list-item>
+          <v-list-item
+            @click="$root.$emit('open-dialog-color')"
+            rounded="xl"
+            class="mx-2 my-1"
+          >
+            <template #prepend>
+              <v-icon color="primary">mdi-palette-plus</v-icon>
+            </template>
+            <v-list-item-title>Nuevo Color</v-list-item-title>
+          </v-list-item>
+        </v-list-group>
       </v-list>
 
       <template #append>

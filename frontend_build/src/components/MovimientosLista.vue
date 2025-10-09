@@ -53,54 +53,63 @@
       </v-card-text>
     </v-card>
 
-    <div v-if="loading" class="text-center mt-4">
-      <v-progress-circular indeterminate color="primary"></v-progress-circular>
-    </div>
+    <v-card elevation="3">
+      <v-card-title class="d-flex align-center pa-4">
+        <v-icon class="mr-2">mdi-table</v-icon>
+        Historial de Movimientos
+      </v-card-title>
 
-    <div v-else class="mt-4">
-      <v-table density="compact" hover>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Fecha</th>
-            <th>Tipo</th>
-            <th>Producto</th>
-            <th>Cantidad</th>
-            <th>Stock Anterior</th>
-            <th>Stock Nuevo</th>
-            <th>Motivo</th>
-            <th>Usuario</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="mov in movimientosFiltrados" :key="mov.id">
-            <td>{{ mov.id }}</td>
-            <td>{{ formatFecha(mov.fecha_movimiento) }}</td>
-            <td>
-              <v-chip
-                :color="getBadgeClass(mov.tipo_movimiento)"
-                size="small"
-                variant="flat"
-              >
-                {{ mov.tipo_movimiento }}
-              </v-chip>
-            </td>
-            <td><span class="nombre-producto">{{ mov.producto_info }}</span></td>
-            <td :class="getCantidadClass(mov.tipo_movimiento)">
-              {{ getTipoMovimiento(mov.tipo_movimiento) }}{{ mov.cantidad }}
-            </td>
-            <td>{{ mov.stock_anterior }}</td>
-            <td>{{ mov.stock_nuevo }}</td>
-            <td>{{ mov.motivo }}</td>
-            <td>{{ mov.usuario_nombre }}</td>
-          </tr>
-        </tbody>
-      </v-table>
+      <v-divider></v-divider>
 
-      <v-alert v-if="movimientosFiltrados.length === 0" type="info" variant="tonal" class="mt-3">
-        No hay movimientos de inventario.
-      </v-alert>
-    </div>
+      <v-card-text class="pa-0">
+        <v-progress-linear v-if="loading" indeterminate color="primary"></v-progress-linear>
+
+        <v-alert v-else-if="movimientosFiltrados.length === 0" type="info" variant="tonal" class="ma-4">
+          No hay movimientos de inventario.
+        </v-alert>
+
+        <div v-else style="overflow-x: auto;">
+          <v-table density="compact" hover>
+            <thead>
+              <tr>
+                <th class="text-center">ID</th>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Producto</th>
+                <th class="text-center">Cantidad</th>
+                <th class="text-center">Stock Anterior</th>
+                <th class="text-center">Stock Nuevo</th>
+                <th>Motivo</th>
+                <th>Usuario</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="mov in movimientosFiltrados" :key="mov.id">
+                <td class="text-center">{{ mov.id }}</td>
+                <td style="white-space: nowrap;">{{ formatFecha(mov.fecha_movimiento) }}</td>
+                <td>
+                  <v-chip
+                    :color="getBadgeClass(mov.tipo_movimiento)"
+                    size="small"
+                    variant="flat"
+                  >
+                    {{ mov.tipo_movimiento }}
+                  </v-chip>
+                </td>
+                <td><span class="nombre-producto">{{ mov.producto_info }}</span></td>
+                <td :class="getCantidadClass(mov.tipo_movimiento)" class="text-center">
+                  {{ getTipoMovimiento(mov.tipo_movimiento) }}{{ mov.cantidad }}
+                </td>
+                <td class="text-center">{{ mov.stock_anterior }}</td>
+                <td class="text-center">{{ mov.stock_nuevo }}</td>
+                <td>{{ mov.motivo }}</td>
+                <td>{{ mov.usuario_nombre }}</td>
+              </tr>
+            </tbody>
+          </v-table>
+        </div>
+      </v-card-text>
+    </v-card>
   </v-container>
 </template>
 
