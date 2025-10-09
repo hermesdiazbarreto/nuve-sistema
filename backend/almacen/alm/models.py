@@ -216,18 +216,19 @@ class Venta(models.Model):
         if self.saldo_pendiente < 0:
             self.saldo_pendiente = 0
 
-        # Si el estado viene explícitamente del frontend (PAGADO, ABONO, CANCELADO),
-        # respetarlo y solo ajustar valores inconsistentes
-        if self.estado == 'PAGADO':
-            # Pago completo: saldo debe ser 0
-            self.saldo_pendiente = 0
-        elif self.estado == 'ABONO':
-            # Abono parcial: respetar monto_abonado y saldo_pendiente calculado
-            pass
-        elif self.estado == 'PENDIENTE':
-            # Pendiente: respetar valores
-            pass
-        # Si estado es CANCELADO, no tocar nada
+        # Actualizar estado automáticamente basado en saldo_pendiente
+        # (excepto si está CANCELADO, ese estado no se modifica)
+        if self.estado != 'CANCELADO':
+            if self.saldo_pendiente <= 0:
+                # Si no hay saldo pendiente, marcar como PAGADO
+                self.estado = 'PAGADO'
+                self.saldo_pendiente = 0
+            elif self.monto_abonado > 0 and self.estado != 'PAGADO':
+                # Si hay un abono parcial, marcar como ABONO
+                self.estado = 'ABONO'
+            elif self.monto_abonado == 0:
+                # Sin abono = PENDIENTE
+                self.estado = 'PENDIENTE'
 
         super().save(*args, **kwargs)
 
