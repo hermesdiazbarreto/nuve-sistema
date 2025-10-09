@@ -35,65 +35,62 @@ class ColorViewSet(viewsets.ModelViewSet):
     serializer_class = ColorSerializer
 
 class ProductoViewSet(viewsets.ModelViewSet):
-    queryset = Producto.objects.all()
+    queryset = Producto.objects.all()  # Usa el manager por defecto que excluye eliminados
     serializer_class = ProductoSerializer
+
+    def get_queryset(self):
+        """
+        Permite filtrar productos por diferentes estados:
+        - Por defecto: solo productos no eliminados
+        - ?incluir_inactivos=true: incluye inactivos pero no eliminados
+        - ?incluir_eliminados=true: incluye productos eliminados
+        - ?solo_eliminados=true: solo productos eliminados
+        """
+        incluir_inactivos = self.request.query_params.get('incluir_inactivos', 'false').lower()
+        incluir_eliminados = self.request.query_params.get('incluir_eliminados', 'false').lower()
+        solo_eliminados = self.request.query_params.get('solo_eliminados', 'false').lower()
+
+        if solo_eliminados == 'true':
+            # Mostrar solo productos eliminados
+            queryset = Producto.all_objects.filter(is_deleted=True)
+        elif incluir_eliminados == 'true':
+            # Incluir todos los productos (eliminados y no eliminados)
+            queryset = Producto.all_objects.all()
+        else:
+            # Por defecto: solo productos no eliminados
+            queryset = Producto.objects.all()
+
+        # Filtrar por activo/inactivo solo si no están viendo eliminados
+        if incluir_inactivos != 'true' and solo_eliminados != 'true':
+            queryset = queryset.filter(activo=True)
+
+        return queryset
 
     def destroy(self, request, *args, **kwargs):
         """
-        Eliminar producto - Validar que no tenga variantes con ventas o compras asociadas
+        Soft Delete - Marcar producto como eliminado sin borrarlo físicamente
+        Esto preserva el histórico de ventas y compras
         """
         from django.db import transaction
-        import traceback
 
         instance = self.get_object()
 
         try:
-            # Verificar si alguna variante del producto tiene detalles de venta o compra
-            variantes = instance.variantes.all()
-
-            # Contar detalles de venta asociados a las variantes
-            total_ventas = 0
-            total_compras = 0
-            total_movimientos = 0
-
-            for variante in variantes:
-                total_ventas += DetalleVenta.objects.filter(producto_variante=variante).count()
-                total_compras += DetalleCompra.objects.filter(producto_variante=variante).count()
-                total_movimientos += MovimientoInventario.objects.filter(producto_variante=variante).count()
-
-            # Validar si tiene transacciones asociadas
-            if total_ventas > 0 or total_compras > 0:
-                errores = []
-                if total_ventas > 0:
-                    errores.append(f'{total_ventas} venta(s)')
-                if total_compras > 0:
-                    errores.append(f'{total_compras} compra(s)')
-
-                return Response(
-                    {
-                        'error': f'No se puede eliminar el producto porque tiene {" y ".join(errores)} asociada(s). '
-                                f'En su lugar, puedes desactivar el producto.'
-                    },
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            # Si no tiene ventas ni compras, proceder con la eliminación
             with transaction.atomic():
-                # Eliminar movimientos de inventario huérfanos (si los hay)
-                if total_movimientos > 0:
-                    for variante in variantes:
-                        MovimientoInventario.objects.filter(producto_variante=variante).delete()
-
-                # Las variantes se eliminarán automáticamente por CASCADE
-                instance.delete()
+                # Realizar soft delete usando el método del modelo
+                instance.soft_delete(user=request.user if request.user.is_authenticated else None)
 
             return Response(
-                {'message': 'Producto eliminado correctamente'},
-                status=status.HTTP_204_NO_CONTENT
+                {
+                    'message': 'Producto eliminado correctamente. '
+                              'El producto ya no aparecerá en los listados pero su historial se mantiene.',
+                    'deleted_at': instance.deleted_at
+                },
+                status=status.HTTP_200_OK
             )
 
         except Exception as e:
-            # Imprimir el traceback completo para debugging
+            import traceback
             error_traceback = traceback.format_exc()
             print(f"ERROR AL ELIMINAR PRODUCTO: {error_traceback}")
 
@@ -102,9 +99,92 @@ class ProductoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+    @action(detail=True, methods=['post'])
+    def restaurar(self, request, pk=None):
+        """
+        Restaurar un producto eliminado
+        """
+        from django.db import transaction
+
+        # Obtener el producto usando all_objects para incluir eliminados
+        producto = Producto.all_objects.get(pk=pk)
+
+        if not producto.is_deleted:
+            return Response(
+                {'error': 'Este producto no está eliminado.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            with transaction.atomic():
+                # Restaurar usando el método del modelo
+                producto.restore()
+
+            return Response(
+                {
+                    'message': 'Producto restaurado correctamente.',
+                    'producto': ProductoSerializer(producto).data
+                },
+                status=status.HTTP_200_OK
+            )
+
+        except Exception as e:
+            import traceback
+            error_traceback = traceback.format_exc()
+            print(f"ERROR AL RESTAURAR PRODUCTO: {error_traceback}")
+
+            return Response(
+                {'error': f'Error al restaurar producto: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=True, methods=['post'])
+    def activar(self, request, pk=None):
+        """
+        Activar un producto desactivado
+        """
+        from django.db import transaction
+
+        producto = self.get_object()
+
+        try:
+            with transaction.atomic():
+                producto.activo = True
+                producto.save()
+
+                # También activar todas sus variantes
+                producto.variantes.update(activo=True)
+
+            return Response(
+                {'message': 'Producto activado correctamente.'},
+                status=status.HTTP_200_OK
+            )
+
+        except Exception as e:
+            import traceback
+            error_traceback = traceback.format_exc()
+            print(f"ERROR AL ACTIVAR PRODUCTO: {error_traceback}")
+
+            return Response(
+                {'error': f'Error al activar producto: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 class ProductoVarianteViewSet(viewsets.ModelViewSet):
-    queryset = ProductoVariante.objects.all()
+    queryset = ProductoVariante.objects.filter(activo=True, producto__activo=True)  # Solo variantes activas de productos activos
     serializer_class = ProductoVarianteSerializer
+
+    def get_queryset(self):
+        """
+        Opcionalmente permite ver variantes inactivas con ?incluir_inactivos=true
+        """
+        queryset = ProductoVariante.objects.all()
+        incluir_inactivos = self.request.query_params.get('incluir_inactivos', 'false').lower()
+
+        if incluir_inactivos != 'true':
+            queryset = queryset.filter(activo=True, producto__activo=True)
+
+        return queryset
 
 class ClienteViewSet(viewsets.ModelViewSet):
     queryset = Cliente.objects.all()

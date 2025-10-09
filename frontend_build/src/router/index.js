@@ -7,6 +7,7 @@ import Login from '../components/Login.vue'
 // Inventario
 import ProductosLista from '../components/ProductosLista.vue'
 import ProductoForm from '../components/ProductoForm.vue'
+import ProductosEliminados from '../components/ProductosEliminados.vue'
 import CategoriasLista from '../components/CategoriasLista.vue'
 import MarcasLista from '../components/MarcasLista.vue'
 import TallasLista from '../components/TallasLista.vue'
@@ -55,6 +56,11 @@ const routes = [
     path: '/productos',
     name: 'ProductosLista',
     component: ProductosLista
+  },
+  {
+    path: '/productos/eliminados',
+    name: 'ProductosEliminados',
+    component: ProductosEliminados
   },
   {
     path: '/productos/nuevo',

@@ -39,6 +39,16 @@ class Color(models.Model):
     def __str__(self):
         return self.nombre
 
+class ProductoManager(models.Manager):
+    """Manager personalizado para excluir productos eliminados por defecto"""
+    def get_queryset(self):
+        return super().get_queryset().filter(is_deleted=False)
+
+class ProductoAllManager(models.Manager):
+    """Manager que incluye todos los productos, incluso eliminados"""
+    def get_queryset(self):
+        return super().get_queryset()
+
 class Producto(models.Model):
     codigo = models.CharField(max_length=50, unique=True)
     nombre = models.CharField(max_length=200)
@@ -48,11 +58,39 @@ class Producto(models.Model):
     precio_compra = models.DecimalField(max_digits=10, decimal_places=2)
     precio_venta = models.DecimalField(max_digits=10, decimal_places=2)
     activo = models.BooleanField(default=True)
+    is_deleted = models.BooleanField(default=False, verbose_name="Eliminado")
+    deleted_at = models.DateTimeField(null=True, blank=True, verbose_name="Fecha de eliminación")
+    deleted_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='productos_eliminados', verbose_name="Eliminado por")
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
-    
+
+    # Managers
+    objects = ProductoManager()  # Manager por defecto (excluye eliminados)
+    all_objects = ProductoAllManager()  # Manager que incluye eliminados
+
     def __str__(self):
         return f"{self.codigo} - {self.nombre}"
+
+    def soft_delete(self, user=None):
+        """Método para realizar soft delete"""
+        from django.utils import timezone
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.deleted_by = user
+        self.activo = False  # También marcamos como inactivo
+        self.save()
+        # Desactivar variantes
+        self.variantes.update(activo=False)
+
+    def restore(self):
+        """Método para restaurar un producto eliminado"""
+        self.is_deleted = False
+        self.deleted_at = None
+        self.deleted_by = None
+        self.activo = True
+        self.save()
+        # Reactivar variantes
+        self.variantes.update(activo=True)
 
 class ProductoVariante(models.Model):
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='variantes')

@@ -121,7 +121,26 @@ export default {
     return api.put(`/productos/${id}/`, data)
   },
   deleteProducto(id) {
+    // Soft delete - elimina pero mantiene en BD
     return api.delete(`/productos/${id}/`)
+  },
+  activarProducto(id) {
+    return api.post(`/productos/${id}/activar/`)
+  },
+  restaurarProducto(id) {
+    // Restaurar un producto eliminado
+    return api.post(`/productos/${id}/restaurar/`)
+  },
+  getProductosInactivos() {
+    return api.get('/productos/?incluir_inactivos=true')
+  },
+  getProductosEliminados() {
+    // Obtener solo productos eliminados
+    return api.get('/productos/?solo_eliminados=true')
+  },
+  getProductosConEliminados() {
+    // Obtener todos los productos incluyendo eliminados
+    return api.get('/productos/?incluir_eliminados=true')
   },
 
   // ============ PRODUCTO VARIANTES ============

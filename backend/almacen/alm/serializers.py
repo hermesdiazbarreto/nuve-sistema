@@ -27,10 +27,12 @@ class ColorSerializer(serializers.ModelSerializer):
 class ProductoSerializer(serializers.ModelSerializer):
     categoria_nombre = serializers.CharField(source='categoria.nombre', read_only=True)
     marca_nombre = serializers.CharField(source='marca.nombre', read_only=True)
-    
+    deleted_by_username = serializers.CharField(source='deleted_by.username', read_only=True)
+
     class Meta:
         model = Producto
         fields = '__all__'
+        read_only_fields = ('is_deleted', 'deleted_at', 'deleted_by')
 
 class ProductoVarianteSerializer(serializers.ModelSerializer):
     producto_nombre = serializers.CharField(source='producto.nombre', read_only=True)

@@ -2,9 +2,14 @@
   <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h2>📦 Productos</h2>
-      <router-link to="/productos/nuevo" class="btn btn-primary">
-        ➕ Nuevo Producto
-      </router-link>
+      <div>
+        <router-link to="/productos/eliminados" class="btn btn-outline-danger me-2">
+          🗑️ Ver Eliminados
+        </router-link>
+        <router-link to="/productos/nuevo" class="btn btn-primary">
+          ➕ Nuevo Producto
+        </router-link>
+      </div>
     </div>
 
     <div v-if="loading" class="text-center">
@@ -200,14 +205,14 @@ export default {
       this.variantesProducto = []
     },
     async eliminarProducto(id) {
-      if (confirm('¿Estás seguro de eliminar este producto? Se eliminarán también sus variantes.')) {
+      if (confirm('¿Estás seguro de eliminar este producto?\n\nNOTA: El producto no se borrará permanentemente, solo se marcará como eliminado.\nPodrás restaurarlo desde "Ver Eliminados".')) {
         try {
-          await api.deleteProducto(id)
+          const response = await api.deleteProducto(id)
           await this.cargarProductos()
-          alert('Producto eliminado correctamente')
+          alert(response.data.message || 'Producto eliminado correctamente')
         } catch (error) {
           console.error('Error al eliminar producto:', error)
-          alert('Error al eliminar el producto')
+          alert(error.response?.data?.error || 'Error al eliminar el producto')
         }
       }
     },
