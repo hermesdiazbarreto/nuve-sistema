@@ -93,7 +93,7 @@
 
         <!-- Precio -->
         <template #item.precio_venta="{ item }">
-          <span class="font-weight-medium">S/ {{ Number(item.precio_venta).toFixed(2) }}</span>
+          <span class="font-weight-medium">S/ {{ formatPrecio(item.precio_venta) }}</span>
         </template>
 
         <!-- Fecha Eliminación -->
@@ -165,11 +165,11 @@
             <v-col cols="12" md="6">
               <div class="mb-4">
                 <span class="text-caption text-medium-emphasis">Precio Compra</span>
-                <p class="text-h6 success--text">S/ {{ Number(productoSeleccionado.precio_compra).toFixed(2) }}</p>
+                <p class="text-h6 success--text">S/ {{ formatPrecio(productoSeleccionado.precio_compra) }}</p>
               </div>
               <div class="mb-4">
                 <span class="text-caption text-medium-emphasis">Precio Venta</span>
-                <p class="text-h6 primary--text">S/ {{ Number(productoSeleccionado.precio_venta).toFixed(2) }}</p>
+                <p class="text-h6 primary--text">S/ {{ formatPrecio(productoSeleccionado.precio_venta) }}</p>
               </div>
               <div class="mb-4">
                 <span class="text-caption text-medium-emphasis">Fecha de Eliminación</span>
@@ -302,6 +302,10 @@ export default {
         hour: '2-digit',
         minute: '2-digit'
       })
+    },
+    formatPrecio(precio) {
+      const numero = Number(precio)
+      return numero.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     },
     showSnackbar(text, color = 'success') {
       this.snackbarText = text

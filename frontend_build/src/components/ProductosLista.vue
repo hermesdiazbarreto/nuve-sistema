@@ -74,7 +74,7 @@
 
         <!-- Precio -->
         <template #item.precio_venta="{ item }">
-          <span class="font-weight-medium">S/ {{ Number(item.precio_venta).toFixed(2) }}</span>
+          <span class="font-weight-medium">S/ {{ formatPrecio(item.precio_venta) }}</span>
         </template>
 
         <!-- Variantes -->
@@ -340,6 +340,10 @@ export default {
       if (stock === 0) return 'error'
       if (stock < 10) return 'warning'
       return 'success'
+    },
+    formatPrecio(precio) {
+      const numero = Number(precio)
+      return numero.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     },
     showSnackbar(text, color = 'success') {
       this.snackbarText = text

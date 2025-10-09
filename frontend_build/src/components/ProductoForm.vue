@@ -90,9 +90,10 @@
                 density="comfortable"
                 type="number"
                 step="0.01"
-                prefix="S/"
                 required
                 :rules="[v => !!v || 'Precio de compra es requerido']"
+                hint="Ejemplo: 90000 = noventa mil"
+                persistent-hint
               ></v-text-field>
             </v-col>
 
@@ -104,9 +105,10 @@
                 density="comfortable"
                 type="number"
                 step="0.01"
-                prefix="S/"
                 required
                 :rules="[v => !!v || 'Precio de venta es requerido']"
+                hint="Ejemplo: 90000 = noventa mil"
+                persistent-hint
               ></v-text-field>
             </v-col>
 

@@ -159,7 +159,7 @@
                     </v-chip>
                   </td>
                   <td><span class="text-caption">{{ venta.cliente_nombre }}</span></td>
-                  <td><span class="text-caption font-weight-bold">S/ {{ Number(venta.total).toFixed(2) }}</span></td>
+                  <td><span class="text-caption font-weight-bold">S/ {{ formatPrecio(venta.total) }}</span></td>
                   <td>
                     <v-chip :color="getChipColor(venta.estado)" size="x-small" variant="flat">
                       {{ venta.estado }}
@@ -298,6 +298,10 @@ export default {
         hour: '2-digit',
         minute: '2-digit'
       })
+    },
+    formatPrecio(precio) {
+      const numero = Number(precio)
+      return numero.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     }
   }
 }

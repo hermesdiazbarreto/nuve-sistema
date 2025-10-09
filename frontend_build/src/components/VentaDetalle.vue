@@ -65,8 +65,8 @@
               <tr v-for="detalle in venta.detalles" :key="detalle.id">
                 <td>{{ detalle.producto_info }}</td>
                 <td>{{ detalle.cantidad }}</td>
-                <td>${{ Number(detalle.precio_unitario).toFixed(2) }}</td>
-                <td>${{ Number(detalle.subtotal).toFixed(2) }}</td>
+                <td>S/ {{ formatPrecio(detalle.precio_unitario) }}</td>
+                <td>S/ {{ formatPrecio(detalle.subtotal) }}</td>
               </tr>
             </tbody>
           </v-table>
@@ -83,20 +83,20 @@
             <v-col cols="12" md="6" offset-md="6">
               <div class="d-flex justify-space-between mb-2">
                 <span>Subtotal:</span>
-                <strong>${{ Number(venta.subtotal).toFixed(2) }}</strong>
+                <strong>S/ {{ formatPrecio(venta.subtotal) }}</strong>
               </div>
               <div class="d-flex justify-space-between mb-2 text-error">
                 <span>Descuento:</span>
-                <strong>-${{ Number(venta.descuento).toFixed(2) }}</strong>
+                <strong>-S/ {{ formatPrecio(venta.descuento) }}</strong>
               </div>
               <div class="d-flex justify-space-between mb-2">
                 <span>Impuesto:</span>
-                <strong>${{ Number(venta.impuesto).toFixed(2) }}</strong>
+                <strong>S/ {{ formatPrecio(venta.impuesto) }}</strong>
               </div>
               <v-divider class="my-2"></v-divider>
               <div class="d-flex justify-space-between text-h5">
                 <span><strong>TOTAL:</strong></span>
-                <strong class="text-success">${{ Number(venta.total).toFixed(2) }}</strong>
+                <strong class="text-success">S/ {{ formatPrecio(venta.total) }}</strong>
               </div>
             </v-col>
           </v-row>
@@ -148,6 +148,10 @@ export default {
     formatFecha(fecha) {
       if (!fecha) return ''
       return new Date(fecha).toLocaleString('es-ES')
+    },
+    formatPrecio(precio) {
+      const numero = Number(precio)
+      return numero.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     }
   }
 }

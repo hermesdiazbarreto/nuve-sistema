@@ -76,7 +76,7 @@
             <div class="d-flex justify-space-between align-center">
               <div>
                 <div class="text-subtitle-2">Total Ventas</div>
-                <div class="text-h4 font-weight-bold">S/ {{ totalVentas.toFixed(2) }}</div>
+                <div class="text-h4 font-weight-bold">S/ {{ formatPrecio(totalVentas) }}</div>
               </div>
               <v-icon size="48">mdi-currency-usd</v-icon>
             </div>
@@ -135,17 +135,17 @@
 
         <!-- Subtotal -->
         <template #item.subtotal="{ item }">
-          <span>S/ {{ Number(item.subtotal).toFixed(2) }}</span>
+          <span>S/ {{ formatPrecio(item.subtotal) }}</span>
         </template>
 
         <!-- Descuento -->
         <template #item.descuento="{ item }">
-          <span>S/ {{ Number(item.descuento).toFixed(2) }}</span>
+          <span>S/ {{ formatPrecio(item.descuento) }}</span>
         </template>
 
         <!-- Total -->
         <template #item.total="{ item }">
-          <span class="font-weight-bold">S/ {{ Number(item.total).toFixed(2) }}</span>
+          <span class="font-weight-bold">S/ {{ formatPrecio(item.total) }}</span>
         </template>
 
         <!-- Estado -->
@@ -210,7 +210,7 @@
           <v-alert v-if="ventaSeleccionada" type="info" variant="tonal" class="mb-4">
             <div><strong>N° Venta:</strong> {{ ventaSeleccionada.numero_venta }}</div>
             <div><strong>Cliente:</strong> {{ ventaSeleccionada.cliente_nombre }}</div>
-            <div><strong>Total:</strong> S/ {{ Number(ventaSeleccionada.total).toFixed(2) }}</div>
+            <div><strong>Total:</strong> S/ {{ formatPrecio(ventaSeleccionada.total) }}</div>
             <div>
               <strong>Tipo:</strong>
               <v-chip
@@ -414,6 +414,10 @@ export default {
     formatFecha(fecha) {
       if (!fecha) return ''
       return new Date(fecha).toLocaleString('es-ES')
+    },
+    formatPrecio(precio) {
+      const numero = Number(precio)
+      return numero.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     },
     cancelarVenta(venta) {
       if (venta.estado === 'CANCELADO') {
