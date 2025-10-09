@@ -1,135 +1,244 @@
 <template>
-  <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2>📦 Productos</h2>
-      <div>
-        <router-link to="/productos/eliminados" class="btn btn-outline-danger me-2">
-          🗑️ Ver Eliminados
-        </router-link>
-        <router-link to="/productos/nuevo" class="btn btn-primary">
-          ➕ Nuevo Producto
-        </router-link>
-      </div>
-    </div>
+  <div>
+    <!-- Header -->
+    <v-row align="center" class="mb-6">
+      <v-col cols="12" md="6">
+        <h1 class="text-h4 font-weight-bold">
+          <v-icon large color="primary" class="mr-2">mdi-package-variant</v-icon>
+          Productos
+        </h1>
+      </v-col>
+      <v-col cols="12" md="6" class="text-md-right">
+        <v-btn
+          color="error"
+          variant="outlined"
+          class="mr-2"
+          :to="'/productos/eliminados'"
+        >
+          <v-icon left>mdi-delete</v-icon>
+          Ver Eliminados
+        </v-btn>
+        <v-btn
+          color="primary"
+          :to="'/productos/nuevo'"
+        >
+          <v-icon left>mdi-plus</v-icon>
+          Nuevo Producto
+        </v-btn>
+      </v-col>
+    </v-row>
 
-    <div v-if="loading" class="text-center">
-      <div class="spinner-border" role="status"></div>
-    </div>
+    <!-- Data Table Card -->
+    <v-card elevation="3">
+      <v-card-title class="d-flex align-center pa-4">
+        <v-icon class="mr-2">mdi-table</v-icon>
+        Listado de Productos
 
-    <div v-else>
-      <div class="table-responsive">
-        <table class="table table-striped table-hover">
-          <thead class="table-dark">
-            <tr>
-              <th>Código</th>
-              <th>Nombre</th>
-              <th>Categoría</th>
-              <th>Marca</th>
-              <th>Precio Venta</th>
-              <th>Variantes</th>
-              <th>Stock Total</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="producto in productos" :key="producto.id">
-              <td><strong>{{ producto.codigo }}</strong></td>
-              <td>{{ producto.nombre }}</td>
-              <td><span class="badge bg-secondary">{{ producto.categoria_nombre }}</span></td>
-              <td>{{ producto.marca_nombre }}</td>
-              <td>${{ Number(producto.precio_venta).toFixed(2) }}</td>
-              <td>
-                <button @click="verVariantes(producto)" class="btn btn-sm btn-info">
-                  🔍 {{ producto.total_variantes || 0 }} variante(s)
-                </button>
-              </td>
-              <td>
-                <span :class="getStockClass(producto.stock_total)">
-                  {{ producto.stock_total || 0 }}
-                </span>
-              </td>
-              <td>
-                <span class="badge" :class="producto.activo ? 'bg-success' : 'bg-secondary'">
-                  {{ producto.activo ? 'Activo' : 'Inactivo' }}
-                </span>
-              </td>
-              <td>
-                <router-link :to="`/productos/editar/${producto.id}`" class="btn btn-sm btn-warning me-1">
-                  ✏️
-                </router-link>
-                <button @click="eliminarProducto(producto.id)" class="btn btn-sm btn-danger">
-                  🗑️
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+        <v-spacer></v-spacer>
 
-      <div v-if="productos.length === 0" class="alert alert-info">
-        No hay productos registrados.
-      </div>
-    </div>
+        <v-text-field
+          v-model="search"
+          append-inner-icon="mdi-magnify"
+          label="Buscar producto..."
+          single-line
+          hide-details
+          variant="outlined"
+          density="compact"
+          style="max-width: 300px"
+        ></v-text-field>
+      </v-card-title>
+
+      <v-divider></v-divider>
+
+      <v-data-table
+        :headers="headers"
+        :items="productos"
+        :search="search"
+        :loading="loading"
+        loading-text="Cargando productos..."
+        no-data-text="No hay productos registrados"
+        items-per-page-text="Productos por página"
+        class="elevation-0"
+      >
+        <!-- Código -->
+        <template #item.codigo="{ item }">
+          <span class="font-weight-bold">{{ item.codigo }}</span>
+        </template>
+
+        <!-- Categoría -->
+        <template #item.categoria_nombre="{ item }">
+          <v-chip color="primary" size="small" variant="flat">
+            {{ item.categoria_nombre }}
+          </v-chip>
+        </template>
+
+        <!-- Precio -->
+        <template #item.precio_venta="{ item }">
+          <span class="font-weight-medium">S/ {{ Number(item.precio_venta).toFixed(2) }}</span>
+        </template>
+
+        <!-- Variantes -->
+        <template #item.total_variantes="{ item }">
+          <v-btn
+            size="small"
+            color="info"
+            variant="outlined"
+            @click="verVariantes(item)"
+          >
+            <v-icon left size="small">mdi-magnify</v-icon>
+            {{ item.total_variantes || 0 }}
+          </v-btn>
+        </template>
+
+        <!-- Stock -->
+        <template #item.stock_total="{ item }">
+          <v-chip
+            :color="getStockColor(item.stock_total)"
+            size="small"
+            variant="flat"
+          >
+            {{ item.stock_total || 0 }}
+          </v-chip>
+        </template>
+
+        <!-- Estado -->
+        <template #item.activo="{ item }">
+          <v-chip
+            :color="item.activo ? 'success' : 'grey'"
+            size="small"
+            variant="flat"
+          >
+            <v-icon left size="small">
+              {{ item.activo ? 'mdi-check-circle' : 'mdi-close-circle' }}
+            </v-icon>
+            {{ item.activo ? 'Activo' : 'Inactivo' }}
+          </v-chip>
+        </template>
+
+        <!-- Acciones -->
+        <template #item.actions="{ item }">
+          <v-btn
+            icon
+            size="small"
+            color="warning"
+            variant="text"
+            :to="`/productos/editar/${item.id}`"
+          >
+            <v-icon>mdi-pencil</v-icon>
+          </v-btn>
+          <v-btn
+            icon
+            size="small"
+            color="error"
+            variant="text"
+            @click="eliminarProducto(item.id)"
+          >
+            <v-icon>mdi-delete</v-icon>
+          </v-btn>
+        </template>
+      </v-data-table>
+    </v-card>
 
     <!-- Modal de Variantes -->
-    <div v-if="mostrarVariantes && productoSeleccionado" class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">
-              Variantes de: {{ productoSeleccionado.nombre }}
-            </h5>
-            <button type="button" class="close" @click="cerrarVariantes" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            <router-link :to="`/productos/editar/${productoSeleccionado.id}`" class="btn btn-sm btn-primary mb-3" @click="cerrarVariantes">
-              ➕ Agregar Variante (Ir a Editar Producto)
-            </router-link>
+    <v-dialog v-model="mostrarVariantes" max-width="900px">
+      <v-card>
+        <v-card-title class="text-h5 primary white--text">
+          <v-icon left color="white">mdi-format-list-bulleted</v-icon>
+          Variantes de: {{ productoSeleccionado?.nombre }}
+        </v-card-title>
 
-            <div v-if="cargandoVariantes" class="text-center">
-              <div class="spinner-border spinner-border-sm"></div>
-            </div>
-            <div v-else-if="variantesProducto.length === 0" class="alert alert-info">
-              Este producto no tiene variantes.
-            </div>
-            <table v-else class="table table-sm">
-              <thead>
-                <tr>
-                  <th>Código</th>
-                  <th>Talla</th>
-                  <th>Color</th>
-                  <th>Stock</th>
-                  <th>Min</th>
-                  <th>Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="variante in variantesProducto" :key="variante.id">
-                  <td>{{ variante.codigo_variante }}</td>
-                  <td>{{ variante.talla_nombre }}</td>
-                  <td>{{ variante.color_nombre }}</td>
-                  <td :class="variante.stock_actual <= variante.stock_minimo ? 'text-danger fw-bold' : ''">
+        <v-card-text class="pa-4">
+          <v-btn
+            color="primary"
+            size="small"
+            class="mb-4"
+            :to="`/productos/editar/${productoSeleccionado?.id}`"
+            @click="cerrarVariantes"
+          >
+            <v-icon left>mdi-plus</v-icon>
+            Agregar Variante
+          </v-btn>
+
+          <v-progress-linear
+            v-if="cargandoVariantes"
+            indeterminate
+            color="primary"
+          ></v-progress-linear>
+
+          <v-alert
+            v-else-if="variantesProducto.length === 0"
+            type="info"
+            variant="tonal"
+          >
+            Este producto no tiene variantes.
+          </v-alert>
+
+          <v-table v-else density="comfortable">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Talla</th>
+                <th>Color</th>
+                <th>Stock</th>
+                <th>Mín</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="variante in variantesProducto" :key="variante.id">
+                <td>{{ variante.codigo_variante }}</td>
+                <td>{{ variante.talla_nombre }}</td>
+                <td>{{ variante.color_nombre }}</td>
+                <td>
+                  <v-chip
+                    :color="variante.stock_actual <= variante.stock_minimo ? 'error' : 'success'"
+                    size="small"
+                  >
                     {{ variante.stock_actual }}
-                  </td>
-                  <td>{{ variante.stock_minimo }}</td>
-                  <td>
-                    <span class="badge" :class="variante.activo ? 'bg-success' : 'bg-secondary'">
-                      {{ variante.activo ? 'Activo' : 'Inactivo' }}
-                    </span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="cerrarVariantes">Cerrar</button>
-          </div>
-        </div>
-      </div>
-    </div>
+                  </v-chip>
+                </td>
+                <td>{{ variante.stock_minimo }}</td>
+                <td>
+                  <v-chip
+                    :color="variante.activo ? 'success' : 'grey'"
+                    size="small"
+                  >
+                    {{ variante.activo ? 'Activo' : 'Inactivo' }}
+                  </v-chip>
+                </td>
+              </tr>
+            </tbody>
+          </v-table>
+        </v-card-text>
+
+        <v-divider></v-divider>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" variant="text" @click="cerrarVariantes">
+            Cerrar
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Snackbar para notificaciones -->
+    <v-snackbar
+      v-model="snackbar"
+      :color="snackbarColor"
+      timeout="3000"
+      top
+    >
+      {{ snackbarText }}
+      <template #actions>
+        <v-btn
+          variant="text"
+          @click="snackbar = false"
+        >
+          Cerrar
+        </v-btn>
+      </template>
+    </v-snackbar>
   </div>
 </template>
 
@@ -142,10 +251,25 @@ export default {
     return {
       productos: [],
       loading: true,
+      search: '',
       mostrarVariantes: false,
       productoSeleccionado: null,
       variantesProducto: [],
-      cargandoVariantes: false
+      cargandoVariantes: false,
+      snackbar: false,
+      snackbarText: '',
+      snackbarColor: 'success',
+      headers: [
+        { title: 'Código', key: 'codigo', sortable: true },
+        { title: 'Nombre', key: 'nombre', sortable: true },
+        { title: 'Categoría', key: 'categoria_nombre', sortable: true },
+        { title: 'Marca', key: 'marca_nombre', sortable: true },
+        { title: 'Precio Venta', key: 'precio_venta', sortable: true },
+        { title: 'Variantes', key: 'total_variantes', sortable: false },
+        { title: 'Stock Total', key: 'stock_total', sortable: true },
+        { title: 'Estado', key: 'activo', sortable: true },
+        { title: 'Acciones', key: 'actions', sortable: false, align: 'center' },
+      ],
     }
   },
   async created() {
@@ -160,11 +284,9 @@ export default {
           api.getProductoVariantes()
         ])
 
-        // Los datos pueden venir en .data o .data.results (DRF pagination)
         const productos = productosRes.data.results || productosRes.data || []
         const variantes = variantesRes.data.results || variantesRes.data || []
 
-        // Calcular stock total y cantidad de variantes por producto
         this.productos = productos.map(producto => {
           const variantesProducto = variantes.filter(v => v.producto === producto.id)
           const stockTotal = variantesProducto.reduce((sum, v) => sum + (v.stock_actual || 0), 0)
@@ -176,8 +298,7 @@ export default {
         })
       } catch (error) {
         console.error('Error al cargar productos:', error)
-        console.error('Detalles del error:', error.response?.data)
-        alert('Error al cargar los productos. Abre la consola (F12) para ver detalles.')
+        this.showSnackbar('Error al cargar los productos', 'error')
       } finally {
         this.loading = false
       }
@@ -193,8 +314,7 @@ export default {
         this.variantesProducto = variantes.filter(v => v.producto === producto.id)
       } catch (error) {
         console.error('Error al cargar variantes:', error)
-        console.error('Detalles:', error.response?.data)
-        alert('Error al cargar las variantes')
+        this.showSnackbar('Error al cargar las variantes', 'error')
       } finally {
         this.cargandoVariantes = false
       }
@@ -209,28 +329,34 @@ export default {
         try {
           const response = await api.deleteProducto(id)
           await this.cargarProductos()
-          alert(response.data.message || 'Producto eliminado correctamente')
+          this.showSnackbar(response.data.message || 'Producto eliminado correctamente', 'success')
         } catch (error) {
           console.error('Error al eliminar producto:', error)
-          alert(error.response?.data?.error || 'Error al eliminar el producto')
+          this.showSnackbar(error.response?.data?.error || 'Error al eliminar el producto', 'error')
         }
       }
     },
-    getStockClass(stock) {
-      if (stock === 0) return 'badge bg-danger'
-      if (stock < 10) return 'badge bg-warning'
-      return 'badge bg-success'
+    getStockColor(stock) {
+      if (stock === 0) return 'error'
+      if (stock < 10) return 'warning'
+      return 'success'
+    },
+    showSnackbar(text, color = 'success') {
+      this.snackbarText = text
+      this.snackbarColor = color
+      this.snackbar = true
     }
   }
 }
 </script>
 
 <style scoped>
-.table tbody tr {
+/* Animaciones suaves para las filas */
+.v-data-table >>> tbody tr {
   transition: background-color 0.2s;
 }
 
-.table tbody tr:hover {
-  background-color: #f8f9fa;
+.v-data-table >>> tbody tr:hover {
+  background-color: rgba(25, 118, 210, 0.05);
 }
 </style>

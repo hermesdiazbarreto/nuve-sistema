@@ -1,28 +1,20 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
+import vuetify from './plugins/vuetify'
 
-// Importar jQuery (necesario para Bootstrap 4)
-import $ from 'jquery'
-window.$ = window.jQuery = $
-
-// Importar Bootstrap CSS
-import 'bootstrap/dist/css/bootstrap.min.css'
-
-// Importar Popper.js y Bootstrap JS
-import 'popper.js'
-import 'bootstrap/dist/js/bootstrap.bundle.min.js'
-
-// Importar componente modal y mixin global
-import ModalConfirm from './components/ModalConfirm.vue'
-import modalMixin from './mixins/modalMixin'
+// Importar componente modal y mixin global (si existen)
+// import ModalConfirm from './components/ModalConfirm.vue'
+// import modalMixin from './mixins/modalMixin'
 
 const app = createApp(App)
 
-// Registrar componente modal globalmente
-app.component('ModalConfirm', ModalConfirm)
+// Registrar componente modal globalmente (comentado por ahora, Vuetify tiene sus propios modals)
+// app.component('ModalConfirm', ModalConfirm)
 
 // Registrar mixin globalmente
-app.mixin(modalMixin)
+// app.mixin(modalMixin)
 
-app.use(router).mount('#app')
+app.use(router)
+app.use(vuetify)
+app.mount('#app')

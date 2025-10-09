@@ -1,113 +1,121 @@
 <template>
-  <div id="app">
-    <!-- Navbar (solo visible cuando está autenticado) -->
-    <nav v-if="isAuthenticated" class="navbar navbar-expand-lg navbar-dark navbar-nuve">
-      <div class="container">
-        <router-link class="navbar-brand" to="/">
-          <span class="brand-icon">✨</span> Nuve
-        </router-link>
-        
-        <button
-          class="navbar-toggler"
-          type="button"
-          data-toggle="collapse"
-          data-target="#navbarNav"
-          aria-controls="navbarNav"
-          aria-expanded="false"
-          aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav me-auto">
-            <li class="nav-item">
-              <router-link
-                class="nav-link"
-                :class="{ active: $route.path === '/' || $route.path === '/dashboard' }"
-                to="/">
-                Dashboard
-              </router-link>
-            </li>
+  <v-app>
+    <!-- App Bar / Navbar -->
+    <v-app-bar
+      v-if="isAuthenticated"
+      app
+      elevate-on-scroll
+      color="primary"
+      dark
+      height="70"
+    >
+      <v-app-bar-nav-icon @click="drawer = !drawer" class="d-lg-none"></v-app-bar-nav-icon>
 
-            <!-- Dropdown Inventario -->
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-expanded="false">
-                Inventario
-              </a>
-              <ul class="dropdown-menu">
-                <li><router-link class="dropdown-item" to="/productos">Productos</router-link></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><router-link class="dropdown-item" to="/categorias">Categorías</router-link></li>
-                <li><router-link class="dropdown-item" to="/marcas">Marcas</router-link></li>
-                <li><router-link class="dropdown-item" to="/tallas">Tallas</router-link></li>
-                <li><router-link class="dropdown-item" to="/colores">Colores</router-link></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><router-link class="dropdown-item" to="/movimientos">Movimientos</router-link></li>
-              </ul>
-            </li>
+      <v-toolbar-title class="text-h5 font-weight-bold ml-2">
+        <v-icon large class="mr-2">mdi-star-four-points</v-icon>
+        Nuve
+      </v-toolbar-title>
 
-            <!-- Ventas -->
-            <li class="nav-item">
-              <router-link
-                class="nav-link"
-                :class="{ active: $route.path.includes('/venta') }"
-                to="/ventas">
-                Ventas
-              </router-link>
-            </li>
+      <v-spacer></v-spacer>
 
-            <!-- Clientes -->
-            <li class="nav-item">
-              <router-link
-                class="nav-link"
-                :class="{ active: $route.path.includes('/cliente') }"
-                to="/clientes">
-                Clientes
-              </router-link>
-            </li>
+      <!-- Desktop Menu -->
+      <v-btn
+        v-for="item in menuItems"
+        :key="item.title"
+        :to="item.to"
+        text
+        class="d-none d-lg-flex mx-1"
+      >
+        <v-icon left>{{ item.icon }}</v-icon>
+        {{ item.title }}
+      </v-btn>
 
-            <!-- Proveedores -->
-            <li class="nav-item">
-              <router-link
-                class="nav-link"
-                :class="{ active: $route.path.includes('/proveedor') }"
-                to="/proveedores">
-                Proveedores
-              </router-link>
-            </li>
-          </ul>
+      <v-spacer></v-spacer>
 
-          <!-- Usuario y Cerrar Sesión -->
-          <ul class="navbar-nav" v-if="isAuthenticated">
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-expanded="false">
-                👤 {{ username }}
-              </a>
-              <ul class="dropdown-menu dropdown-menu-right">
-                <li>
-                  <a class="dropdown-item" href="#" @click.prevent="logout">
-                    🚪 Cerrar Sesión
-                  </a>
-                </li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </nav>
-    
-    <!-- Contenido principal -->
-    <main>
-      <router-view/>
-    </main>
-    
-    <!-- Footer (solo visible cuando está autenticado) -->
-    <footer v-if="isAuthenticated" class="footer-nuve text-center text-lg-start mt-5">
-      <div class="text-center p-3">
-        © 2025 Nuve - Sistema de Gestión Empresarial
-      </div>
-    </footer>
-  </div>
+      <!-- User Menu -->
+      <v-menu offset-y>
+        <template #activator="{ props }">
+          <v-btn icon v-bind="props">
+            <v-avatar color="white" size="40">
+              <v-icon color="primary">mdi-account-circle</v-icon>
+            </v-avatar>
+          </v-btn>
+        </template>
+        <v-list>
+          <v-list-item>
+            <v-list-item-title class="font-weight-bold">{{ username }}</v-list-item-title>
+          </v-list-item>
+          <v-divider></v-divider>
+          <v-list-item @click="logout">
+            <template #prepend>
+              <v-icon>mdi-logout</v-icon>
+            </template>
+            <v-list-item-title>Cerrar Sesión</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
+    </v-app-bar>
+
+    <!-- Navigation Drawer (Mobile) -->
+    <v-navigation-drawer
+      v-if="isAuthenticated"
+      v-model="drawer"
+      app
+      temporary
+      width="280"
+    >
+      <v-list>
+        <v-list-item class="py-4">
+          <v-list-item-title class="text-h6 font-weight-bold primary--text">
+            <v-icon large color="primary" class="mr-2">mdi-star-four-points</v-icon>
+            Nuve
+          </v-list-item-title>
+        </v-list-item>
+      </v-list>
+
+      <v-divider></v-divider>
+
+      <v-list nav>
+        <v-list-item
+          v-for="item in allMenuItems"
+          :key="item.title"
+          :to="item.to"
+          link
+        >
+          <template #prepend>
+            <v-icon>{{ item.icon }}</v-icon>
+          </template>
+          <v-list-item-title>{{ item.title }}</v-list-item-title>
+        </v-list-item>
+      </v-list>
+    </v-navigation-drawer>
+
+    <!-- Main Content -->
+    <v-main>
+      <v-container fluid class="pa-4">
+        <router-view />
+      </v-container>
+    </v-main>
+
+    <!-- Footer -->
+    <v-footer
+      v-if="isAuthenticated"
+      app
+      color="primary"
+      dark
+      class="text-center"
+    >
+      <v-container>
+        <v-row>
+          <v-col cols="12">
+            <span class="font-weight-medium">
+              © {{ new Date().getFullYear() }} Nuve - Sistema de Gestión Empresarial
+            </span>
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-footer>
+  </v-app>
 </template>
 
 <script>
@@ -117,13 +125,31 @@ export default {
   name: 'App',
   data() {
     return {
+      drawer: false,
       isAuthenticated: false,
-      username: ''
+      username: '',
+      menuItems: [
+        { title: 'Dashboard', icon: 'mdi-view-dashboard', to: '/' },
+        { title: 'Productos', icon: 'mdi-package-variant', to: '/productos' },
+        { title: 'Ventas', icon: 'mdi-point-of-sale', to: '/ventas' },
+        { title: 'Clientes', icon: 'mdi-account-group', to: '/clientes' },
+      ],
+      allMenuItems: [
+        { title: 'Dashboard', icon: 'mdi-view-dashboard', to: '/' },
+        { title: 'Productos', icon: 'mdi-package-variant', to: '/productos' },
+        { title: 'Categorías', icon: 'mdi-tag-multiple', to: '/categorias' },
+        { title: 'Marcas', icon: 'mdi-bookmark-multiple', to: '/marcas' },
+        { title: 'Tallas', icon: 'mdi-ruler', to: '/tallas' },
+        { title: 'Colores', icon: 'mdi-palette', to: '/colores' },
+        { title: 'Movimientos', icon: 'mdi-swap-horizontal', to: '/movimientos' },
+        { title: 'Ventas', icon: 'mdi-point-of-sale', to: '/ventas' },
+        { title: 'Clientes', icon: 'mdi-account-group', to: '/clientes' },
+        { title: 'Proveedores', icon: 'mdi-truck', to: '/proveedores' },
+      ],
     }
   },
   mounted() {
     this.checkAuth()
-    // Escuchar cambios de ruta para actualizar el estado de autenticación
     this.$router.afterEach(() => {
       this.checkAuth()
     })
@@ -156,7 +182,6 @@ export default {
       } catch (error) {
         console.error('Error al cerrar sesión:', error)
       } finally {
-        // Limpiar localStorage y redirigir al login
         localStorage.removeItem('token')
         localStorage.removeItem('user')
         this.isAuthenticated = false
@@ -169,149 +194,34 @@ export default {
 </script>
 
 <style>
-/* Paleta de Colores Nuve */
-:root {
-  --nuve-primary: #FF6BD5;
-  --nuve-secondary: #A855F7;
-  --nuve-accent: #EC4899;
-  --nuve-light: #FDF4FF;
-  --nuve-dark: #701A75;
-  --nuve-gradient: linear-gradient(135deg, #FF6BD5 0%, #A855F7 50%, #EC4899 100%);
+/* Fuente personalizada */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+* {
+  font-family: 'Inter', 'Segoe UI', sans-serif;
 }
 
-#app {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background-color: #f8f9fa;
+/* Asegurar que v-main tenga el fondo correcto */
+.v-main {
+  background-color: #F5F5F5;
 }
 
-main {
-  flex: 1;
+/* Animaciones suaves */
+.v-btn {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Navbar Nuve */
-.navbar-nuve {
-  background: var(--nuve-gradient) !important;
-  box-shadow: 0 2px 10px rgba(255, 107, 213, 0.3);
-}
-
-.navbar-brand {
-  font-weight: bold;
-  font-size: 1.5rem;
-  letter-spacing: 1px;
-}
-
-.brand-icon {
-  font-size: 1.3rem;
-  margin-right: 5px;
-}
-
-.nav-link {
-  transition: all 0.3s ease;
-  border-radius: 5px;
-  margin: 0 5px;
-}
-
-.nav-link:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+.v-btn:hover {
   transform: translateY(-2px);
 }
 
-.nav-link.active {
-  font-weight: bold;
-  background-color: rgba(255, 255, 255, 0.25);
-}
-
-.dropdown-menu {
-  border: none;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-.dropdown-item:hover {
-  background: linear-gradient(90deg, rgba(255, 107, 213, 0.1), rgba(168, 85, 247, 0.1));
-  color: var(--nuve-dark);
-}
-
-/* Footer Nuve */
-.footer-nuve {
-  background: var(--nuve-gradient);
-  color: white;
-  font-weight: 500;
-}
-
-.container {
-  max-width: 1200px;
-}
-
-/* Estilos para mejorar la apariencia */
-.card {
-  box-shadow: 0 0.125rem 0.5rem rgba(255, 107, 213, 0.1);
-  border: 1px solid rgba(255, 107, 213, 0.2);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 0.5rem 1rem rgba(255, 107, 213, 0.2);
-}
-
-.table {
-  background-color: white;
-}
-
-.table thead {
-  background: var(--nuve-gradient) !important;
-  color: white;
-}
-
-.btn-primary {
-  background: var(--nuve-gradient);
-  border: none;
+/* Cards con sombra bonita */
+.v-card {
   transition: all 0.3s ease;
 }
 
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(255, 107, 213, 0.4);
-}
-
-.btn {
-  margin-right: 0.5rem;
-}
-
-.me-2 {
-  margin-right: 0.5rem;
-}
-
-/* Badges personalizados */
-.badge.bg-success {
-  background: linear-gradient(90deg, #10b981, #059669) !important;
-}
-
-.badge.bg-warning {
-  background: linear-gradient(90deg, #f59e0b, #d97706) !important;
-}
-
-.badge.bg-danger {
-  background: linear-gradient(90deg, #ef4444, #dc2626) !important;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .container {
-    padding: 0 15px;
-  }
-
-  .table-responsive {
-    font-size: 0.875rem;
-  }
-
-  .navbar-brand {
-    font-size: 1.2rem;
-  }
+.v-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(25, 118, 210, 0.15) !important;
 }
 </style>

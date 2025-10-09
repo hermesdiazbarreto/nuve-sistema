@@ -1,108 +1,227 @@
 <template>
-  <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2>🗑️ Productos Eliminados</h2>
-      <div>
-        <router-link to="/productos" class="btn btn-outline-secondary me-2">
-          ← Volver a Productos
-        </router-link>
-      </div>
-    </div>
+  <div>
+    <!-- Header -->
+    <v-row align="center" class="mb-6">
+      <v-col cols="12" md="6">
+        <h1 class="text-h4 font-weight-bold">
+          <v-icon large color="error" class="mr-2">mdi-delete-variant</v-icon>
+          Productos Eliminados
+        </h1>
+      </v-col>
+      <v-col cols="12" md="6" class="text-md-right">
+        <v-btn
+          color="primary"
+          variant="outlined"
+          :to="'/productos'"
+        >
+          <v-icon left>mdi-arrow-left</v-icon>
+          Volver a Productos
+        </v-btn>
+      </v-col>
+    </v-row>
 
-    <div v-if="loading" class="text-center">
-      <div class="spinner-border" role="status"></div>
-    </div>
+    <!-- Info Alert -->
+    <v-alert
+      v-if="productos.length > 0"
+      type="warning"
+      variant="tonal"
+      class="mb-4"
+    >
+      <v-alert-title class="font-weight-bold">
+        <v-icon left>mdi-information</v-icon>
+        Información
+      </v-alert-title>
+      Estos productos han sido eliminados pero aún se conservan en la base de datos.
+      Puedes restaurarlos cuando quieras.
+    </v-alert>
 
-    <div v-else>
-      <div v-if="productos.length === 0" class="alert alert-info">
-        <h5>✅ No hay productos eliminados</h5>
-        <p class="mb-0">Todos los productos están activos.</p>
-      </div>
+    <!-- Empty State -->
+    <v-card v-if="!loading && productos.length === 0" elevation="3" class="text-center pa-8">
+      <v-icon size="80" color="success" class="mb-4">mdi-check-circle</v-icon>
+      <h2 class="text-h5 mb-2">¡No hay productos eliminados!</h2>
+      <p class="text-body-1 text-medium-emphasis">
+        Todos los productos están activos.
+      </p>
+      <v-btn color="primary" :to="'/productos'" class="mt-4">
+        Ver Productos Activos
+      </v-btn>
+    </v-card>
 
-      <div v-else class="alert alert-warning">
-        <strong>ℹ️ Información:</strong> Estos productos han sido eliminados pero aún se conservan en la base de datos. Puedes restaurarlos cuando quieras.
-      </div>
+    <!-- Data Table Card -->
+    <v-card v-else elevation="3">
+      <v-card-title class="d-flex align-center pa-4">
+        <v-icon class="mr-2">mdi-delete-restore</v-icon>
+        Productos Eliminados ({{ productos.length }})
 
-      <div v-if="productos.length > 0" class="table-responsive">
-        <table class="table table-striped table-hover">
-          <thead class="table-dark">
-            <tr>
-              <th>Código</th>
-              <th>Nombre</th>
-              <th>Categoría</th>
-              <th>Marca</th>
-              <th>Precio Venta</th>
-              <th>Fecha Eliminación</th>
-              <th>Eliminado Por</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="producto in productos" :key="producto.id" class="table-danger">
-              <td><strong>{{ producto.codigo }}</strong></td>
-              <td>{{ producto.nombre }}</td>
-              <td><span class="badge bg-secondary">{{ producto.categoria_nombre }}</span></td>
-              <td>{{ producto.marca_nombre }}</td>
-              <td>${{ Number(producto.precio_venta).toFixed(2) }}</td>
-              <td>{{ formatFecha(producto.deleted_at) }}</td>
-              <td>
-                <span class="badge bg-dark">
-                  {{ producto.deleted_by_username || 'Desconocido' }}
-                </span>
-              </td>
-              <td>
-                <button @click="restaurarProducto(producto.id)" class="btn btn-sm btn-success me-1" title="Restaurar producto">
-                  ♻️ Restaurar
-                </button>
-                <button @click="verDetalles(producto)" class="btn btn-sm btn-info" title="Ver detalles">
-                  👁️
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+        <v-spacer></v-spacer>
+
+        <v-text-field
+          v-model="search"
+          append-inner-icon="mdi-magnify"
+          label="Buscar..."
+          single-line
+          hide-details
+          variant="outlined"
+          density="compact"
+          style="max-width: 300px"
+        ></v-text-field>
+      </v-card-title>
+
+      <v-divider></v-divider>
+
+      <v-data-table
+        :headers="headers"
+        :items="productos"
+        :search="search"
+        :loading="loading"
+        loading-text="Cargando productos eliminados..."
+        no-data-text="No hay productos eliminados"
+        items-per-page-text="Productos por página"
+        class="elevation-0"
+      >
+        <!-- Código -->
+        <template #item.codigo="{ item }">
+          <span class="font-weight-bold">{{ item.codigo }}</span>
+        </template>
+
+        <!-- Categoría -->
+        <template #item.categoria_nombre="{ item }">
+          <v-chip color="grey" size="small" variant="flat">
+            {{ item.categoria_nombre }}
+          </v-chip>
+        </template>
+
+        <!-- Precio -->
+        <template #item.precio_venta="{ item }">
+          <span class="font-weight-medium">S/ {{ Number(item.precio_venta).toFixed(2) }}</span>
+        </template>
+
+        <!-- Fecha Eliminación -->
+        <template #item.deleted_at="{ item }">
+          <span>{{ formatFecha(item.deleted_at) }}</span>
+        </template>
+
+        <!-- Usuario -->
+        <template #item.deleted_by_username="{ item }">
+          <v-chip color="error" size="small" variant="flat">
+            <v-icon left size="small">mdi-account</v-icon>
+            {{ item.deleted_by_username || 'Desconocido' }}
+          </v-chip>
+        </template>
+
+        <!-- Acciones -->
+        <template #item.actions="{ item }">
+          <v-btn
+            size="small"
+            color="success"
+            variant="tonal"
+            class="mr-2"
+            @click="restaurarProducto(item.id)"
+          >
+            <v-icon left size="small">mdi-restore</v-icon>
+            Restaurar
+          </v-btn>
+          <v-btn
+            icon
+            size="small"
+            color="info"
+            variant="text"
+            @click="verDetalles(item)"
+          >
+            <v-icon>mdi-eye</v-icon>
+          </v-btn>
+        </template>
+      </v-data-table>
+    </v-card>
 
     <!-- Modal de Detalles -->
-    <div v-if="mostrarDetalles && productoSeleccionado" class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header bg-danger text-white">
-            <h5 class="modal-title">
-              📋 Detalles del Producto Eliminado
-            </h5>
-            <button type="button" class="btn-close btn-close-white" @click="cerrarDetalles" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <div class="row">
-              <div class="col-md-6">
-                <p><strong>Código:</strong> {{ productoSeleccionado.codigo }}</p>
-                <p><strong>Nombre:</strong> {{ productoSeleccionado.nombre }}</p>
-                <p><strong>Categoría:</strong> {{ productoSeleccionado.categoria_nombre }}</p>
-                <p><strong>Marca:</strong> {{ productoSeleccionado.marca_nombre }}</p>
+    <v-dialog v-model="mostrarDetalles" max-width="700px">
+      <v-card v-if="productoSeleccionado">
+        <v-card-title class="text-h5 error white--text">
+          <v-icon left color="white">mdi-file-document-outline</v-icon>
+          Detalles del Producto Eliminado
+        </v-card-title>
+
+        <v-card-text class="pa-6">
+          <v-row>
+            <v-col cols="12" md="6">
+              <div class="mb-4">
+                <span class="text-caption text-medium-emphasis">Código</span>
+                <p class="text-h6 font-weight-medium">{{ productoSeleccionado.codigo }}</p>
               </div>
-              <div class="col-md-6">
-                <p><strong>Precio Compra:</strong> ${{ Number(productoSeleccionado.precio_compra).toFixed(2) }}</p>
-                <p><strong>Precio Venta:</strong> ${{ Number(productoSeleccionado.precio_venta).toFixed(2) }}</p>
-                <p><strong>Fecha Eliminación:</strong> {{ formatFecha(productoSeleccionado.deleted_at) }}</p>
-                <p><strong>Eliminado Por:</strong> {{ productoSeleccionado.deleted_by_username || 'Desconocido' }}</p>
+              <div class="mb-4">
+                <span class="text-caption text-medium-emphasis">Nombre</span>
+                <p class="text-h6 font-weight-medium">{{ productoSeleccionado.nombre }}</p>
               </div>
-            </div>
-            <div v-if="productoSeleccionado.descripcion" class="mt-3">
-              <p><strong>Descripción:</strong></p>
-              <p class="text-muted">{{ productoSeleccionado.descripcion }}</p>
-            </div>
+              <div class="mb-4">
+                <span class="text-caption text-medium-emphasis">Categoría</span>
+                <p class="text-body-1">{{ productoSeleccionado.categoria_nombre }}</p>
+              </div>
+              <div class="mb-4">
+                <span class="text-caption text-medium-emphasis">Marca</span>
+                <p class="text-body-1">{{ productoSeleccionado.marca_nombre }}</p>
+              </div>
+            </v-col>
+            <v-col cols="12" md="6">
+              <div class="mb-4">
+                <span class="text-caption text-medium-emphasis">Precio Compra</span>
+                <p class="text-h6 success--text">S/ {{ Number(productoSeleccionado.precio_compra).toFixed(2) }}</p>
+              </div>
+              <div class="mb-4">
+                <span class="text-caption text-medium-emphasis">Precio Venta</span>
+                <p class="text-h6 primary--text">S/ {{ Number(productoSeleccionado.precio_venta).toFixed(2) }}</p>
+              </div>
+              <div class="mb-4">
+                <span class="text-caption text-medium-emphasis">Fecha de Eliminación</span>
+                <p class="text-body-1">{{ formatFecha(productoSeleccionado.deleted_at) }}</p>
+              </div>
+              <div class="mb-4">
+                <span class="text-caption text-medium-emphasis">Eliminado Por</span>
+                <p class="text-body-1">{{ productoSeleccionado.deleted_by_username || 'Desconocido' }}</p>
+              </div>
+            </v-col>
+          </v-row>
+
+          <v-divider class="my-4"></v-divider>
+
+          <div v-if="productoSeleccionado.descripcion">
+            <span class="text-caption text-medium-emphasis">Descripción</span>
+            <p class="text-body-1 mt-2">{{ productoSeleccionado.descripcion }}</p>
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-success" @click="restaurarProducto(productoSeleccionado.id)">
-              ♻️ Restaurar Producto
-            </button>
-            <button type="button" class="btn btn-secondary" @click="cerrarDetalles">Cerrar</button>
-          </div>
-        </div>
-      </div>
-    </div>
+        </v-card-text>
+
+        <v-divider></v-divider>
+
+        <v-card-actions class="pa-4">
+          <v-btn
+            color="success"
+            @click="restaurarProducto(productoSeleccionado.id)"
+          >
+            <v-icon left>mdi-restore</v-icon>
+            Restaurar Producto
+          </v-btn>
+          <v-spacer></v-spacer>
+          <v-btn color="grey" variant="text" @click="cerrarDetalles">
+            Cerrar
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Snackbar -->
+    <v-snackbar
+      v-model="snackbar"
+      :color="snackbarColor"
+      timeout="3000"
+      top
+    >
+      {{ snackbarText }}
+      <template #actions>
+        <v-btn variant="text" @click="snackbar = false">
+          Cerrar
+        </v-btn>
+      </template>
+    </v-snackbar>
   </div>
 </template>
 
@@ -115,8 +234,22 @@ export default {
     return {
       productos: [],
       loading: true,
+      search: '',
       mostrarDetalles: false,
-      productoSeleccionado: null
+      productoSeleccionado: null,
+      snackbar: false,
+      snackbarText: '',
+      snackbarColor: 'success',
+      headers: [
+        { title: 'Código', key: 'codigo', sortable: true },
+        { title: 'Nombre', key: 'nombre', sortable: true },
+        { title: 'Categoría', key: 'categoria_nombre', sortable: true },
+        { title: 'Marca', key: 'marca_nombre', sortable: true },
+        { title: 'Precio Venta', key: 'precio_venta', sortable: true },
+        { title: 'Fecha Eliminación', key: 'deleted_at', sortable: true },
+        { title: 'Eliminado Por', key: 'deleted_by_username', sortable: true },
+        { title: 'Acciones', key: 'actions', sortable: false, align: 'center' },
+      ],
     }
   },
   async created() {
@@ -127,15 +260,10 @@ export default {
       try {
         this.loading = true
         const response = await api.getProductosEliminados()
-
-        // Los datos pueden venir en .data o .data.results (DRF pagination)
         this.productos = response.data.results || response.data || []
-
-        console.log('Productos eliminados:', this.productos)
       } catch (error) {
         console.error('Error al cargar productos eliminados:', error)
-        console.error('Detalles del error:', error.response?.data)
-        alert('Error al cargar los productos eliminados. Abre la consola (F12) para ver detalles.')
+        this.showSnackbar('Error al cargar los productos eliminados', 'error')
       } finally {
         this.loading = false
       }
@@ -144,20 +272,15 @@ export default {
       if (confirm('¿Estás seguro de restaurar este producto?\n\nEl producto volverá a estar activo y visible en el listado principal.')) {
         try {
           const response = await api.restaurarProducto(id)
-
-          // Mostrar mensaje de éxito
-          alert(response.data.message || 'Producto restaurado correctamente')
-
-          // Recargar la lista
           await this.cargarProductosEliminados()
+          this.showSnackbar(response.data.message || 'Producto restaurado correctamente', 'success')
 
-          // Cerrar modal si está abierto
           if (this.mostrarDetalles) {
             this.cerrarDetalles()
           }
         } catch (error) {
           console.error('Error al restaurar producto:', error)
-          alert(error.response?.data?.error || 'Error al restaurar el producto')
+          this.showSnackbar(error.response?.data?.error || 'Error al restaurar el producto', 'error')
         }
       }
     },
@@ -179,25 +302,24 @@ export default {
         hour: '2-digit',
         minute: '2-digit'
       })
+    },
+    showSnackbar(text, color = 'success') {
+      this.snackbarText = text
+      this.snackbarColor = color
+      this.snackbar = true
     }
   }
 }
 </script>
 
 <style scoped>
-.table tbody tr {
+/* Filas de productos eliminados con fondo rojo claro */
+.v-data-table >>> tbody tr {
+  background-color: rgba(255, 82, 82, 0.05);
   transition: background-color 0.2s;
 }
 
-.table tbody tr:hover {
-  background-color: #f8d7da !important;
-}
-
-.modal {
-  display: block;
-}
-
-.btn-close-white {
-  filter: brightness(0) invert(1);
+.v-data-table >>> tbody tr:hover {
+  background-color: rgba(255, 82, 82, 0.1);
 }
 </style>
