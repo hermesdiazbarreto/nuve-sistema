@@ -201,7 +201,7 @@ export default {
   registrarPagoVenta(ventaId, data) {
     // Registrar un pago/abono a una venta
     // data debe contener: { monto, tipo_pago, observaciones? }
-    return api.post(`/ventas/${ventaId}/registrar-pago/`, data)
+    return api.post(`/ventas/${ventaId}/registrar_pago/`, data)
   },
 
   // ============ DETALLE VENTAS ============
