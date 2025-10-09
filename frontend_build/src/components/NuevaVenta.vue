@@ -26,7 +26,7 @@
           <v-card-title class="bg-primary">
             <span class="text-white">Seleccionar Productos</span>
           </v-card-title>
-          <v-card-text>
+          <v-card-text class="pt-4">
             <v-text-field
               v-model="busqueda"
               variant="outlined"
@@ -34,46 +34,59 @@
               placeholder="Buscar producto, código o variante..."
               prepend-inner-icon="mdi-magnify"
               @input="filtrarVariantes"
-              class="mb-3"
+              class="mb-4"
             ></v-text-field>
 
-            <div style="max-height: 500px; overflow-y: auto;">
-              <v-table density="compact" hover>
+            <div style="max-height: 500px; overflow-y: auto; overflow-x: auto;">
+              <v-table density="compact" hover fixed-header>
                 <thead>
                   <tr>
-                    <th>Código</th>
-                    <th>Producto</th>
-                    <th>Talla</th>
-                    <th>Color</th>
-                    <th>Precio</th>
-                    <th>Stock</th>
-                    <th>Acción</th>
+                    <th class="text-left" style="min-width: 100px;">Código</th>
+                    <th class="text-left" style="min-width: 180px;">Producto</th>
+                    <th class="text-left" style="min-width: 60px;">Talla</th>
+                    <th class="text-left" style="min-width: 80px;">Color</th>
+                    <th class="text-left" style="min-width: 80px;">Marca</th>
+                    <th class="text-right" style="min-width: 80px;">Precio</th>
+                    <th class="text-center" style="min-width: 70px;">Stock</th>
+                    <th class="text-center" style="min-width: 120px;">Acción</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="variante in variantesFiltradas" :key="variante.id">
-                    <td><span class="text-caption font-weight-bold">{{ variante.codigo_variante }}</span></td>
-                    <td><span class="nombre-producto">{{ variante.producto_nombre }}</span></td>
-                    <td>{{ variante.talla_nombre }}</td>
-                    <td>{{ variante.color_nombre }}</td>
-                    <td>${{ Number(variante.precio_venta).toFixed(2) }}</td>
-                    <td>
+                    <td class="text-left">
+                      <span class="text-caption font-weight-bold">{{ variante.codigo_variante }}</span>
+                    </td>
+                    <td class="text-left">
+                      <div class="nombre-producto">{{ variante.producto_nombre }}</div>
+                      <div class="text-caption text-medium-emphasis">{{ variante.categoria_nombre }}</div>
+                    </td>
+                    <td class="text-left">{{ variante.talla_nombre }}</td>
+                    <td class="text-left">
+                      <v-chip size="x-small" :color="variante.color_hex" variant="flat">
+                        {{ variante.color_nombre }}
+                      </v-chip>
+                    </td>
+                    <td class="text-left">{{ variante.marca_nombre }}</td>
+                    <td class="text-right font-weight-bold">${{ Number(variante.precio_venta).toFixed(2) }}</td>
+                    <td class="text-center">
                       <v-chip
-                        :color="variante.stock_actual > 0 ? 'success' : 'error'"
+                        :color="variante.stock_actual > 10 ? 'success' : variante.stock_actual > 0 ? 'warning' : 'error'"
                         size="small"
                         variant="flat"
                       >
                         {{ variante.stock_actual }}
                       </v-chip>
                     </td>
-                    <td>
+                    <td class="text-center">
                       <v-btn
                         @click="agregarAlCarrito(variante)"
                         :disabled="variante.stock_actual === 0"
                         color="primary"
                         size="small"
+                        variant="flat"
                       >
-                        <v-icon left>mdi-plus</v-icon> Agregar
+                        <v-icon size="small">mdi-plus</v-icon>
+                        Agregar
                       </v-btn>
                     </td>
                   </tr>
@@ -90,7 +103,7 @@
           <v-card-title class="bg-error">
             <span class="text-white">Registrar Egreso (Gasto)</span>
           </v-card-title>
-          <v-card-text>
+          <v-card-text class="pt-4">
             <v-row>
               <v-col cols="12" md="6">
                 <v-text-field
@@ -167,7 +180,7 @@
           <v-card-title class="bg-success">
             <span class="text-white">Carrito de Compra</span>
           </v-card-title>
-          <v-card-text>
+          <v-card-text class="pt-4">
             <!-- Selector de Cliente -->
             <v-select
               v-model="venta.cliente_id"
@@ -181,12 +194,16 @@
               label="Cliente (Opcional)"
               variant="outlined"
               density="comfortable"
-              class="mb-3"
+              prepend-inner-icon="mdi-account"
+              class="mb-4"
             ></v-select>
 
             <!-- Items del Carrito -->
-            <div class="mb-3">
-              <h6>Productos Seleccionados:</h6>
+            <div class="mb-4">
+              <h6 class="mb-3 text-subtitle-1 font-weight-bold">
+                <v-icon size="small" class="mr-1">mdi-cart</v-icon>
+                Productos Seleccionados:
+              </h6>
               <v-alert
                 v-if="carrito.length === 0"
                 type="info"
@@ -199,53 +216,77 @@
                   v-for="(item, index) in carrito"
                   :key="index"
                   variant="outlined"
-                  class="mb-2 pa-2"
+                  class="mb-3"
                 >
-                  <div class="d-flex justify-space-between align-center">
-                    <div class="flex-grow-1">
-                      <strong class="nombre-producto">{{ item.nombre }}</strong><br>
-                      <small class="text-medium-emphasis">
-                        {{ item.talla }} - {{ item.color }}
-                      </small><br>
-                      <small>${{ Number(item.precio).toFixed(2) }} x {{ item.cantidad }}</small>
+                  <v-card-text class="pa-3">
+                    <div class="d-flex flex-column">
+                      <!-- Información del producto -->
+                      <div class="mb-2">
+                        <div class="font-weight-bold text-body-1">{{ item.nombre }}</div>
+                        <div class="text-caption text-medium-emphasis">
+                          <v-icon size="x-small">mdi-resize</v-icon> {{ item.talla }}
+                          <v-icon size="x-small" class="ml-2">mdi-palette</v-icon> {{ item.color }}
+                          <span v-if="item.marca" class="ml-2">
+                            <v-icon size="x-small">mdi-tag</v-icon> {{ item.marca }}
+                          </span>
+                        </div>
+                        <div class="text-caption mt-1">
+                          Precio unitario: <strong>${{ Number(item.precio).toFixed(2) }}</strong>
+                        </div>
+                      </div>
+
+                      <!-- Controles de cantidad -->
+                      <div class="d-flex justify-space-between align-center">
+                        <div class="d-flex align-center ga-1">
+                          <v-btn
+                            @click="modificarCantidad(index, -1)"
+                            icon="mdi-minus"
+                            size="x-small"
+                            variant="tonal"
+                            color="primary"
+                          ></v-btn>
+                          <v-text-field
+                            v-model.number="item.cantidad"
+                            type="number"
+                            variant="outlined"
+                            density="compact"
+                            hide-details
+                            class="text-center"
+                            style="width: 70px;"
+                            min="1"
+                            :max="item.stock_max"
+                            @change="validarCantidad(index)"
+                          ></v-text-field>
+                          <v-btn
+                            @click="modificarCantidad(index, 1)"
+                            icon="mdi-plus"
+                            size="x-small"
+                            variant="tonal"
+                            color="primary"
+                          ></v-btn>
+                          <v-chip size="small" color="info" variant="tonal" class="ml-2">
+                            Max: {{ item.stock_max }}
+                          </v-chip>
+                        </div>
+                        <v-btn
+                          @click="eliminarDelCarrito(index)"
+                          icon="mdi-delete"
+                          size="small"
+                          color="error"
+                          variant="tonal"
+                        ></v-btn>
+                      </div>
+
+                      <!-- Subtotal -->
+                      <v-divider class="my-2"></v-divider>
+                      <div class="d-flex justify-space-between align-center">
+                        <span class="text-body-2">Subtotal:</span>
+                        <span class="text-h6 font-weight-bold text-success">
+                          ${{ (item.precio * item.cantidad).toFixed(2) }}
+                        </span>
+                      </div>
                     </div>
-                    <div class="d-flex align-center">
-                      <v-btn
-                        @click="modificarCantidad(index, -1)"
-                        icon="mdi-minus"
-                        size="small"
-                        variant="outlined"
-                      ></v-btn>
-                      <v-text-field
-                        v-model.number="item.cantidad"
-                        type="number"
-                        variant="outlined"
-                        density="compact"
-                        hide-details
-                        class="mx-1"
-                        style="width: 60px;"
-                        min="1"
-                        :max="item.stock_max"
-                        @change="validarCantidad(index)"
-                      ></v-text-field>
-                      <v-btn
-                        @click="modificarCantidad(index, 1)"
-                        icon="mdi-plus"
-                        size="small"
-                        variant="outlined"
-                      ></v-btn>
-                      <v-btn
-                        @click="eliminarDelCarrito(index)"
-                        icon="mdi-delete"
-                        size="small"
-                        color="error"
-                        class="ms-2"
-                      ></v-btn>
-                    </div>
-                  </div>
-                  <div class="text-right mt-1">
-                    <strong>Subtotal: ${{ (item.precio * item.cantidad).toFixed(2) }}</strong>
-                  </div>
+                  </v-card-text>
                 </v-card>
               </div>
             </div>
@@ -515,6 +556,8 @@ export default {
           nombre: variante.producto_nombre,
           talla: variante.talla_nombre,
           color: variante.color_nombre,
+          marca: variante.marca_nombre,
+          categoria: variante.categoria_nombre,
           precio: Number(variante.precio_venta),
           cantidad: 1,
           stock_max: variante.stock_actual

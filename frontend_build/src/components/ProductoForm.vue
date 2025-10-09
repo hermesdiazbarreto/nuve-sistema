@@ -67,7 +67,18 @@
                 density="comfortable"
                 required
                 :rules="[v => !!v || 'Categoría es requerida']"
-              ></v-select>
+              >
+                <template v-slot:append>
+                  <v-btn
+                    icon="mdi-plus"
+                    size="small"
+                    color="primary"
+                    variant="text"
+                    @click="mostrarDialogCategoria = true"
+                    title="Agregar nueva categoría"
+                  ></v-btn>
+                </template>
+              </v-select>
             </v-col>
 
             <v-col cols="12" md="6">
@@ -81,7 +92,18 @@
                 density="comfortable"
                 required
                 :rules="[v => !!v || 'Marca es requerida']"
-              ></v-select>
+              >
+                <template v-slot:append>
+                  <v-btn
+                    icon="mdi-plus"
+                    size="small"
+                    color="primary"
+                    variant="text"
+                    @click="mostrarDialogMarca = true"
+                    title="Agregar nueva marca"
+                  ></v-btn>
+                </template>
+              </v-select>
             </v-col>
 
             <v-col cols="12" md="6">
@@ -201,24 +223,48 @@
                 </v-chip>
               </td>
               <td>
-                <v-btn
-                  icon
-                  size="small"
-                  color="warning"
-                  variant="text"
-                  @click="editarVariante(variante)"
-                >
-                  <v-icon>mdi-pencil</v-icon>
-                </v-btn>
-                <v-btn
-                  icon
-                  size="small"
-                  color="error"
-                  variant="text"
-                  @click="eliminarVariante(variante.id)"
-                >
-                  <v-icon>mdi-delete</v-icon>
-                </v-btn>
+                <v-tooltip text="Editar variante">
+                  <template v-slot:activator="{ props }">
+                    <v-btn
+                      v-bind="props"
+                      icon
+                      size="small"
+                      color="warning"
+                      variant="text"
+                      @click="editarVariante(variante)"
+                    >
+                      <v-icon>mdi-pencil</v-icon>
+                    </v-btn>
+                  </template>
+                </v-tooltip>
+                <v-tooltip text="Clonar variante">
+                  <template v-slot:activator="{ props }">
+                    <v-btn
+                      v-bind="props"
+                      icon
+                      size="small"
+                      color="info"
+                      variant="text"
+                      @click="clonarVariante(variante)"
+                    >
+                      <v-icon>mdi-content-copy</v-icon>
+                    </v-btn>
+                  </template>
+                </v-tooltip>
+                <v-tooltip text="Eliminar variante">
+                  <template v-slot:activator="{ props }">
+                    <v-btn
+                      v-bind="props"
+                      icon
+                      size="small"
+                      color="error"
+                      variant="text"
+                      @click="eliminarVariante(variante.id)"
+                    >
+                      <v-icon>mdi-delete</v-icon>
+                    </v-btn>
+                  </template>
+                </v-tooltip>
               </td>
             </tr>
           </tbody>
@@ -230,10 +276,25 @@
     <v-dialog v-model="mostrarModalVariante" max-width="600px">
       <v-card>
         <v-card-title class="text-h5 primary white--text">
-          <v-icon left color="white">mdi-package-variant</v-icon>
-          {{ varianteEditando ? 'Editar' : 'Nueva' }} Variante
+          <v-icon left color="white">
+            {{ varianteEditando ? 'mdi-pencil' : formVariante.stock_actual === 0 && (formVariante.talla || formVariante.color) ? 'mdi-content-copy' : 'mdi-plus' }}
+          </v-icon>
+          {{ varianteEditando ? 'Editar Variante' : formVariante.stock_actual === 0 && (formVariante.talla || formVariante.color) ? 'Clonar Variante' : 'Nueva Variante' }}
         </v-card-title>
         <v-card-text class="pa-6">
+          <v-alert
+            v-if="!varianteEditando && formVariante.stock_actual === 0 && (formVariante.talla || formVariante.color)"
+            type="info"
+            variant="tonal"
+            density="compact"
+            class="mb-4"
+          >
+            <div class="d-flex align-center">
+              <v-icon>mdi-information</v-icon>
+              <span class="ml-2">Clonando variante. Cambia la <strong>talla</strong> o el <strong>color</strong> para crear una nueva variante con las mismas características.</span>
+            </div>
+          </v-alert>
+
           <v-form @submit.prevent="guardarVariante">
             <v-select
               v-model="formVariante.talla"
@@ -245,7 +306,18 @@
               density="comfortable"
               required
               :disabled="!!varianteEditando"
-            ></v-select>
+            >
+              <template v-slot:append v-if="!varianteEditando">
+                <v-btn
+                  icon="mdi-plus"
+                  size="small"
+                  color="primary"
+                  variant="text"
+                  @click="mostrarDialogTalla = true"
+                  title="Agregar nueva talla"
+                ></v-btn>
+              </template>
+            </v-select>
 
             <v-select
               v-model="formVariante.color"
@@ -258,7 +330,18 @@
               required
               :disabled="!!varianteEditando"
               class="mt-4"
-            ></v-select>
+            >
+              <template v-slot:append v-if="!varianteEditando">
+                <v-btn
+                  icon="mdi-plus"
+                  size="small"
+                  color="primary"
+                  variant="text"
+                  @click="mostrarDialogColor = true"
+                  title="Agregar nuevo color"
+                ></v-btn>
+              </template>
+            </v-select>
 
             <v-text-field
               v-model.number="formVariante.stock_actual"
@@ -269,6 +352,8 @@
               min="0"
               required
               class="mt-4"
+              :hint="!varianteEditando && formVariante.stock_actual === 0 && (formVariante.talla || formVariante.color) ? 'El stock inicia en 0 al clonar. Ingresa la cantidad inicial.' : ''"
+              persistent-hint
             ></v-text-field>
 
             <v-text-field
@@ -335,6 +420,150 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Dialog para agregar Categoría -->
+    <v-dialog v-model="mostrarDialogCategoria" max-width="500px">
+      <v-card>
+        <v-card-title class="bg-primary text-white">
+          <v-icon left color="white">mdi-shape-plus</v-icon>
+          Nueva Categoría
+        </v-card-title>
+        <v-card-text class="pa-6">
+          <v-text-field
+            v-model="nuevaCategoria.nombre"
+            label="Nombre de la Categoría *"
+            variant="outlined"
+            density="comfortable"
+            autofocus
+          ></v-text-field>
+          <v-textarea
+            v-model="nuevaCategoria.descripcion"
+            label="Descripción"
+            variant="outlined"
+            density="comfortable"
+            rows="2"
+          ></v-textarea>
+        </v-card-text>
+        <v-card-actions class="pa-4">
+          <v-btn color="grey" variant="text" @click="cerrarDialogCategoria">Cancelar</v-btn>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" @click="guardarCategoria">Guardar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Dialog para agregar Marca -->
+    <v-dialog v-model="mostrarDialogMarca" max-width="500px">
+      <v-card>
+        <v-card-title class="bg-primary text-white">
+          <v-icon left color="white">mdi-tag-plus</v-icon>
+          Nueva Marca
+        </v-card-title>
+        <v-card-text class="pa-6">
+          <v-text-field
+            v-model="nuevaMarca.nombre"
+            label="Nombre de la Marca *"
+            variant="outlined"
+            density="comfortable"
+            autofocus
+          ></v-text-field>
+          <v-textarea
+            v-model="nuevaMarca.descripcion"
+            label="Descripción"
+            variant="outlined"
+            density="comfortable"
+            rows="2"
+          ></v-textarea>
+        </v-card-text>
+        <v-card-actions class="pa-4">
+          <v-btn color="grey" variant="text" @click="cerrarDialogMarca">Cancelar</v-btn>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" @click="guardarMarca">Guardar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Dialog para agregar Talla -->
+    <v-dialog v-model="mostrarDialogTalla" max-width="500px">
+      <v-card>
+        <v-card-title class="bg-primary text-white">
+          <v-icon left color="white">mdi-resize</v-icon>
+          Nueva Talla
+        </v-card-title>
+        <v-card-text class="pa-6">
+          <v-text-field
+            v-model="nuevaTalla.nombre"
+            label="Nombre de la Talla *"
+            variant="outlined"
+            density="comfortable"
+            autofocus
+            hint="Ej: XS, S, M, L, XL, 36, 38, 40, etc."
+            persistent-hint
+          ></v-text-field>
+          <v-text-field
+            v-model.number="nuevaTalla.orden"
+            label="Orden"
+            variant="outlined"
+            density="comfortable"
+            type="number"
+            class="mt-4"
+            hint="Orden de visualización (menor número = primero)"
+            persistent-hint
+          ></v-text-field>
+        </v-card-text>
+        <v-card-actions class="pa-4">
+          <v-btn color="grey" variant="text" @click="cerrarDialogTalla">Cancelar</v-btn>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" @click="guardarTalla">Guardar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Dialog para agregar Color -->
+    <v-dialog v-model="mostrarDialogColor" max-width="500px">
+      <v-card>
+        <v-card-title class="bg-primary text-white">
+          <v-icon left color="white">mdi-palette-plus</v-icon>
+          Nuevo Color
+        </v-card-title>
+        <v-card-text class="pa-6">
+          <v-text-field
+            v-model="nuevoColor.nombre"
+            label="Nombre del Color *"
+            variant="outlined"
+            density="comfortable"
+            autofocus
+          ></v-text-field>
+          <v-text-field
+            v-model="nuevoColor.codigo_hex"
+            label="Código Hexadecimal"
+            variant="outlined"
+            density="comfortable"
+            class="mt-4"
+            placeholder="#FF0000"
+            hint="Ej: #FF0000 para rojo"
+            persistent-hint
+          >
+            <template v-slot:prepend-inner v-if="nuevoColor.codigo_hex">
+              <div
+                :style="{
+                  backgroundColor: nuevoColor.codigo_hex,
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '4px',
+                  border: '1px solid #ccc'
+                }"
+              ></div>
+            </template>
+          </v-text-field>
+        </v-card-text>
+        <v-card-actions class="pa-4">
+          <v-btn color="grey" variant="text" @click="cerrarDialogColor">Cancelar</v-btn>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" @click="guardarColor">Guardar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -379,7 +608,30 @@ export default {
       snackbarText: '',
       snackbarColor: 'success',
       dialogEliminar: false,
-      varianteIdEliminar: null
+      varianteIdEliminar: null,
+      // Diálogos para agregar datos
+      mostrarDialogCategoria: false,
+      mostrarDialogMarca: false,
+      mostrarDialogTalla: false,
+      mostrarDialogColor: false,
+      nuevaCategoria: {
+        nombre: '',
+        descripcion: '',
+        activo: true
+      },
+      nuevaMarca: {
+        nombre: '',
+        descripcion: '',
+        activo: true
+      },
+      nuevaTalla: {
+        nombre: '',
+        orden: 0
+      },
+      nuevoColor: {
+        nombre: '',
+        codigo_hex: ''
+      }
     }
   },
   async created() {
@@ -496,6 +748,20 @@ export default {
       }
       this.mostrarModalVariante = true
     },
+    clonarVariante(variante) {
+      // No establecemos varianteEditando para que sea una nueva variante
+      this.varianteEditando = null
+      this.formVariante = {
+        producto: parseInt(this.productoId),
+        talla: variante.talla, // Mantiene la misma talla por defecto
+        color: variante.color, // Mantiene el mismo color por defecto
+        stock_actual: 0, // Stock inicial en 0 para la nueva variante
+        stock_minimo: variante.stock_minimo, // Copia el stock mínimo
+        activo: true // Nueva variante activa por defecto
+      }
+      this.mostrarModalVariante = true
+      this.showSnackbar('Clonando variante. Cambia la talla o color para crear una nueva variante.', 'info')
+    },
     async guardarVariante() {
       try {
         // Generar código de variante
@@ -565,6 +831,90 @@ export default {
       this.snackbarText = text
       this.snackbarColor = color
       this.snackbar = true
+    },
+    // Métodos para Categoría
+    async guardarCategoria() {
+      if (!this.nuevaCategoria.nombre) {
+        this.showSnackbar('El nombre es requerido', 'warning')
+        return
+      }
+      try {
+        const response = await api.createCategoria(this.nuevaCategoria)
+        this.categorias.push(response.data)
+        this.form.categoria = response.data.id
+        this.showSnackbar('Categoría creada correctamente', 'success')
+        this.cerrarDialogCategoria()
+      } catch (error) {
+        console.error('Error al crear categoría:', error)
+        this.showSnackbar('Error al crear la categoría', 'error')
+      }
+    },
+    cerrarDialogCategoria() {
+      this.mostrarDialogCategoria = false
+      this.nuevaCategoria = { nombre: '', descripcion: '', activo: true }
+    },
+    // Métodos para Marca
+    async guardarMarca() {
+      if (!this.nuevaMarca.nombre) {
+        this.showSnackbar('El nombre es requerido', 'warning')
+        return
+      }
+      try {
+        const response = await api.createMarca(this.nuevaMarca)
+        this.marcas.push(response.data)
+        this.form.marca = response.data.id
+        this.showSnackbar('Marca creada correctamente', 'success')
+        this.cerrarDialogMarca()
+      } catch (error) {
+        console.error('Error al crear marca:', error)
+        this.showSnackbar('Error al crear la marca', 'error')
+      }
+    },
+    cerrarDialogMarca() {
+      this.mostrarDialogMarca = false
+      this.nuevaMarca = { nombre: '', descripcion: '', activo: true }
+    },
+    // Métodos para Talla
+    async guardarTalla() {
+      if (!this.nuevaTalla.nombre) {
+        this.showSnackbar('El nombre es requerido', 'warning')
+        return
+      }
+      try {
+        const response = await api.createTalla(this.nuevaTalla)
+        this.tallas.push(response.data)
+        this.formVariante.talla = response.data.id
+        this.showSnackbar('Talla creada correctamente', 'success')
+        this.cerrarDialogTalla()
+      } catch (error) {
+        console.error('Error al crear talla:', error)
+        this.showSnackbar('Error al crear la talla', 'error')
+      }
+    },
+    cerrarDialogTalla() {
+      this.mostrarDialogTalla = false
+      this.nuevaTalla = { nombre: '', orden: 0 }
+    },
+    // Métodos para Color
+    async guardarColor() {
+      if (!this.nuevoColor.nombre) {
+        this.showSnackbar('El nombre es requerido', 'warning')
+        return
+      }
+      try {
+        const response = await api.createColor(this.nuevoColor)
+        this.colores.push(response.data)
+        this.formVariante.color = response.data.id
+        this.showSnackbar('Color creado correctamente', 'success')
+        this.cerrarDialogColor()
+      } catch (error) {
+        console.error('Error al crear color:', error)
+        this.showSnackbar('Error al crear el color', 'error')
+      }
+    },
+    cerrarDialogColor() {
+      this.mostrarDialogColor = false
+      this.nuevoColor = { nombre: '', codigo_hex: '' }
     }
   }
 }
