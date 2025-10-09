@@ -51,8 +51,9 @@
         <v-card-title class="bg-success">
           <span class="text-white">Productos</span>
         </v-card-title>
-        <v-card-text>
-          <v-table hover>
+        <v-card-text class="pa-0">
+          <!-- Vista Desktop: Tabla -->
+          <v-table v-if="$vuetify.display.mdAndUp" hover>
             <thead>
               <tr>
                 <th>Producto</th>
@@ -70,6 +71,35 @@
               </tr>
             </tbody>
           </v-table>
+
+          <!-- Vista Móvil: Cards -->
+          <div v-else class="pa-2">
+            <v-card
+              v-for="detalle in venta.detalles"
+              :key="detalle.id"
+              class="mb-2"
+              variant="outlined"
+            >
+              <v-card-text class="pa-3">
+                <div class="nombre-producto text-body-2 font-weight-bold mb-2">
+                  {{ detalle.producto_info }}
+                </div>
+                <v-divider class="my-2"></v-divider>
+                <div class="d-flex justify-space-between mb-1">
+                  <span class="text-caption">Cantidad:</span>
+                  <span class="text-body-2 font-weight-medium">{{ detalle.cantidad }}</span>
+                </div>
+                <div class="d-flex justify-space-between mb-1">
+                  <span class="text-caption">Precio Unit.:</span>
+                  <span class="text-body-2">{{ formatearPrecio(detalle.precio_unitario) }}</span>
+                </div>
+                <div class="d-flex justify-space-between">
+                  <span class="text-caption font-weight-bold">Subtotal:</span>
+                  <span class="text-body-1 font-weight-bold text-primary">{{ formatearPrecio(detalle.subtotal) }}</span>
+                </div>
+              </v-card-text>
+            </v-card>
+          </div>
         </v-card-text>
       </v-card>
 
@@ -134,8 +164,9 @@
             Historial de Pagos
           </span>
         </v-card-title>
-        <v-card-text>
-          <v-table hover>
+        <v-card-text class="pa-0">
+          <!-- Vista Desktop: Tabla -->
+          <v-table v-if="$vuetify.display.mdAndUp" hover>
             <thead>
               <tr>
                 <th>Fecha</th>
@@ -157,6 +188,36 @@
               </tr>
             </tbody>
           </v-table>
+
+          <!-- Vista Móvil: Cards -->
+          <div v-else class="pa-2">
+            <v-card
+              v-for="pago in venta.pagos"
+              :key="pago.id"
+              class="mb-2"
+              variant="outlined"
+            >
+              <v-card-text class="pa-3">
+                <div class="d-flex justify-space-between align-center mb-2">
+                  <div class="text-caption text-medium-emphasis">
+                    {{ formatFecha(pago.fecha_pago) }}
+                  </div>
+                  <v-chip size="small" variant="outlined">{{ pago.tipo_pago }}</v-chip>
+                </div>
+                <v-divider class="my-2"></v-divider>
+                <div class="d-flex justify-space-between mb-2">
+                  <span class="text-body-2">Monto:</span>
+                  <span class="text-h6 font-weight-bold text-success">{{ formatearPrecio(pago.monto) }}</span>
+                </div>
+                <div class="text-caption mb-1">
+                  <strong>Usuario:</strong> {{ pago.usuario_nombre }}
+                </div>
+                <div v-if="pago.observaciones" class="text-caption">
+                  <strong>Observaciones:</strong> {{ pago.observaciones }}
+                </div>
+              </v-card-text>
+            </v-card>
+          </div>
 
           <!-- Resumen de pagos -->
           <v-alert type="info" variant="tonal" class="mt-4">

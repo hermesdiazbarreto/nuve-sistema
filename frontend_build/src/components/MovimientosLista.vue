@@ -78,7 +78,8 @@
           No hay movimientos de inventario.
         </v-alert>
 
-        <div v-else style="overflow-x: auto;">
+        <!-- Vista Desktop: Tabla -->
+        <div v-else-if="$vuetify.display.mdAndUp" style="overflow-x: auto;">
           <v-table density="compact" hover>
             <thead>
               <tr>
@@ -117,6 +118,72 @@
               </tr>
             </tbody>
           </v-table>
+        </div>
+
+        <!-- Vista Móvil: Cards -->
+        <div v-else class="pa-2">
+          <v-card
+            v-for="mov in movimientosFiltrados"
+            :key="mov.id"
+            class="mb-3"
+            elevation="2"
+          >
+            <v-card-text class="pa-3">
+              <!-- Header -->
+              <div class="d-flex justify-space-between align-center mb-2">
+                <div>
+                  <div class="text-caption text-medium-emphasis">ID: {{ mov.id }}</div>
+                  <div class="text-caption">{{ formatFecha(mov.fecha_movimiento) }}</div>
+                </div>
+                <v-chip
+                  :color="getBadgeClass(mov.tipo_movimiento)"
+                  size="small"
+                  variant="flat"
+                >
+                  {{ mov.tipo_movimiento }}
+                </v-chip>
+              </div>
+
+              <v-divider class="my-2"></v-divider>
+
+              <!-- Producto -->
+              <div class="mb-2">
+                <div class="nombre-producto text-body-2 font-weight-bold mb-1">
+                  {{ mov.producto_info }}
+                </div>
+              </div>
+
+              <!-- Stocks -->
+              <div class="d-flex justify-space-around mb-2">
+                <div class="text-center">
+                  <div class="text-caption text-medium-emphasis">Stock Anterior</div>
+                  <div class="text-body-1 font-weight-medium">{{ mov.stock_anterior }}</div>
+                </div>
+                <div class="text-center" :class="getCantidadClass(mov.tipo_movimiento)">
+                  <div class="text-caption text-medium-emphasis">Cantidad</div>
+                  <div class="text-h6 font-weight-bold">
+                    {{ getTipoMovimiento(mov.tipo_movimiento) }}{{ mov.cantidad }}
+                  </div>
+                </div>
+                <div class="text-center">
+                  <div class="text-caption text-medium-emphasis">Stock Nuevo</div>
+                  <div class="text-body-1 font-weight-medium">{{ mov.stock_nuevo }}</div>
+                </div>
+              </div>
+
+              <v-divider class="my-2"></v-divider>
+
+              <!-- Motivo y usuario -->
+              <div>
+                <div class="text-caption mb-1">
+                  <strong>Motivo:</strong> {{ mov.motivo }}
+                </div>
+                <div class="text-caption">
+                  <strong>Usuario:</strong> {{ mov.usuario_nombre }}
+                </div>
+              </div>
+            </v-card-text>
+          </v-card>
         </div>
       </v-card-text>
     </v-card>

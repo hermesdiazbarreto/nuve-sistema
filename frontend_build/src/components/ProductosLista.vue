@@ -178,7 +178,8 @@
             Este producto no tiene variantes.
           </v-alert>
 
-          <v-table v-else density="comfortable">
+          <!-- Vista Desktop: Tabla -->
+          <v-table v-else-if="$vuetify.display.mdAndUp" density="comfortable">
             <thead>
               <tr>
                 <th>Código</th>
@@ -227,6 +228,65 @@
               </tr>
             </tbody>
           </v-table>
+
+          <!-- Vista Móvil: Cards -->
+          <div v-else>
+            <v-card
+              v-for="variante in variantesProducto"
+              :key="variante.id"
+              class="mb-2"
+              elevation="2"
+            >
+              <v-card-text class="pa-3">
+                <div class="d-flex justify-space-between align-center mb-2">
+                  <div>
+                    <div class="text-body-2 font-weight-bold">{{ variante.codigo_variante }}</div>
+                    <div class="text-caption text-medium-emphasis">
+                      {{ variante.talla_nombre }} / {{ variante.color_nombre }}
+                    </div>
+                  </div>
+                  <v-chip
+                    :color="variante.activo ? 'success' : 'grey'"
+                    size="small"
+                    variant="flat"
+                  >
+                    {{ variante.activo ? 'Activo' : 'Inactivo' }}
+                  </v-chip>
+                </div>
+
+                <v-divider class="my-2"></v-divider>
+
+                <div class="d-flex justify-space-around mb-2">
+                  <div class="text-center">
+                    <div class="text-caption text-medium-emphasis">Stock</div>
+                    <v-chip
+                      :color="variante.stock_actual <= variante.stock_minimo ? 'error' : 'success'"
+                      size="small"
+                      variant="flat"
+                    >
+                      {{ variante.stock_actual }}
+                    </v-chip>
+                  </div>
+                  <div class="text-center">
+                    <div class="text-caption text-medium-emphasis">Mínimo</div>
+                    <div class="text-body-2 font-weight-medium">{{ variante.stock_minimo }}</div>
+                  </div>
+                </div>
+
+                <div class="text-center">
+                  <v-btn
+                    size="small"
+                    color="info"
+                    variant="outlined"
+                    @click="abrirModalDuplicar(variante)"
+                  >
+                    <v-icon left size="small">mdi-content-copy</v-icon>
+                    Duplicar
+                  </v-btn>
+                </div>
+              </v-card-text>
+            </v-card>
+          </div>
         </v-card-text>
 
         <v-divider></v-divider>

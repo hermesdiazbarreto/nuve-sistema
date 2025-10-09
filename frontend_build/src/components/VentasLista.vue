@@ -106,7 +106,9 @@
       </v-card-title>
       <v-divider></v-divider>
 
+      <!-- Vista Desktop: Tabla completa -->
       <v-data-table
+        v-if="$vuetify.display.mdAndUp"
         :headers="headers"
         :items="ventasFiltradas"
         :items-per-page="10"
@@ -220,6 +222,114 @@
           </v-btn>
         </template>
       </v-data-table>
+
+      <!-- Vista Móvil/Tablet: Cards -->
+      <v-card-text v-else class="pa-2">
+        <v-card
+          v-for="venta in ventasFiltradas"
+          :key="venta.id"
+          class="mb-3"
+          elevation="2"
+        >
+          <v-card-text class="pa-3">
+            <!-- Header con número y tipo -->
+            <div class="d-flex justify-space-between align-center mb-2">
+              <div>
+                <div class="text-subtitle-2 font-weight-bold">{{ venta.numero_venta }}</div>
+                <div class="text-caption text-medium-emphasis">{{ formatFecha(venta.fecha_venta) }}</div>
+              </div>
+              <v-chip
+                :color="venta.tipo_movimiento === 'INGRESO' ? 'success' : 'error'"
+                size="small"
+                variant="flat"
+              >
+                <v-icon left size="x-small">
+                  {{ venta.tipo_movimiento === 'INGRESO' ? 'mdi-cash-plus' : 'mdi-cash-minus' }}
+                </v-icon>
+                {{ venta.tipo_movimiento === 'INGRESO' ? 'Ingreso' : 'Egreso' }}
+              </v-chip>
+            </div>
+
+            <v-divider class="my-2"></v-divider>
+
+            <!-- Información principal -->
+            <div class="mb-2">
+              <div class="d-flex justify-space-between mb-1">
+                <span class="text-caption">Cliente:</span>
+                <span class="text-caption font-weight-medium">{{ venta.cliente_nombre }}</span>
+              </div>
+              <div class="d-flex justify-space-between mb-1">
+                <span class="text-caption">Total:</span>
+                <span class="text-body-2 font-weight-bold text-primary">{{ formatearPrecio(venta.total) }}</span>
+              </div>
+              <div v-if="venta.monto_abonado > 0" class="d-flex justify-space-between mb-1">
+                <span class="text-caption">Abonado:</span>
+                <span class="text-caption font-weight-medium text-success">{{ formatearPrecio(venta.monto_abonado) }}</span>
+              </div>
+              <div v-if="venta.saldo_pendiente > 0" class="d-flex justify-space-between mb-1">
+                <span class="text-caption">Pendiente:</span>
+                <span class="text-caption font-weight-bold text-warning">{{ formatearPrecio(venta.saldo_pendiente) }}</span>
+              </div>
+            </div>
+
+            <!-- Estado y acciones -->
+            <div class="d-flex justify-space-between align-center">
+              <v-chip :color="getChipColor(venta.estado)" size="small" variant="flat">
+                {{ venta.estado }}
+              </v-chip>
+              <div class="d-flex ga-1">
+                <v-btn
+                  icon
+                  size="small"
+                  color="info"
+                  variant="text"
+                  :to="`/ventas/${venta.id}`"
+                  title="Ver detalles"
+                >
+                  <v-icon size="small">mdi-eye</v-icon>
+                </v-btn>
+                <v-btn
+                  v-if="venta.estado === 'ABONO' || (venta.estado === 'PENDIENTE' && venta.saldo_pendiente > 0)"
+                  icon
+                  size="small"
+                  color="success"
+                  variant="text"
+                  @click="abrirModalPago(venta)"
+                  title="Registrar pago"
+                >
+                  <v-icon size="small">mdi-cash-plus</v-icon>
+                </v-btn>
+                <v-btn
+                  icon
+                  size="small"
+                  color="warning"
+                  variant="text"
+                  :disabled="venta.estado === 'CANCELADO'"
+                  @click="cancelarVenta(venta)"
+                  title="Cancelar"
+                >
+                  <v-icon size="small">mdi-cancel</v-icon>
+                </v-btn>
+                <v-btn
+                  icon
+                  size="small"
+                  color="error"
+                  variant="text"
+                  @click="eliminarVenta(venta.id)"
+                  title="Eliminar"
+                >
+                  <v-icon size="small">mdi-delete</v-icon>
+                </v-btn>
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
+
+        <!-- Paginación manual para móvil (opcional) -->
+        <div v-if="ventasFiltradas.length === 0" class="text-center pa-4 text-medium-emphasis">
+          No hay ventas registradas
+        </div>
+      </v-card-text>
     </v-card>
 
     <!-- Modal para Registrar Pago -->

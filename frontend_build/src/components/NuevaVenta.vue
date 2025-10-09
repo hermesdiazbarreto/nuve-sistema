@@ -37,18 +37,19 @@
               class="mb-4"
             ></v-text-field>
 
-            <div style="max-height: 500px; overflow-y: auto; overflow-x: auto;">
+            <!-- Vista Desktop: Tabla -->
+            <div v-if="$vuetify.display.mdAndUp" style="max-height: 500px; overflow-y: auto;">
               <v-table density="compact" hover fixed-header>
                 <thead>
                   <tr>
-                    <th class="text-left" style="min-width: 100px;">Código</th>
-                    <th class="text-left" style="min-width: 180px;">Producto</th>
-                    <th class="text-left" style="min-width: 60px;">Talla</th>
-                    <th class="text-left" style="min-width: 80px;">Color</th>
-                    <th class="text-left" style="min-width: 80px;">Marca</th>
-                    <th class="text-right" style="min-width: 80px;">Precio</th>
-                    <th class="text-center" style="min-width: 70px;">Stock</th>
-                    <th class="text-center" style="min-width: 120px;">Acción</th>
+                    <th class="text-left">Código</th>
+                    <th class="text-left">Producto</th>
+                    <th class="text-left">Talla</th>
+                    <th class="text-left">Color</th>
+                    <th class="text-left">Marca</th>
+                    <th class="text-right">Precio</th>
+                    <th class="text-center">Stock</th>
+                    <th class="text-center">Acción</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -92,6 +93,64 @@
                   </tr>
                 </tbody>
               </v-table>
+            </div>
+
+            <!-- Vista Móvil: Cards -->
+            <div v-else style="max-height: 500px; overflow-y: auto;">
+              <v-card
+                v-for="variante in variantesFiltradas"
+                :key="variante.id"
+                class="mb-3"
+                elevation="2"
+              >
+                <v-card-text class="pa-3">
+                  <div class="d-flex justify-space-between align-center mb-2">
+                    <div class="flex-grow-1">
+                      <div class="nombre-producto text-body-2 font-weight-bold">
+                        {{ variante.producto_nombre }}
+                      </div>
+                      <div class="text-caption text-medium-emphasis">
+                        {{ variante.codigo_variante }}
+                      </div>
+                    </div>
+                    <v-chip
+                      :color="variante.stock_actual > 10 ? 'success' : variante.stock_actual > 0 ? 'warning' : 'error'"
+                      size="small"
+                      variant="flat"
+                    >
+                      Stock: {{ variante.stock_actual }}
+                    </v-chip>
+                  </div>
+
+                  <v-divider class="my-2"></v-divider>
+
+                  <div class="d-flex justify-space-between align-center mb-2">
+                    <div class="text-caption">
+                      <v-icon size="x-small">mdi-resize</v-icon> {{ variante.talla_nombre }}
+                      <v-chip size="x-small" :color="variante.color_hex" variant="flat" class="ml-2">
+                        {{ variante.color_nombre }}
+                      </v-chip>
+                    </div>
+                    <div class="text-caption">{{ variante.marca_nombre }}</div>
+                  </div>
+
+                  <div class="d-flex justify-space-between align-center">
+                    <div class="text-h6 font-weight-bold text-primary">
+                      {{ formatearPrecio(variante.precio_venta) }}
+                    </div>
+                    <v-btn
+                      @click="agregarAlCarrito(variante)"
+                      :disabled="variante.stock_actual === 0"
+                      color="primary"
+                      size="small"
+                      variant="flat"
+                    >
+                      <v-icon size="small">mdi-plus</v-icon>
+                      Agregar
+                    </v-btn>
+                  </div>
+                </v-card-text>
+              </v-card>
             </div>
           </v-card-text>
         </v-card>
