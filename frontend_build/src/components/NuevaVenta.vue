@@ -885,7 +885,8 @@ export default {
             descuento: Number(this.venta.descuento).toFixed(2),
             impuesto: this.impuesto.toFixed(2),
             total: this.total.toFixed(2),
-            monto_abonado: this.venta.es_abono ? Number(this.venta.monto_abonado).toFixed(2) : 0,
+            monto_abonado: this.venta.es_abono ? Number(this.venta.monto_abonado).toFixed(2) : this.total.toFixed(2),
+            estado: this.venta.es_abono ? undefined : 'PAGADO',
             tipo_pago: this.venta.tipo_pago,
             observaciones: this.venta.observaciones || '',
             detalles: this.carrito.map(item => ({
