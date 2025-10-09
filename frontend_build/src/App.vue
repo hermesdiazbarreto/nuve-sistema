@@ -1,86 +1,52 @@
 <template>
   <v-app>
-    <!-- App Bar / Navbar -->
+    <!-- Top App Bar (solo para mobile) -->
     <v-app-bar
       v-if="isAuthenticated"
       app
-      elevate-on-scroll
-      color="primary"
-      dark
-      height="70"
+      color="white"
+      elevation="1"
+      height="64"
+      class="d-lg-none"
     >
-      <v-app-bar-nav-icon @click="drawer = !drawer" class="d-lg-none"></v-app-bar-nav-icon>
-
-      <v-toolbar-title class="text-h5 font-weight-bold ml-2">
-        <v-icon large class="mr-2">mdi-star-four-points</v-icon>
+      <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
+      <v-toolbar-title class="text-h6 font-weight-bold">
+        <v-icon color="primary" class="mr-2">mdi-star-four-points</v-icon>
         Nuve
       </v-toolbar-title>
-
-      <v-spacer></v-spacer>
-
-      <!-- Desktop Menu -->
-      <v-btn
-        v-for="item in menuItems"
-        :key="item.title"
-        :to="item.to"
-        text
-        class="d-none d-lg-flex mx-1"
-      >
-        <v-icon left>{{ item.icon }}</v-icon>
-        {{ item.title }}
-      </v-btn>
-
-      <v-spacer></v-spacer>
-
-      <!-- User Menu -->
-      <v-menu offset-y>
-        <template #activator="{ props }">
-          <v-btn icon v-bind="props">
-            <v-avatar color="white" size="40">
-              <v-icon color="primary">mdi-account-circle</v-icon>
-            </v-avatar>
-          </v-btn>
-        </template>
-        <v-list>
-          <v-list-item>
-            <v-list-item-title class="font-weight-bold">{{ username }}</v-list-item-title>
-          </v-list-item>
-          <v-divider></v-divider>
-          <v-list-item @click="logout">
-            <template #prepend>
-              <v-icon>mdi-logout</v-icon>
-            </template>
-            <v-list-item-title>Cerrar Sesión</v-list-item-title>
-          </v-list-item>
-        </v-list>
-      </v-menu>
     </v-app-bar>
 
-    <!-- Navigation Drawer (Mobile) -->
+    <!-- Sidebar (Menú Lateral) -->
     <v-navigation-drawer
       v-if="isAuthenticated"
       v-model="drawer"
       app
-      temporary
+      :permanent="$vuetify.display.lgAndUp"
+      :temporary="!$vuetify.display.lgAndUp"
       width="280"
+      color="white"
+      elevation="2"
     >
-      <v-list>
-        <v-list-item class="py-4">
-          <v-list-item-title class="text-h6 font-weight-bold primary--text">
-            <v-icon large color="primary" class="mr-2">mdi-star-four-points</v-icon>
-            Nuve
-          </v-list-item-title>
-        </v-list-item>
-      </v-list>
+      <!-- Header del Sidebar -->
+      <div class="sidebar-header pa-6">
+        <div class="d-flex align-center mb-2">
+          <v-icon size="40" color="primary">mdi-star-four-points</v-icon>
+          <span class="text-h5 font-weight-bold ml-3" style="background: var(--nuve-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Nuve</span>
+        </div>
+        <div class="text-caption text-medium-emphasis">Sistema de Gestión</div>
+      </div>
 
       <v-divider></v-divider>
 
-      <v-list nav>
+      <!-- Menu Principal -->
+      <v-list nav class="py-2">
         <v-list-item
-          v-for="item in allMenuItems"
+          v-for="item in mainMenuItems"
           :key="item.title"
           :to="item.to"
           link
+          rounded="xl"
+          class="mx-2 my-1"
         >
           <template #prepend>
             <v-icon>{{ item.icon }}</v-icon>
@@ -88,6 +54,99 @@
           <v-list-item-title>{{ item.title }}</v-list-item-title>
         </v-list-item>
       </v-list>
+
+      <v-divider class="my-2"></v-divider>
+
+      <!-- Sección Maestros -->
+      <v-list nav class="py-2">
+        <v-list-subheader>MAESTROS</v-list-subheader>
+        <v-list-item
+          v-for="item in maestrosMenuItems"
+          :key="item.title"
+          :to="item.to"
+          link
+          rounded="xl"
+          class="mx-2 my-1"
+        >
+          <template #prepend>
+            <v-icon>{{ item.icon }}</v-icon>
+          </template>
+          <v-list-item-title>{{ item.title }}</v-list-item-title>
+        </v-list-item>
+      </v-list>
+
+      <v-divider class="my-2"></v-divider>
+
+      <!-- Acceso Rápido -->
+      <v-list nav class="py-2">
+        <v-list-subheader>ACCESO RÁPIDO</v-list-subheader>
+        <v-list-item
+          @click="$root.$emit('open-dialog-categoria')"
+          rounded="xl"
+          class="mx-2 my-1"
+        >
+          <template #prepend>
+            <v-icon color="primary">mdi-shape-plus</v-icon>
+          </template>
+          <v-list-item-title>Nueva Categoría</v-list-item-title>
+        </v-list-item>
+        <v-list-item
+          @click="$root.$emit('open-dialog-marca')"
+          rounded="xl"
+          class="mx-2 my-1"
+        >
+          <template #prepend>
+            <v-icon color="primary">mdi-tag-plus</v-icon>
+          </template>
+          <v-list-item-title>Nueva Marca</v-list-item-title>
+        </v-list-item>
+        <v-list-item
+          @click="$root.$emit('open-dialog-talla')"
+          rounded="xl"
+          class="mx-2 my-1"
+        >
+          <template #prepend>
+            <v-icon color="primary">mdi-resize</v-icon>
+          </template>
+          <v-list-item-title>Nueva Talla</v-list-item-title>
+        </v-list-item>
+        <v-list-item
+          @click="$root.$emit('open-dialog-color')"
+          rounded="xl"
+          class="mx-2 my-1"
+        >
+          <template #prepend>
+            <v-icon color="primary">mdi-palette-plus</v-icon>
+          </template>
+          <v-list-item-title>Nuevo Color</v-list-item-title>
+        </v-list-item>
+      </v-list>
+
+      <template #append>
+        <v-divider></v-divider>
+        <!-- User Menu -->
+        <v-list nav class="py-2">
+          <v-list-item class="mx-2" rounded="xl">
+            <template #prepend>
+              <v-avatar color="primary" size="40">
+                <v-icon color="white">mdi-account-circle</v-icon>
+              </v-avatar>
+            </template>
+            <v-list-item-title class="font-weight-bold">{{ username }}</v-list-item-title>
+            <v-list-item-subtitle>Administrador</v-list-item-subtitle>
+          </v-list-item>
+          <v-list-item
+            @click="logout"
+            rounded="xl"
+            class="mx-2 my-1"
+          >
+            <template #prepend>
+              <v-icon color="error">mdi-logout</v-icon>
+            </template>
+            <v-list-item-title>Cerrar Sesión</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </template>
     </v-navigation-drawer>
 
     <!-- Main Content -->
@@ -125,26 +184,22 @@ export default {
   name: 'App',
   data() {
     return {
-      drawer: false,
+      drawer: true, // Abierto por defecto en desktop
       isAuthenticated: false,
       username: '',
-      menuItems: [
+      mainMenuItems: [
         { title: 'Dashboard', icon: 'mdi-view-dashboard', to: '/' },
         { title: 'Productos', icon: 'mdi-package-variant', to: '/productos' },
         { title: 'Ventas', icon: 'mdi-point-of-sale', to: '/ventas' },
         { title: 'Clientes', icon: 'mdi-account-group', to: '/clientes' },
+        { title: 'Proveedores', icon: 'mdi-truck', to: '/proveedores' },
+        { title: 'Movimientos', icon: 'mdi-swap-horizontal', to: '/movimientos' },
       ],
-      allMenuItems: [
-        { title: 'Dashboard', icon: 'mdi-view-dashboard', to: '/' },
-        { title: 'Productos', icon: 'mdi-package-variant', to: '/productos' },
+      maestrosMenuItems: [
         { title: 'Categorías', icon: 'mdi-tag-multiple', to: '/categorias' },
         { title: 'Marcas', icon: 'mdi-bookmark-multiple', to: '/marcas' },
         { title: 'Tallas', icon: 'mdi-ruler', to: '/tallas' },
         { title: 'Colores', icon: 'mdi-palette', to: '/colores' },
-        { title: 'Movimientos', icon: 'mdi-swap-horizontal', to: '/movimientos' },
-        { title: 'Ventas', icon: 'mdi-point-of-sale', to: '/ventas' },
-        { title: 'Clientes', icon: 'mdi-account-group', to: '/clientes' },
-        { title: 'Proveedores', icon: 'mdi-truck', to: '/proveedores' },
       ],
     }
   },
@@ -199,10 +254,10 @@ export default {
 
 /* Paleta de colores Nuve */
 :root {
-  --nuve-primary: #FF6BD5;
-  --nuve-secondary: #A855F7;
-  --nuve-accent: #EC4899;
-  --nuve-gradient: linear-gradient(135deg, #FF6BD5 0%, #A855F7 50%, #EC4899 100%);
+  --nuve-primary: #d369c6;
+  --nuve-secondary: #69d37c;
+  --nuve-accent: #d369c6;
+  --nuve-gradient: linear-gradient(135deg, #d369c6 0%, #69d37c 100%);
 }
 
 * {
@@ -211,15 +266,25 @@ export default {
 
 /* Asegurar que v-main tenga el fondo correcto */
 .v-main {
-  background-color: #FDF4FF;
+  background-color: #fdf5fc;
 }
 
-/* Gradiente rosa/morado en navbar y footer */
-.v-app-bar {
+/* Sidebar styling */
+.sidebar-header {
+  background: linear-gradient(135deg, rgba(211, 105, 198, 0.05) 0%, rgba(105, 211, 124, 0.05) 100%);
+}
+
+/* Active menu item */
+.v-list-item--active {
   background: var(--nuve-gradient) !important;
-  box-shadow: 0 2px 10px rgba(255, 107, 213, 0.3) !important;
+  color: white !important;
 }
 
+.v-list-item--active .v-icon {
+  color: white !important;
+}
+
+/* Gradiente rosa/morado en footer */
 .v-footer {
   background: var(--nuve-gradient) !important;
 }
@@ -240,7 +305,7 @@ export default {
 
 .v-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(255, 107, 213, 0.2) !important;
+  box-shadow: 0 8px 24px rgba(211, 105, 198, 0.2) !important;
 }
 
 /* Avatar del usuario */

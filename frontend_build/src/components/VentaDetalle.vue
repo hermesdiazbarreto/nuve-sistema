@@ -63,10 +63,10 @@
             </thead>
             <tbody>
               <tr v-for="detalle in venta.detalles" :key="detalle.id">
-                <td>{{ detalle.producto_info }}</td>
+                <td><span class="nombre-producto">{{ detalle.producto_info }}</span></td>
                 <td>{{ detalle.cantidad }}</td>
-                <td>S/ {{ formatPrecio(detalle.precio_unitario) }}</td>
-                <td>S/ {{ formatPrecio(detalle.subtotal) }}</td>
+                <td>{{ formatearPrecio(detalle.precio_unitario) }}</td>
+                <td>{{ formatearPrecio(detalle.subtotal) }}</td>
               </tr>
             </tbody>
           </v-table>
@@ -83,20 +83,20 @@
             <v-col cols="12" md="6" offset-md="6">
               <div class="d-flex justify-space-between mb-2">
                 <span>Subtotal:</span>
-                <strong>S/ {{ formatPrecio(venta.subtotal) }}</strong>
+                <strong>{{ formatearPrecio(venta.subtotal) }}</strong>
               </div>
               <div class="d-flex justify-space-between mb-2 text-error">
                 <span>Descuento:</span>
-                <strong>-S/ {{ formatPrecio(venta.descuento) }}</strong>
+                <strong>-{{ formatearPrecio(venta.descuento) }}</strong>
               </div>
               <div class="d-flex justify-space-between mb-2">
                 <span>Impuesto:</span>
-                <strong>S/ {{ formatPrecio(venta.impuesto) }}</strong>
+                <strong>{{ formatearPrecio(venta.impuesto) }}</strong>
               </div>
               <v-divider class="my-2"></v-divider>
               <div class="d-flex justify-space-between text-h5 mb-3">
                 <span><strong>TOTAL:</strong></span>
-                <strong class="text-primary">S/ {{ formatPrecio(venta.total) }}</strong>
+                <strong class="text-primary">{{ formatearPrecio(venta.total) }}</strong>
               </div>
 
               <!-- Información de Pagos (si hay abono o pendiente) -->
@@ -107,7 +107,7 @@
                     <v-icon size="small" color="success">mdi-cash-check</v-icon>
                     Monto Abonado:
                   </span>
-                  <strong class="text-success">S/ {{ formatPrecio(venta.monto_abonado || 0) }}</strong>
+                  <strong class="text-success">{{ formatearPrecio(venta.monto_abonado || 0) }}</strong>
                 </div>
                 <div class="d-flex justify-space-between mb-2">
                   <span :class="venta.saldo_pendiente > 0 ? 'text-warning' : 'text-grey'">
@@ -117,7 +117,7 @@
                     Saldo Pendiente:
                   </span>
                   <strong :class="venta.saldo_pendiente > 0 ? 'text-warning text-h6' : 'text-grey'">
-                    S/ {{ formatPrecio(venta.saldo_pendiente || 0) }}
+                    {{ formatearPrecio(venta.saldo_pendiente || 0) }}
                   </strong>
                 </div>
               </div>
@@ -148,7 +148,7 @@
             <tbody>
               <tr v-for="pago in venta.pagos" :key="pago.id">
                 <td>{{ formatFecha(pago.fecha_pago) }}</td>
-                <td class="text-success font-weight-bold">S/ {{ formatPrecio(pago.monto) }}</td>
+                <td class="text-success font-weight-bold">{{ formatearPrecio(pago.monto) }}</td>
                 <td>
                   <v-chip size="small" variant="outlined">{{ pago.tipo_pago }}</v-chip>
                 </td>
@@ -166,7 +166,7 @@
             </div>
             <div class="d-flex justify-space-between mt-2">
               <span><strong>Monto Total Abonado:</strong></span>
-              <span class="text-success"><strong>S/ {{ formatPrecio(venta.monto_abonado || 0) }}</strong></span>
+              <span class="text-success"><strong>{{ formatearPrecio(venta.monto_abonado || 0) }}</strong></span>
             </div>
           </v-alert>
         </v-card-text>
@@ -181,9 +181,11 @@
 
 <script>
 import api from '../services/api'
+import formatoPrecio from '../mixins/formatoPrecio'
 
 export default {
   name: 'VentaDetalle',
+  mixins: [formatoPrecio],
   data() {
     return {
       venta: null,
@@ -218,16 +220,6 @@ export default {
     formatFecha(fecha) {
       if (!fecha) return ''
       return new Date(fecha).toLocaleString('es-ES')
-    },
-    formatPrecio(precio) {
-      const numero = Number(precio)
-      const esEntero = numero % 1 === 0
-
-      // Formatear con punto como separador de miles
-      const partes = numero.toFixed(esEntero ? 0 : 2).split('.')
-      partes[0] = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.')
-
-      return partes.join(',')
     }
   }
 }

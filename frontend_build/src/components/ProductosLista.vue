@@ -79,7 +79,7 @@
 
         <!-- Precio -->
         <template #item.precio_venta="{ item }">
-          <span class="font-weight-medium">{{ formatPrecio(item.precio_venta) }}</span>
+          <span class="font-weight-medium">{{ formatearPrecio(item.precio_venta) }}</span>
         </template>
 
         <!-- Variantes -->
@@ -336,9 +336,11 @@
 
 <script>
 import api from '../services/api'
+import formatoPrecio from '../mixins/formatoPrecio'
 
 export default {
   name: 'ProductosLista',
+  mixins: [formatoPrecio],
   data() {
     return {
       productos: [],
@@ -443,16 +445,6 @@ export default {
       if (stock === 0) return 'error'
       if (stock < 10) return 'warning'
       return 'success'
-    },
-    formatPrecio(precio) {
-      const numero = Number(precio)
-      const esEntero = numero % 1 === 0
-
-      // Formatear con punto como separador de miles
-      const partes = numero.toFixed(esEntero ? 0 : 2).split('.')
-      partes[0] = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.')
-
-      return partes.join(',')
     },
     showSnackbar(text, color = 'success') {
       this.snackbarText = text

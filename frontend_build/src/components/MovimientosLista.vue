@@ -85,7 +85,7 @@
                 {{ mov.tipo_movimiento }}
               </v-chip>
             </td>
-            <td>{{ mov.producto_info }}</td>
+            <td><span class="nombre-producto">{{ mov.producto_info }}</span></td>
             <td :class="getCantidadClass(mov.tipo_movimiento)">
               {{ getTipoMovimiento(mov.tipo_movimiento) }}{{ mov.cantidad }}
             </td>

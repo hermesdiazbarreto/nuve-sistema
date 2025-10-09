@@ -76,7 +76,7 @@
             <div class="d-flex justify-space-between align-center">
               <div>
                 <div class="text-subtitle-2">Total Ventas</div>
-                <div class="text-h4 font-weight-bold">S/ {{ formatPrecio(totalVentas) }}</div>
+                <div class="text-h4 font-weight-bold">{{ formatearPrecio(totalVentas) }}</div>
               </div>
               <v-icon size="48">mdi-currency-usd</v-icon>
             </div>
@@ -135,22 +135,22 @@
 
         <!-- Subtotal -->
         <template #item.subtotal="{ item }">
-          <span>S/ {{ formatPrecio(item.subtotal) }}</span>
+          <span>{{ formatearPrecio(item.subtotal) }}</span>
         </template>
 
         <!-- Descuento -->
         <template #item.descuento="{ item }">
-          <span>S/ {{ formatPrecio(item.descuento) }}</span>
+          <span>{{ formatearPrecio(item.descuento) }}</span>
         </template>
 
         <!-- Total -->
         <template #item.total="{ item }">
-          <span class="font-weight-bold">S/ {{ formatPrecio(item.total) }}</span>
+          <span class="font-weight-bold">{{ formatearPrecio(item.total) }}</span>
         </template>
 
         <!-- Monto Abonado -->
         <template #item.monto_abonado="{ item }">
-          <span class="font-weight-medium text-success">S/ {{ formatPrecio(item.monto_abonado || 0) }}</span>
+          <span class="font-weight-medium text-success">{{ formatearPrecio(item.monto_abonado || 0) }}</span>
         </template>
 
         <!-- Saldo Pendiente -->
@@ -158,7 +158,7 @@
           <span
             :class="item.saldo_pendiente > 0 ? 'font-weight-medium text-warning' : 'text-grey'"
           >
-            S/ {{ formatPrecio(item.saldo_pendiente || 0) }}
+            {{ formatearPrecio(item.saldo_pendiente || 0) }}
           </span>
         </template>
 
@@ -233,15 +233,15 @@
           <v-alert v-if="ventaParaPago" type="info" variant="tonal" class="mb-4">
             <div><strong>N° Venta:</strong> {{ ventaParaPago.numero_venta }}</div>
             <div><strong>Cliente:</strong> {{ ventaParaPago.cliente_nombre }}</div>
-            <div><strong>Total:</strong> S/ {{ formatPrecio(ventaParaPago.total) }}</div>
+            <div><strong>Total:</strong> {{ formatearPrecio(ventaParaPago.total) }}</div>
             <div class="mt-2">
               <strong>Monto Abonado:</strong>
-              <span class="text-success ml-2">S/ {{ formatPrecio(ventaParaPago.monto_abonado || 0) }}</span>
+              <span class="text-success ml-2">{{ formatearPrecio(ventaParaPago.monto_abonado || 0) }}</span>
             </div>
             <div class="mt-1">
               <strong>Saldo Pendiente:</strong>
               <span class="text-warning ml-2 font-weight-bold">
-                S/ {{ formatPrecio(ventaParaPago.saldo_pendiente || 0) }}
+                {{ formatearPrecio(ventaParaPago.saldo_pendiente || 0) }}
               </span>
             </div>
           </v-alert>
@@ -289,7 +289,7 @@
               <div class="d-flex justify-space-between">
                 <span><strong>Nuevo Saldo Pendiente:</strong></span>
                 <span class="font-weight-bold">
-                  S/ {{ formatPrecio((ventaParaPago.saldo_pendiente || 0) - nuevoPago.monto) }}
+                  {{ formatearPrecio((ventaParaPago.saldo_pendiente || 0) - nuevoPago.monto) }}
                 </span>
               </div>
               <div v-if="(ventaParaPago.saldo_pendiente - nuevoPago.monto) <= 0" class="mt-2">
@@ -326,7 +326,7 @@
           <v-alert v-if="ventaSeleccionada" type="info" variant="tonal" class="mb-4">
             <div><strong>N° Venta:</strong> {{ ventaSeleccionada.numero_venta }}</div>
             <div><strong>Cliente:</strong> {{ ventaSeleccionada.cliente_nombre }}</div>
-            <div><strong>Total:</strong> S/ {{ formatPrecio(ventaSeleccionada.total) }}</div>
+            <div><strong>Total:</strong> {{ formatearPrecio(ventaSeleccionada.total) }}</div>
             <div>
               <strong>Tipo:</strong>
               <v-chip
@@ -428,9 +428,11 @@
 
 <script>
 import api from '../services/api'
+import formatoPrecio from '../mixins/formatoPrecio'
 
 export default {
   name: 'VentasLista',
+  mixins: [formatoPrecio],
   data() {
     return {
       ventas: [],
@@ -541,16 +543,6 @@ export default {
       if (!fecha) return ''
       return new Date(fecha).toLocaleString('es-ES')
     },
-    formatPrecio(precio) {
-      const numero = Number(precio)
-      const esEntero = numero % 1 === 0
-
-      // Formatear con punto como separador de miles
-      const partes = numero.toFixed(esEntero ? 0 : 2).split('.')
-      partes[0] = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.')
-
-      return partes.join(',')
-    },
     cancelarVenta(venta) {
       if (venta.estado === 'CANCELADO') {
         this.mensajeError = 'Esta venta ya está cancelada'
@@ -645,7 +637,7 @@ export default {
         if (ventaActualizada.estado === 'PAGADO') {
           this.mensajeExito = `Pago registrado correctamente. ¡La venta está totalmente pagada!`
         } else {
-          this.mensajeExito = `Pago registrado correctamente. Saldo pendiente: S/ ${this.formatPrecio(ventaActualizada.saldo_pendiente)}`
+          this.mensajeExito = `Pago registrado correctamente. Saldo pendiente: ${this.formatearPrecio(ventaActualizada.saldo_pendiente)}`
         }
 
         this.mostrarModalExito = true

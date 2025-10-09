@@ -102,7 +102,7 @@
               </thead>
               <tbody>
                 <tr v-for="variante in productosStockBajo" :key="variante.id">
-                  <td>{{ variante.producto_nombre }}</td>
+                  <td><span class="nombre-producto">{{ variante.producto_nombre }}</span></td>
                   <td>{{ variante.talla_nombre }}</td>
                   <td>{{ variante.color_nombre }}</td>
                   <td>
@@ -159,7 +159,7 @@
                     </v-chip>
                   </td>
                   <td><span class="text-caption">{{ venta.cliente_nombre }}</span></td>
-                  <td><span class="text-caption font-weight-bold">S/ {{ formatPrecio(venta.total) }}</span></td>
+                  <td><span class="text-caption font-weight-bold">{{ formatearPrecio(venta.total) }}</span></td>
                   <td>
                     <v-chip :color="getChipColor(venta.estado)" size="x-small" variant="flat">
                       {{ venta.estado }}
@@ -219,9 +219,11 @@
 
 <script>
 import api from '../services/api'
+import formatoPrecio from '../mixins/formatoPrecio'
 
 export default {
   name: 'Dashboard',
+  mixins: [formatoPrecio],
   data() {
     return {
       loading: true,
@@ -298,16 +300,6 @@ export default {
         hour: '2-digit',
         minute: '2-digit'
       })
-    },
-    formatPrecio(precio) {
-      const numero = Number(precio)
-      const esEntero = numero % 1 === 0
-
-      // Formatear con punto como separador de miles
-      const partes = numero.toFixed(esEntero ? 0 : 2).split('.')
-      partes[0] = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.')
-
-      return partes.join(',')
     }
   }
 }

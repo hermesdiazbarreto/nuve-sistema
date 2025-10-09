@@ -1,46 +1,6 @@
 <template>
   <v-container fluid class="mt-4">
-    <div class="d-flex justify-space-between align-center mb-4">
-      <h2>Nueva Venta</h2>
-      <div class="d-flex gap-2">
-        <v-btn
-          size="small"
-          color="primary"
-          variant="tonal"
-          prepend-icon="mdi-shape-plus"
-          @click="mostrarDialogCategoria = true"
-        >
-          Categoría
-        </v-btn>
-        <v-btn
-          size="small"
-          color="primary"
-          variant="tonal"
-          prepend-icon="mdi-tag-plus"
-          @click="mostrarDialogMarca = true"
-        >
-          Marca
-        </v-btn>
-        <v-btn
-          size="small"
-          color="primary"
-          variant="tonal"
-          prepend-icon="mdi-resize"
-          @click="mostrarDialogTalla = true"
-        >
-          Talla
-        </v-btn>
-        <v-btn
-          size="small"
-          color="primary"
-          variant="tonal"
-          prepend-icon="mdi-palette-plus"
-          @click="mostrarDialogColor = true"
-        >
-          Color
-        </v-btn>
-      </div>
-    </div>
+    <h2 class="mb-4">Nueva Venta</h2>
 
     <!-- Selector de Tipo de Movimiento (arriba de todo) -->
     <v-card elevation="2" class="mb-4">
@@ -107,7 +67,7 @@
                       </v-chip>
                     </td>
                     <td class="text-left">{{ variante.marca_nombre }}</td>
-                    <td class="text-right font-weight-bold">${{ formatearPrecio(variante.precio_venta) }}</td>
+                    <td class="text-right font-weight-bold">{{ formatearPrecio(variante.precio_venta) }}</td>
                     <td class="text-center">
                       <v-chip
                         :color="variante.stock_actual > 10 ? 'success' : variante.stock_actual > 0 ? 'warning' : 'error'"
@@ -188,7 +148,7 @@
 
             <div class="d-flex justify-space-between mb-3 text-h5">
               <span><strong>TOTAL A EGRESAR:</strong></span>
-              <strong class="text-error">${{ formatearPrecio(venta.monto_egreso || 0) }}</strong>
+              <strong class="text-error">{{ formatearPrecio(venta.monto_egreso || 0) }}</strong>
             </div>
 
             <div class="d-flex flex-column ga-2">
@@ -262,7 +222,7 @@
                     <div class="d-flex flex-column">
                       <!-- Información del producto -->
                       <div class="mb-2">
-                        <div class="font-weight-bold text-body-1">{{ item.nombre }}</div>
+                        <div class="font-weight-bold text-body-1 nombre-producto">{{ item.nombre }}</div>
                         <div class="text-caption text-medium-emphasis">
                           <v-icon size="x-small">mdi-resize</v-icon> {{ item.talla }}
                           <v-icon size="x-small" class="ml-2">mdi-palette</v-icon> {{ item.color }}
@@ -271,7 +231,7 @@
                           </span>
                         </div>
                         <div class="text-caption mt-1">
-                          Precio unitario: <strong>${{ formatearPrecio(item.precio) }}</strong>
+                          Precio unitario: <strong>{{ formatearPrecio(item.precio) }}</strong>
                         </div>
                       </div>
 
@@ -322,7 +282,7 @@
                       <div class="d-flex justify-space-between align-center">
                         <span class="text-body-2">Subtotal:</span>
                         <span class="text-h6 font-weight-bold text-success">
-                          ${{ formatearPrecio(item.precio * item.cantidad) }}
+                          {{ formatearPrecio(item.precio * item.cantidad) }}
                         </span>
                       </div>
                     </div>
@@ -386,19 +346,19 @@
 
             <div class="mb-2 d-flex justify-space-between">
               <span>Subtotal:</span>
-              <strong>${{ formatearPrecio(subtotal) }}</strong>
+              <strong>{{ formatearPrecio(subtotal) }}</strong>
             </div>
             <div class="mb-2 d-flex justify-space-between text-error">
               <span>Descuento:</span>
-              <strong>-${{ formatearPrecio(venta.descuento) }}</strong>
+              <strong>-{{ formatearPrecio(venta.descuento) }}</strong>
             </div>
             <div class="mb-2 d-flex justify-space-between">
               <span>Impuesto ({{ venta.impuesto_porcentaje }}%):</span>
-              <strong>${{ formatearPrecio(impuesto) }}</strong>
+              <strong>{{ formatearPrecio(impuesto) }}</strong>
             </div>
             <div class="mb-3 d-flex justify-space-between text-h5">
               <span><strong>TOTAL:</strong></span>
-              <strong class="text-success">${{ formatearPrecio(total) }}</strong>
+              <strong class="text-success">{{ formatearPrecio(total) }}</strong>
             </div>
 
             <!-- Opción de Abono -->
@@ -444,12 +404,12 @@
             >
               <div class="d-flex justify-space-between align-center">
                 <span><strong>Abono:</strong></span>
-                <span>${{ formatearPrecio(venta.monto_abonado || 0) }}</span>
+                <span>{{ formatearPrecio(venta.monto_abonado || 0) }}</span>
               </div>
               <div class="d-flex justify-space-between align-center">
                 <span><strong>Saldo Pendiente:</strong></span>
                 <span class="text-error">
-                  ${{ formatearPrecio(total - Number(venta.monto_abonado || 0)) }}
+                  {{ formatearPrecio(total - Number(venta.monto_abonado || 0)) }}
                 </span>
               </div>
             </v-alert>
@@ -630,9 +590,11 @@
 
 <script>
 import api from '../services/api'
+import formatoPrecio from '../mixins/formatoPrecio'
 
 export default {
   name: 'NuevaVenta',
+  mixins: [formatoPrecio],
   data() {
     return {
       busqueda: '',
@@ -704,14 +666,28 @@ export default {
   },
   async created() {
     await this.cargarDatos()
+    // Escuchar eventos globales del navbar
+    this.$root.$on('open-dialog-categoria', () => {
+      this.mostrarDialogCategoria = true
+    })
+    this.$root.$on('open-dialog-marca', () => {
+      this.mostrarDialogMarca = true
+    })
+    this.$root.$on('open-dialog-talla', () => {
+      this.mostrarDialogTalla = true
+    })
+    this.$root.$on('open-dialog-color', () => {
+      this.mostrarDialogColor = true
+    })
+  },
+  beforeUnmount() {
+    // Limpiar event listeners
+    this.$root.$off('open-dialog-categoria')
+    this.$root.$off('open-dialog-marca')
+    this.$root.$off('open-dialog-talla')
+    this.$root.$off('open-dialog-color')
   },
   methods: {
-    formatearPrecio(precio) {
-      const numero = Number(precio)
-      if (isNaN(numero)) return '0'
-      // Formatear con separador de miles (punto) y decimales (coma)
-      return numero.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '.')
-    },
     showSnackbar(text, color = 'success') {
       this.snackbarText = text
       this.snackbarColor = color
