@@ -289,9 +289,9 @@
             density="compact"
             class="mb-4"
           >
-            <div class="d-flex align-center">
-              <v-icon>mdi-information</v-icon>
-              <span class="ml-2">Clonando variante. Cambia la <strong>talla</strong> o el <strong>color</strong> para crear una nueva variante con las mismas características.</span>
+            <div class="text-body-2">
+              <v-icon size="small" class="mr-1">mdi-information</v-icon>
+              Clonando variante. Cambia la <strong>talla</strong> o el <strong>color</strong> para crear una nueva variante con las mismas características.
             </div>
           </v-alert>
 

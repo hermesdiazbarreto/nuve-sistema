@@ -1,6 +1,46 @@
 <template>
   <v-container fluid class="mt-4">
-    <h2 class="mb-4">Nueva Venta</h2>
+    <div class="d-flex justify-space-between align-center mb-4">
+      <h2>Nueva Venta</h2>
+      <div class="d-flex gap-2">
+        <v-btn
+          size="small"
+          color="primary"
+          variant="tonal"
+          prepend-icon="mdi-shape-plus"
+          @click="mostrarDialogCategoria = true"
+        >
+          Categoría
+        </v-btn>
+        <v-btn
+          size="small"
+          color="primary"
+          variant="tonal"
+          prepend-icon="mdi-tag-plus"
+          @click="mostrarDialogMarca = true"
+        >
+          Marca
+        </v-btn>
+        <v-btn
+          size="small"
+          color="primary"
+          variant="tonal"
+          prepend-icon="mdi-resize"
+          @click="mostrarDialogTalla = true"
+        >
+          Talla
+        </v-btn>
+        <v-btn
+          size="small"
+          color="primary"
+          variant="tonal"
+          prepend-icon="mdi-palette-plus"
+          @click="mostrarDialogColor = true"
+        >
+          Color
+        </v-btn>
+      </div>
+    </div>
 
     <!-- Selector de Tipo de Movimiento (arriba de todo) -->
     <v-card elevation="2" class="mb-4">
@@ -67,7 +107,7 @@
                       </v-chip>
                     </td>
                     <td class="text-left">{{ variante.marca_nombre }}</td>
-                    <td class="text-right font-weight-bold">${{ Number(variante.precio_venta).toFixed(2) }}</td>
+                    <td class="text-right font-weight-bold">${{ formatearPrecio(variante.precio_venta) }}</td>
                     <td class="text-center">
                       <v-chip
                         :color="variante.stock_actual > 10 ? 'success' : variante.stock_actual > 0 ? 'warning' : 'error'"
@@ -148,7 +188,7 @@
 
             <div class="d-flex justify-space-between mb-3 text-h5">
               <span><strong>TOTAL A EGRESAR:</strong></span>
-              <strong class="text-error">${{ Number(venta.monto_egreso || 0).toFixed(2) }}</strong>
+              <strong class="text-error">${{ formatearPrecio(venta.monto_egreso || 0) }}</strong>
             </div>
 
             <div class="d-flex flex-column ga-2">
@@ -231,7 +271,7 @@
                           </span>
                         </div>
                         <div class="text-caption mt-1">
-                          Precio unitario: <strong>${{ Number(item.precio).toFixed(2) }}</strong>
+                          Precio unitario: <strong>${{ formatearPrecio(item.precio) }}</strong>
                         </div>
                       </div>
 
@@ -282,7 +322,7 @@
                       <div class="d-flex justify-space-between align-center">
                         <span class="text-body-2">Subtotal:</span>
                         <span class="text-h6 font-weight-bold text-success">
-                          ${{ (item.precio * item.cantidad).toFixed(2) }}
+                          ${{ formatearPrecio(item.precio * item.cantidad) }}
                         </span>
                       </div>
                     </div>
@@ -346,19 +386,19 @@
 
             <div class="mb-2 d-flex justify-space-between">
               <span>Subtotal:</span>
-              <strong>${{ subtotal.toFixed(2) }}</strong>
+              <strong>${{ formatearPrecio(subtotal) }}</strong>
             </div>
             <div class="mb-2 d-flex justify-space-between text-error">
               <span>Descuento:</span>
-              <strong>-${{ Number(venta.descuento).toFixed(2) }}</strong>
+              <strong>-${{ formatearPrecio(venta.descuento) }}</strong>
             </div>
             <div class="mb-2 d-flex justify-space-between">
               <span>Impuesto ({{ venta.impuesto_porcentaje }}%):</span>
-              <strong>${{ impuesto.toFixed(2) }}</strong>
+              <strong>${{ formatearPrecio(impuesto) }}</strong>
             </div>
             <div class="mb-3 d-flex justify-space-between text-h5">
               <span><strong>TOTAL:</strong></span>
-              <strong class="text-success">${{ total.toFixed(2) }}</strong>
+              <strong class="text-success">${{ formatearPrecio(total) }}</strong>
             </div>
 
             <!-- Opción de Abono -->
@@ -404,12 +444,12 @@
             >
               <div class="d-flex justify-space-between align-center">
                 <span><strong>Abono:</strong></span>
-                <span>${{ Number(venta.monto_abonado || 0).toFixed(2) }}</span>
+                <span>${{ formatearPrecio(venta.monto_abonado || 0) }}</span>
               </div>
               <div class="d-flex justify-space-between align-center">
                 <span><strong>Saldo Pendiente:</strong></span>
                 <span class="text-error">
-                  ${{ (total - Number(venta.monto_abonado || 0)).toFixed(2) }}
+                  ${{ formatearPrecio(total - Number(venta.monto_abonado || 0)) }}
                 </span>
               </div>
             </v-alert>
@@ -441,6 +481,150 @@
     <v-snackbar v-model="snackbar" :color="snackbarColor" :timeout="3000">
       {{ snackbarText }}
     </v-snackbar>
+
+    <!-- Dialog para agregar Categoría -->
+    <v-dialog v-model="mostrarDialogCategoria" max-width="500px">
+      <v-card>
+        <v-card-title class="bg-primary text-white">
+          <v-icon left color="white">mdi-shape-plus</v-icon>
+          Nueva Categoría
+        </v-card-title>
+        <v-card-text class="pa-6">
+          <v-text-field
+            v-model="nuevaCategoria.nombre"
+            label="Nombre de la Categoría *"
+            variant="outlined"
+            density="comfortable"
+            autofocus
+          ></v-text-field>
+          <v-textarea
+            v-model="nuevaCategoria.descripcion"
+            label="Descripción"
+            variant="outlined"
+            density="comfortable"
+            rows="2"
+          ></v-textarea>
+        </v-card-text>
+        <v-card-actions class="pa-4">
+          <v-btn color="grey" variant="text" @click="cerrarDialogCategoria">Cancelar</v-btn>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" @click="guardarCategoria">Guardar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Dialog para agregar Marca -->
+    <v-dialog v-model="mostrarDialogMarca" max-width="500px">
+      <v-card>
+        <v-card-title class="bg-primary text-white">
+          <v-icon left color="white">mdi-tag-plus</v-icon>
+          Nueva Marca
+        </v-card-title>
+        <v-card-text class="pa-6">
+          <v-text-field
+            v-model="nuevaMarca.nombre"
+            label="Nombre de la Marca *"
+            variant="outlined"
+            density="comfortable"
+            autofocus
+          ></v-text-field>
+          <v-textarea
+            v-model="nuevaMarca.descripcion"
+            label="Descripción"
+            variant="outlined"
+            density="comfortable"
+            rows="2"
+          ></v-textarea>
+        </v-card-text>
+        <v-card-actions class="pa-4">
+          <v-btn color="grey" variant="text" @click="cerrarDialogMarca">Cancelar</v-btn>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" @click="guardarMarca">Guardar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Dialog para agregar Talla -->
+    <v-dialog v-model="mostrarDialogTalla" max-width="500px">
+      <v-card>
+        <v-card-title class="bg-primary text-white">
+          <v-icon left color="white">mdi-resize</v-icon>
+          Nueva Talla
+        </v-card-title>
+        <v-card-text class="pa-6">
+          <v-text-field
+            v-model="nuevaTalla.nombre"
+            label="Nombre de la Talla *"
+            variant="outlined"
+            density="comfortable"
+            autofocus
+            hint="Ej: XS, S, M, L, XL, 36, 38, 40, etc."
+            persistent-hint
+          ></v-text-field>
+          <v-text-field
+            v-model.number="nuevaTalla.orden"
+            label="Orden"
+            variant="outlined"
+            density="comfortable"
+            type="number"
+            class="mt-4"
+            hint="Orden de visualización (menor número = primero)"
+            persistent-hint
+          ></v-text-field>
+        </v-card-text>
+        <v-card-actions class="pa-4">
+          <v-btn color="grey" variant="text" @click="cerrarDialogTalla">Cancelar</v-btn>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" @click="guardarTalla">Guardar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Dialog para agregar Color -->
+    <v-dialog v-model="mostrarDialogColor" max-width="500px">
+      <v-card>
+        <v-card-title class="bg-primary text-white">
+          <v-icon left color="white">mdi-palette-plus</v-icon>
+          Nuevo Color
+        </v-card-title>
+        <v-card-text class="pa-6">
+          <v-text-field
+            v-model="nuevoColor.nombre"
+            label="Nombre del Color *"
+            variant="outlined"
+            density="comfortable"
+            autofocus
+          ></v-text-field>
+          <v-text-field
+            v-model="nuevoColor.codigo_hex"
+            label="Código Hexadecimal"
+            variant="outlined"
+            density="comfortable"
+            class="mt-4"
+            placeholder="#FF0000"
+            hint="Ej: #FF0000 para rojo"
+            persistent-hint
+          >
+            <template v-slot:prepend-inner v-if="nuevoColor.codigo_hex">
+              <div
+                :style="{
+                  backgroundColor: nuevoColor.codigo_hex,
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '4px',
+                  border: '1px solid #ccc'
+                }"
+              ></div>
+            </template>
+          </v-text-field>
+        </v-card-text>
+        <v-card-actions class="pa-4">
+          <v-btn color="grey" variant="text" @click="cerrarDialogColor">Cancelar</v-btn>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" @click="guardarColor">Guardar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -471,7 +655,34 @@ export default {
       },
       snackbar: false,
       snackbarText: '',
-      snackbarColor: 'success'
+      snackbarColor: 'success',
+      // Diálogos para agregar datos
+      mostrarDialogCategoria: false,
+      mostrarDialogMarca: false,
+      mostrarDialogTalla: false,
+      mostrarDialogColor: false,
+      categorias: [],
+      marcas: [],
+      tallas: [],
+      colores: [],
+      nuevaCategoria: {
+        nombre: '',
+        descripcion: '',
+        activo: true
+      },
+      nuevaMarca: {
+        nombre: '',
+        descripcion: '',
+        activo: true
+      },
+      nuevaTalla: {
+        nombre: '',
+        orden: 0
+      },
+      nuevoColor: {
+        nombre: '',
+        codigo_hex: ''
+      }
     }
   },
   computed: {
@@ -495,6 +706,12 @@ export default {
     await this.cargarDatos()
   },
   methods: {
+    formatearPrecio(precio) {
+      const numero = Number(precio)
+      if (isNaN(numero)) return '0'
+      // Formatear con separador de miles (punto) y decimales (coma)
+      return numero.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+    },
     showSnackbar(text, color = 'success') {
       this.snackbarText = text
       this.snackbarColor = color
@@ -502,19 +719,31 @@ export default {
     },
     async cargarDatos() {
       try {
-        const [variantesRes, productosRes, clientesRes] = await Promise.all([
+        const [variantesRes, productosRes, clientesRes, categoriasRes, marcasRes, tallasRes, coloresRes] = await Promise.all([
           api.getProductoVariantes(),
           api.getProductos(),
-          api.getClientes()
+          api.getClientes(),
+          api.getCategorias(),
+          api.getMarcas(),
+          api.getTallas(),
+          api.getColores()
         ])
 
         const variantes = variantesRes.data.results || variantesRes.data || []
         const productos = productosRes.data.results || productosRes.data || []
         const clientes = clientesRes.data.results || clientesRes.data || []
+        const categorias = categoriasRes.data.results || categoriasRes.data || []
+        const marcas = marcasRes.data.results || marcasRes.data || []
+        const tallas = tallasRes.data.results || tallasRes.data || []
+        const colores = coloresRes.data.results || coloresRes.data || []
 
         this.variantes = variantes.filter(v => v.activo && v.stock_actual > 0)
         this.productos = productos
         this.clientes = clientes.filter(c => c.activo)
+        this.categorias = categorias.filter(c => c.activo)
+        this.marcas = marcas.filter(m => m.activo)
+        this.tallas = tallas
+        this.colores = colores
 
         // Enriquecer variantes con precio de venta
         this.variantes = this.variantes.map(v => {
@@ -684,6 +913,86 @@ export default {
           this.showSnackbar('Error al procesar el egreso: ' + JSON.stringify(error.response?.data || error.message), 'error')
         }
       }
+    },
+    // Métodos para Categoría
+    async guardarCategoria() {
+      if (!this.nuevaCategoria.nombre) {
+        this.showSnackbar('El nombre es requerido', 'warning')
+        return
+      }
+      try {
+        const response = await api.createCategoria(this.nuevaCategoria)
+        this.categorias.push(response.data)
+        this.showSnackbar('Categoría creada correctamente', 'success')
+        this.cerrarDialogCategoria()
+      } catch (error) {
+        console.error('Error al crear categoría:', error)
+        this.showSnackbar('Error al crear la categoría', 'error')
+      }
+    },
+    cerrarDialogCategoria() {
+      this.mostrarDialogCategoria = false
+      this.nuevaCategoria = { nombre: '', descripcion: '', activo: true }
+    },
+    // Métodos para Marca
+    async guardarMarca() {
+      if (!this.nuevaMarca.nombre) {
+        this.showSnackbar('El nombre es requerido', 'warning')
+        return
+      }
+      try {
+        const response = await api.createMarca(this.nuevaMarca)
+        this.marcas.push(response.data)
+        this.showSnackbar('Marca creada correctamente', 'success')
+        this.cerrarDialogMarca()
+      } catch (error) {
+        console.error('Error al crear marca:', error)
+        this.showSnackbar('Error al crear la marca', 'error')
+      }
+    },
+    cerrarDialogMarca() {
+      this.mostrarDialogMarca = false
+      this.nuevaMarca = { nombre: '', descripcion: '', activo: true }
+    },
+    // Métodos para Talla
+    async guardarTalla() {
+      if (!this.nuevaTalla.nombre) {
+        this.showSnackbar('El nombre es requerido', 'warning')
+        return
+      }
+      try {
+        const response = await api.createTalla(this.nuevaTalla)
+        this.tallas.push(response.data)
+        this.showSnackbar('Talla creada correctamente', 'success')
+        this.cerrarDialogTalla()
+      } catch (error) {
+        console.error('Error al crear talla:', error)
+        this.showSnackbar('Error al crear la talla', 'error')
+      }
+    },
+    cerrarDialogTalla() {
+      this.mostrarDialogTalla = false
+      this.nuevaTalla = { nombre: '', orden: 0 }
+    },
+    // Métodos para Color
+    async guardarColor() {
+      if (!this.nuevoColor.nombre) {
+        this.showSnackbar('El nombre es requerido', 'warning')
+        return
+      }
+      try {
+        const response = await api.createColor(this.nuevoColor)
+        this.colores.push(response.data)
+        this.showSnackbar('Color creado correctamente', 'success')
+        this.cerrarDialogColor()
+      } catch (error) {
+        console.error('Error al crear color:', error)
+        this.showSnackbar('Error al crear el color', 'error')
+      }
+    },
+    cerrarDialogColor() {
+      this.mostrarDialogColor = false
+      this.nuevoColor = { nombre: '', codigo_hex: '' }
     }
   }
 }
