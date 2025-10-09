@@ -84,31 +84,29 @@
 
             <v-col cols="12" md="6">
               <v-text-field
-                v-model.number="form.precio_compra"
+                v-model="precioCompraFormateado"
                 label="Precio de Compra *"
                 variant="outlined"
                 density="comfortable"
-                type="number"
-                step="0.01"
                 required
                 :rules="[v => !!v || 'Precio de compra es requerido']"
-                hint="Ejemplo: 90000 = noventa mil"
+                hint="Use punto como separador de miles: 90.000 = noventa mil"
                 persistent-hint
+                @blur="actualizarPrecioCompra"
               ></v-text-field>
             </v-col>
 
             <v-col cols="12" md="6">
               <v-text-field
-                v-model.number="form.precio_venta"
+                v-model="precioVentaFormateado"
                 label="Precio de Venta *"
                 variant="outlined"
                 density="comfortable"
-                type="number"
-                step="0.01"
                 required
                 :rules="[v => !!v || 'Precio de venta es requerido']"
-                hint="Ejemplo: 90000 = noventa mil"
+                hint="Use punto como separador de miles: 90.000 = noventa mil"
                 persistent-hint
+                @blur="actualizarPrecioVenta"
               ></v-text-field>
             </v-col>
 
@@ -355,6 +353,8 @@ export default {
         precio_venta: 0,
         activo: true
       },
+      precioCompraFormateado: '',
+      precioVentaFormateado: '',
       categorias: [],
       marcas: [],
       tallas: [],
@@ -417,10 +417,29 @@ export default {
       try {
         const response = await api.getProducto(this.productoId)
         this.form = { ...response.data }
+        // Inicializar campos formateados
+        this.precioCompraFormateado = this.form.precio_compra ? String(this.form.precio_compra) : ''
+        this.precioVentaFormateado = this.form.precio_venta ? String(this.form.precio_venta) : ''
       } catch (error) {
         console.error('Error al cargar producto:', error)
         this.showSnackbar('Error al cargar el producto', 'error')
         this.$router.push('/productos')
+      }
+    },
+    actualizarPrecioCompra() {
+      // Parsear el valor ingresado (puede tener puntos como separadores de miles)
+      const valorLimpio = this.precioCompraFormateado.replace(/\./g, '').replace(/,/g, '.')
+      const numero = parseFloat(valorLimpio)
+      if (!isNaN(numero)) {
+        this.form.precio_compra = numero
+      }
+    },
+    actualizarPrecioVenta() {
+      // Parsear el valor ingresado (puede tener puntos como separadores de miles)
+      const valorLimpio = this.precioVentaFormateado.replace(/\./g, '').replace(/,/g, '.')
+      const numero = parseFloat(valorLimpio)
+      if (!isNaN(numero)) {
+        this.form.precio_venta = numero
       }
     },
     async guardarProducto() {

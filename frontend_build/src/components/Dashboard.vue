@@ -301,7 +301,12 @@ export default {
     },
     formatPrecio(precio) {
       const numero = Number(precio)
-      return numero.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      // Si es entero, mostrar sin decimales. Si tiene decimales, mostrar con 2 decimales.
+      const esEntero = numero % 1 === 0
+      return numero.toLocaleString('es-PE', {
+        minimumFractionDigits: esEntero ? 0 : 2,
+        maximumFractionDigits: 2
+      })
     }
   }
 }
