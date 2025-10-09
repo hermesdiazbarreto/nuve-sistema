@@ -38,8 +38,9 @@
 
       <v-divider></v-divider>
 
-      <!-- Menu Principal -->
+      <!-- Menu completo en un solo v-list -->
       <v-list nav class="py-2">
+        <!-- Menu Principal -->
         <v-list-item
           v-for="item in mainMenuItems"
           :key="item.title"
@@ -53,12 +54,10 @@
           </template>
           <v-list-item-title>{{ item.title }}</v-list-item-title>
         </v-list-item>
-      </v-list>
 
-      <v-divider class="my-2"></v-divider>
+        <v-divider class="my-2"></v-divider>
 
-      <!-- Sección Maestros (Desplegable) -->
-      <v-list nav class="py-2">
+        <!-- Sección Maestros (Desplegable) -->
         <v-list-group value="maestros">
           <template #activator="{ props }">
             <v-list-item
@@ -87,12 +86,10 @@
             <v-list-item-title>{{ item.title }}</v-list-item-title>
           </v-list-item>
         </v-list-group>
-      </v-list>
 
-      <v-divider class="my-2"></v-divider>
+        <v-divider class="my-2"></v-divider>
 
-      <!-- Acceso Rápido (Desplegable) -->
-      <v-list nav class="py-2">
+        <!-- Acceso Rápido (Desplegable) -->
         <v-list-group value="acceso-rapido">
           <template #activator="{ props }">
             <v-list-item

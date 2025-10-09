@@ -1,7 +1,16 @@
 <template>
-  <v-container class="mt-4">
-    <h2>Movimientos de Inventario</h2>
+  <v-container fluid class="pa-4">
+    <!-- Header -->
+    <v-row align="center" class="mb-6">
+      <v-col cols="12">
+        <h1 class="text-h4 font-weight-bold">
+          <v-icon large color="primary" class="mr-2">mdi-swap-horizontal</v-icon>
+          Movimientos de Inventario
+        </h1>
+      </v-col>
+    </v-row>
 
+    <!-- Filtros Card -->
     <v-card elevation="3" class="mb-4">
       <v-card-title class="bg-primary">
         <span class="text-white">Filtros</span>
