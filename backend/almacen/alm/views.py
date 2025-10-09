@@ -8,7 +8,8 @@ from django.db import models
 from django.contrib.auth import authenticate
 from .models import (
     Categoria, Marca, Talla, Color, Producto, ProductoVariante,
-    Cliente, Venta, DetalleVenta, MovimientoInventario, Proveedor
+    Cliente, Venta, DetalleVenta, MovimientoInventario, Proveedor,
+    DetalleCompra
 )
 from .serializers import (
     CategoriaSerializer, MarcaSerializer, TallaSerializer, ColorSerializer,
@@ -36,6 +37,70 @@ class ColorViewSet(viewsets.ModelViewSet):
 class ProductoViewSet(viewsets.ModelViewSet):
     queryset = Producto.objects.all()
     serializer_class = ProductoSerializer
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        Eliminar producto - Validar que no tenga variantes con ventas o compras asociadas
+        """
+        from django.db import transaction
+        import traceback
+
+        instance = self.get_object()
+
+        try:
+            # Verificar si alguna variante del producto tiene detalles de venta o compra
+            variantes = instance.variantes.all()
+
+            # Contar detalles de venta asociados a las variantes
+            total_ventas = 0
+            total_compras = 0
+            total_movimientos = 0
+
+            for variante in variantes:
+                total_ventas += DetalleVenta.objects.filter(producto_variante=variante).count()
+                total_compras += DetalleCompra.objects.filter(producto_variante=variante).count()
+                total_movimientos += MovimientoInventario.objects.filter(producto_variante=variante).count()
+
+            # Validar si tiene transacciones asociadas
+            if total_ventas > 0 or total_compras > 0:
+                errores = []
+                if total_ventas > 0:
+                    errores.append(f'{total_ventas} venta(s)')
+                if total_compras > 0:
+                    errores.append(f'{total_compras} compra(s)')
+
+                return Response(
+                    {
+                        'error': f'No se puede eliminar el producto porque tiene {" y ".join(errores)} asociada(s). '
+                                f'En su lugar, puedes desactivar el producto.'
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Si no tiene ventas ni compras, proceder con la eliminación
+            with transaction.atomic():
+                # Eliminar movimientos de inventario huérfanos (si los hay)
+                if total_movimientos > 0:
+                    for variante in variantes:
+                        MovimientoInventario.objects.filter(producto_variante=variante).delete()
+
+                # Las variantes se eliminarán automáticamente por CASCADE
+                instance.delete()
+
+            return Response(
+                {'message': 'Producto eliminado correctamente'},
+                status=status.HTTP_204_NO_CONTENT
+            )
+
+        except Exception as e:
+            # Imprimir el traceback completo para debugging
+            error_traceback = traceback.format_exc()
+            print(f"ERROR AL ELIMINAR PRODUCTO: {error_traceback}")
+
+            return Response(
+                {'error': f'Error al eliminar producto: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class ProductoVarianteViewSet(viewsets.ModelViewSet):
     queryset = ProductoVariante.objects.all()
