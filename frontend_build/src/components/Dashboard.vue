@@ -301,12 +301,13 @@ export default {
     },
     formatPrecio(precio) {
       const numero = Number(precio)
-      // Si es entero, mostrar sin decimales. Si tiene decimales, mostrar con 2 decimales.
       const esEntero = numero % 1 === 0
-      return numero.toLocaleString('es-PE', {
-        minimumFractionDigits: esEntero ? 0 : 2,
-        maximumFractionDigits: 2
-      })
+
+      // Formatear con punto como separador de miles
+      const partes = numero.toFixed(esEntero ? 0 : 2).split('.')
+      partes[0] = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+
+      return partes.join(',')
     }
   }
 }

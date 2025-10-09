@@ -417,14 +417,25 @@ export default {
       try {
         const response = await api.getProducto(this.productoId)
         this.form = { ...response.data }
-        // Inicializar campos formateados
-        this.precioCompraFormateado = this.form.precio_compra ? String(this.form.precio_compra) : ''
-        this.precioVentaFormateado = this.form.precio_venta ? String(this.form.precio_venta) : ''
+        // Inicializar campos formateados con punto como separador de miles
+        this.precioCompraFormateado = this.formatearParaInput(this.form.precio_compra)
+        this.precioVentaFormateado = this.formatearParaInput(this.form.precio_venta)
       } catch (error) {
         console.error('Error al cargar producto:', error)
         this.showSnackbar('Error al cargar el producto', 'error')
         this.$router.push('/productos')
       }
+    },
+    formatearParaInput(precio) {
+      if (!precio) return ''
+      const numero = Number(precio)
+      const esEntero = numero % 1 === 0
+
+      // Formatear con punto como separador de miles
+      const partes = numero.toFixed(esEntero ? 0 : 2).split('.')
+      partes[0] = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+
+      return partes.join(',')
     },
     actualizarPrecioCompra() {
       // Parsear el valor ingresado (puede tener puntos como separadores de miles)
