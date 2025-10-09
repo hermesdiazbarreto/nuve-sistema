@@ -13,7 +13,7 @@ SECRET_KEY = 'django-insecure-your-secret-key-here'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']  # Permitir todas las conexiones (desarrollo)
 
 # Application definition
 INSTALLED_APPS = [
@@ -117,18 +117,8 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# CORS Configuration
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8080",
-    "http://localhost:8081",
-    "http://localhost:8083",
-    "http://localhost:8084",
-    "http://127.0.0.1:8080",
-    "http://127.0.0.1:8081",
-    "http://127.0.0.1:8083",
-    "http://127.0.0.1:8084",
-]
-
+# CORS Configuration - Permitir todos los orígenes en desarrollo
+CORS_ALLOW_ALL_ORIGINS = True  # Permitir todas las conexiones (desarrollo)
 CORS_ALLOW_CREDENTIALS = True
 
 # Django REST Framework Configuration

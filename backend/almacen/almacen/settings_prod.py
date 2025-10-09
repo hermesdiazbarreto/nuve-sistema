@@ -114,7 +114,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 cors_origins = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:8080,http://localhost:8084')
 CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins.split(',')]
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_ALL_ORIGINS = False
+
+# Si no hay orígenes configurados, permitir todos (útil para desarrollo/testing)
+if len(CORS_ALLOWED_ORIGINS) <= 2:  # Solo localhost configurado
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOW_ALL_ORIGINS = False
 
 # Security settings for production
 if not DEBUG:
