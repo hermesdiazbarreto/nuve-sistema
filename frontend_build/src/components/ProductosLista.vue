@@ -65,6 +65,11 @@
           <span class="font-weight-bold">{{ item.codigo }}</span>
         </template>
 
+        <!-- Nombre -->
+        <template #item.nombre="{ item }">
+          <span class="nombre-producto">{{ item.nombre }}</span>
+        </template>
+
         <!-- Categoría -->
         <template #item.categoria_nombre="{ item }">
           <v-chip color="primary" size="small" variant="flat">
@@ -144,7 +149,7 @@
       <v-card>
         <v-card-title class="text-h5 primary white--text">
           <v-icon left color="white">mdi-format-list-bulleted</v-icon>
-          Variantes de: {{ productoSeleccionado?.nombre }}
+          <span>Variantes de: <span class="nombre-producto">{{ productoSeleccionado?.nombre }}</span></span>
         </v-card-title>
 
         <v-card-text class="pa-4">

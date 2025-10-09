@@ -53,7 +53,7 @@
                 <tbody>
                   <tr v-for="variante in variantesFiltradas" :key="variante.id">
                     <td><span class="text-caption font-weight-bold">{{ variante.codigo_variante }}</span></td>
-                    <td>{{ variante.producto_nombre }}</td>
+                    <td><span class="nombre-producto">{{ variante.producto_nombre }}</span></td>
                     <td>{{ variante.talla_nombre }}</td>
                     <td>{{ variante.color_nombre }}</td>
                     <td>${{ Number(variante.precio_venta).toFixed(2) }}</td>
@@ -203,7 +203,7 @@
                 >
                   <div class="d-flex justify-space-between align-center">
                     <div class="flex-grow-1">
-                      <strong>{{ item.nombre }}</strong><br>
+                      <strong class="nombre-producto">{{ item.nombre }}</strong><br>
                       <small class="text-medium-emphasis">
                         {{ item.talla }} - {{ item.color }}
                       </small><br>

@@ -247,4 +247,10 @@ export default {
 .v-avatar {
   border: 2px solid white;
 }
+
+/* Nombres de productos en mayúsculas - aplicar globalmente */
+.nombre-producto,
+.producto-nombre {
+  text-transform: uppercase !important;
+}
 </style>
