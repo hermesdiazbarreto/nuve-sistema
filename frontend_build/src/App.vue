@@ -84,64 +84,6 @@
           </v-list-item>
         </v-list-group>
 
-        <v-divider class="my-2"></v-divider>
-
-        <!-- Acceso Rápido (Desplegable) -->
-        <v-list-group value="acceso-rapido">
-          <template #activator="{ props }">
-            <v-list-item
-              v-bind="props"
-              rounded="xl"
-              class="mx-2 my-1"
-            >
-              <template #prepend>
-                <v-icon>mdi-lightning-bolt</v-icon>
-              </template>
-              <v-list-item-title>ACCESO RÁPIDO</v-list-item-title>
-            </v-list-item>
-          </template>
-
-          <v-list-item
-            @click="$root.$emit('open-dialog-categoria')"
-            rounded="xl"
-            class="mx-2 my-1"
-          >
-            <template #prepend>
-              <v-icon color="primary">mdi-shape-plus</v-icon>
-            </template>
-            <v-list-item-title>Nueva Categoría</v-list-item-title>
-          </v-list-item>
-          <v-list-item
-            @click="$root.$emit('open-dialog-marca')"
-            rounded="xl"
-            class="mx-2 my-1"
-          >
-            <template #prepend>
-              <v-icon color="primary">mdi-tag-plus</v-icon>
-            </template>
-            <v-list-item-title>Nueva Marca</v-list-item-title>
-          </v-list-item>
-          <v-list-item
-            @click="$root.$emit('open-dialog-talla')"
-            rounded="xl"
-            class="mx-2 my-1"
-          >
-            <template #prepend>
-              <v-icon color="primary">mdi-resize</v-icon>
-            </template>
-            <v-list-item-title>Nueva Talla</v-list-item-title>
-          </v-list-item>
-          <v-list-item
-            @click="$root.$emit('open-dialog-color')"
-            rounded="xl"
-            class="mx-2 my-1"
-          >
-            <template #prepend>
-              <v-icon color="primary">mdi-palette-plus</v-icon>
-            </template>
-            <v-list-item-title>Nuevo Color</v-list-item-title>
-          </v-list-item>
-        </v-list-group>
       </v-list>
 
       <template #append>
