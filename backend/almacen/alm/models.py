@@ -50,7 +50,7 @@ class ProductoAllManager(models.Manager):
         return super().get_queryset()
 
 class Producto(models.Model):
-    codigo = models.CharField(max_length=50, unique=True)
+    codigo = models.CharField(max_length=50, unique=True, blank=True)
     nombre = models.CharField(max_length=200)
     descripcion = models.TextField(blank=True, null=True)
     categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE)
@@ -70,6 +70,32 @@ class Producto(models.Model):
 
     def __str__(self):
         return f"{self.codigo} - {self.nombre}"
+
+    def save(self, *args, **kwargs):
+        if not self.codigo:
+            # Generar código automáticamente basado en categoría
+            # Obtener las primeras 3 letras de la categoría en mayúsculas
+            prefijo = self.categoria.nombre[:3].upper()
+
+            # Buscar el último producto con ese prefijo
+            last_producto = Producto.all_objects.filter(
+                codigo__startswith=prefijo
+            ).order_by('-id').first()
+
+            if last_producto and '-' in last_producto.codigo:
+                # Extraer el número del último código
+                try:
+                    last_number = int(last_producto.codigo.split('-')[1])
+                    nuevo_numero = last_number + 1
+                except (ValueError, IndexError):
+                    nuevo_numero = 1
+            else:
+                nuevo_numero = 1
+
+            # Generar el nuevo código: PREFIJO-001, PREFIJO-002, etc.
+            self.codigo = f"{prefijo}-{nuevo_numero:03d}"
+
+        super().save(*args, **kwargs)
 
     def soft_delete(self, user=None):
         """Método para realizar soft delete"""

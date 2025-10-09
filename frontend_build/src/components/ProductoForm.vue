@@ -25,11 +25,13 @@
             <v-col cols="12" md="6">
               <v-text-field
                 v-model="form.codigo"
-                label="Código *"
+                label="Código (Generado automáticamente)"
                 variant="outlined"
                 density="comfortable"
-                required
-                :rules="[v => !!v || 'Código es requerido']"
+                readonly
+                hint="Se genera automáticamente al guardar según la categoría"
+                persistent-hint
+                placeholder="Se generará automáticamente"
               ></v-text-field>
             </v-col>
 
