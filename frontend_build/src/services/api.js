@@ -144,7 +144,10 @@ export default {
   },
 
   // ============ PRODUCTO VARIANTES ============
-  getProductoVariantes() {
+  getProductoVariantes(productoId = null) {
+    if (productoId) {
+      return api.get(`/producto-variantes/?producto=${productoId}`)
+    }
     return api.get('/producto-variantes/')
   },
   getProductoVariante(id) {

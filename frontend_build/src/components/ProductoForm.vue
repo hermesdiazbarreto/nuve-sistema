@@ -727,9 +727,9 @@ export default {
     async cargarVariantes() {
       try {
         this.cargandoVariantes = true
-        const response = await api.getProductoVariantes()
-        const todasVariantes = response.data.results || response.data || []
-        this.variantes = todasVariantes.filter(v => v.producto === parseInt(this.productoId))
+        // Filtrar por producto directamente en el API
+        const response = await api.getProductoVariantes(this.productoId)
+        this.variantes = response.data.results || response.data || []
       } catch (error) {
         console.error('Error al cargar variantes:', error)
       } finally {
