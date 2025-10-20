@@ -764,21 +764,18 @@ export default {
     },
     async guardarVariante() {
       try {
-        // Generar código de variante
-        const talla = this.tallas.find(t => t.id === this.formVariante.talla)
-        const color = this.colores.find(c => c.id === this.formVariante.color)
-        const codigo_variante = `${this.form.codigo}-${talla.nombre}-${color.nombre.substring(0, 3).toUpperCase()}`
-
         const data = {
           ...this.formVariante,
-          producto: parseInt(this.productoId),
-          codigo_variante: this.varianteEditando ? this.varianteEditando.codigo_variante : codigo_variante
+          producto: parseInt(this.productoId)
         }
 
+        // Solo incluir codigo_variante si estamos editando (para mantener el mismo código)
         if (this.varianteEditando) {
+          data.codigo_variante = this.varianteEditando.codigo_variante
           await api.updateProductoVariante(this.varianteEditando.id, data)
           this.showSnackbar('Variante actualizada correctamente', 'success')
         } else {
+          // Para variantes nuevas, NO enviar codigo_variante (se genera automáticamente en el backend)
           await api.createProductoVariante(data)
           this.showSnackbar('Variante creada correctamente', 'success')
         }
