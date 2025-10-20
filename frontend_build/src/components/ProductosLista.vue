@@ -474,9 +474,9 @@ export default {
       this.cargandoVariantes = true
 
       try {
-        const response = await api.getProductoVariantes()
-        const variantes = response.data.results || response.data || []
-        this.variantesProducto = variantes.filter(v => v.producto === producto.id)
+        // Filtrar por producto directamente en el API
+        const response = await api.getProductoVariantes(producto.id)
+        this.variantesProducto = response.data.results || response.data || []
       } catch (error) {
         console.error('Error al cargar variantes:', error)
         this.showSnackbar('Error al cargar las variantes', 'error')
