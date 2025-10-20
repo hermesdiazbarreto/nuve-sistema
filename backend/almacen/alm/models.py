@@ -122,14 +122,23 @@ class ProductoVariante(models.Model):
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='variantes')
     talla = models.ForeignKey(Talla, on_delete=models.CASCADE)
     color = models.ForeignKey(Color, on_delete=models.CASCADE)
-    codigo_variante = models.CharField(max_length=100, unique=True)
+    codigo_variante = models.CharField(max_length=100, unique=True, blank=True)
     stock_actual = models.IntegerField(default=0, validators=[MinValueValidator(0)])
     stock_minimo = models.IntegerField(default=5, validators=[MinValueValidator(0)])
     activo = models.BooleanField(default=True)
-    
+
     def __str__(self):
         return f"{self.producto.nombre} - {self.talla} - {self.color}"
-    
+
+    def save(self, *args, **kwargs):
+        if not self.codigo_variante:
+            # Generar código automáticamente: CODIGO_PRODUCTO-TALLA-PRIMERAS_3_LETRAS_COLOR
+            # Ejemplo: SHO-010-6-AZU, SHO-010-10-BLA
+            codigo_color = self.color.nombre[:3].upper()
+            self.codigo_variante = f"{self.producto.codigo}-{self.talla.nombre}-{codigo_color}"
+
+        super().save(*args, **kwargs)
+
     class Meta:
         unique_together = ['producto', 'talla', 'color']
         verbose_name_plural = "Variantes de Producto"
@@ -414,3 +423,57 @@ class PagoVenta(models.Model):
         ordering = ['-fecha_pago']
         verbose_name = "Pago de Venta"
         verbose_name_plural = "Pagos de Ventas"
+
+class PromocionWhatsApp(models.Model):
+    """Modelo para gestionar promociones enviadas por WhatsApp"""
+    ESTADO_CHOICES = [
+        ('BORRADOR', 'Borrador'),
+        ('ENVIANDO', 'Enviando'),
+        ('ENVIADO', 'Enviado'),
+        ('ERROR', 'Error'),
+    ]
+
+    titulo = models.CharField(max_length=200, help_text="Título de la promoción (solo para referencia interna)")
+    mensaje = models.TextField(help_text="Mensaje que se enviará. Usa {nombre} para personalizar")
+    estado = models.CharField(max_length=10, choices=ESTADO_CHOICES, default='BORRADOR')
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_envio = models.DateTimeField(null=True, blank=True, help_text="Fecha y hora en que se envió la promoción")
+    creado_por = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    # Estadísticas de envío
+    total_destinatarios = models.IntegerField(default=0)
+    mensajes_enviados = models.IntegerField(default=0)
+    mensajes_fallidos = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.titulo} - {self.estado}"
+
+    class Meta:
+        ordering = ['-fecha_creacion']
+        verbose_name = "Promoción WhatsApp"
+        verbose_name_plural = "Promociones WhatsApp"
+
+class EnvioWhatsApp(models.Model):
+    """Modelo para registrar cada envío individual de WhatsApp"""
+    ESTADO_CHOICES = [
+        ('PENDIENTE', 'Pendiente'),
+        ('ENVIADO', 'Enviado'),
+        ('FALLIDO', 'Fallido'),
+    ]
+
+    promocion = models.ForeignKey(PromocionWhatsApp, on_delete=models.CASCADE, related_name='envios')
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
+    telefono = models.CharField(max_length=15)
+    mensaje_enviado = models.TextField()
+    estado = models.CharField(max_length=10, choices=ESTADO_CHOICES, default='PENDIENTE')
+    fecha_envio = models.DateTimeField(null=True, blank=True)
+    mensaje_error = models.TextField(blank=True, null=True)
+    sid_twilio = models.CharField(max_length=100, blank=True, null=True, help_text="ID del mensaje en Twilio")
+
+    def __str__(self):
+        return f"{self.promocion.titulo} -> {self.cliente.nombre_completo} ({self.estado})"
+
+    class Meta:
+        ordering = ['-fecha_envio']
+        verbose_name = "Envío WhatsApp"
+        verbose_name_plural = "Envíos WhatsApp"
