@@ -134,8 +134,39 @@ class ProductoVariante(models.Model):
         if not self.codigo_variante:
             # Generar código automáticamente: CODIGO_PRODUCTO-TALLA-PRIMERAS_3_LETRAS_COLOR
             # Ejemplo: SHO-010-6-AZU, SHO-010-10-BLA
-            codigo_color = self.color.nombre[:3].upper()
-            self.codigo_variante = f"{self.producto.codigo}-{self.talla.nombre}-{codigo_color}"
+
+            # Si producto, talla o color son IDs (no instancias), cargarlos primero
+            if isinstance(self.producto_id, int) and not hasattr(self.producto, 'codigo'):
+                from django.db.models import ObjectDoesNotExist
+                try:
+                    producto = Producto.all_objects.get(id=self.producto_id)
+                    producto_codigo = producto.codigo
+                except ObjectDoesNotExist:
+                    producto_codigo = "UNK"
+            else:
+                producto_codigo = self.producto.codigo
+
+            if isinstance(self.talla_id, int) and not hasattr(self.talla, 'nombre'):
+                from django.db.models import ObjectDoesNotExist
+                try:
+                    talla = Talla.objects.get(id=self.talla_id)
+                    talla_nombre = talla.nombre
+                except ObjectDoesNotExist:
+                    talla_nombre = "0"
+            else:
+                talla_nombre = self.talla.nombre
+
+            if isinstance(self.color_id, int) and not hasattr(self.color, 'nombre'):
+                from django.db.models import ObjectDoesNotExist
+                try:
+                    color = Color.objects.get(id=self.color_id)
+                    codigo_color = color.nombre[:3].upper()
+                except ObjectDoesNotExist:
+                    codigo_color = "UNK"
+            else:
+                codigo_color = self.color.nombre[:3].upper()
+
+            self.codigo_variante = f"{producto_codigo}-{talla_nombre}-{codigo_color}"
 
         super().save(*args, **kwargs)
 
