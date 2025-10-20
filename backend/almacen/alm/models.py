@@ -135,36 +135,24 @@ class ProductoVariante(models.Model):
             # Generar código automáticamente: CODIGO_PRODUCTO-TALLA-PRIMERAS_3_LETRAS_COLOR
             # Ejemplo: SHO-010-6-AZU, SHO-010-10-BLA
 
-            # Si producto, talla o color son IDs (no instancias), cargarlos primero
-            if isinstance(self.producto_id, int) and not hasattr(self.producto, 'codigo'):
-                from django.db.models import ObjectDoesNotExist
-                try:
-                    producto = Producto.all_objects.get(id=self.producto_id)
-                    producto_codigo = producto.codigo
-                except ObjectDoesNotExist:
-                    producto_codigo = "UNK"
+            # Cargar instancias desde IDs si es necesario
+            if self.producto_id:
+                producto = Producto.all_objects.get(id=self.producto_id)
+                producto_codigo = producto.codigo
             else:
-                producto_codigo = self.producto.codigo
+                producto_codigo = "UNK"
 
-            if isinstance(self.talla_id, int) and not hasattr(self.talla, 'nombre'):
-                from django.db.models import ObjectDoesNotExist
-                try:
-                    talla = Talla.objects.get(id=self.talla_id)
-                    talla_nombre = talla.nombre
-                except ObjectDoesNotExist:
-                    talla_nombre = "0"
+            if self.talla_id:
+                talla = Talla.objects.get(id=self.talla_id)
+                talla_nombre = talla.nombre
             else:
-                talla_nombre = self.talla.nombre
+                talla_nombre = "0"
 
-            if isinstance(self.color_id, int) and not hasattr(self.color, 'nombre'):
-                from django.db.models import ObjectDoesNotExist
-                try:
-                    color = Color.objects.get(id=self.color_id)
-                    codigo_color = color.nombre[:3].upper()
-                except ObjectDoesNotExist:
-                    codigo_color = "UNK"
+            if self.color_id:
+                color = Color.objects.get(id=self.color_id)
+                codigo_color = color.nombre[:3].upper()
             else:
-                codigo_color = self.color.nombre[:3].upper()
+                codigo_color = "UNK"
 
             self.codigo_variante = f"{producto_codigo}-{talla_nombre}-{codigo_color}"
 
