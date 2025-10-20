@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from .models import (
     Categoria, Marca, Talla, Color, Producto, ProductoVariante,
-    Cliente, Venta, DetalleVenta, MovimientoInventario, Proveedor, PagoVenta
+    Cliente, Venta, DetalleVenta, MovimientoInventario, Proveedor, PagoVenta,
+    PromocionWhatsApp, EnvioWhatsApp
 )
 
 class CategoriaSerializer(serializers.ModelSerializer):
@@ -38,7 +39,8 @@ class ProductoVarianteSerializer(serializers.ModelSerializer):
     producto_nombre = serializers.CharField(source='producto.nombre', read_only=True)
     talla_nombre = serializers.CharField(source='talla.nombre', read_only=True)
     color_nombre = serializers.CharField(source='color.nombre', read_only=True)
-    
+    codigo_variante = serializers.CharField(required=False, allow_blank=True)
+
     class Meta:
         model = ProductoVariante
         fields = '__all__'
@@ -93,3 +95,21 @@ class ProveedorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Proveedor
         fields = '__all__'
+
+class EnvioWhatsAppSerializer(serializers.ModelSerializer):
+    cliente_nombre = serializers.CharField(source='cliente.nombre_completo', read_only=True)
+
+    class Meta:
+        model = EnvioWhatsApp
+        fields = '__all__'
+        read_only_fields = ('fecha_envio', 'mensaje_error', 'sid_twilio')
+
+class PromocionWhatsAppSerializer(serializers.ModelSerializer):
+    creado_por_nombre = serializers.CharField(source='creado_por.username', read_only=True)
+    envios = EnvioWhatsAppSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = PromocionWhatsApp
+        fields = '__all__'
+        read_only_fields = ('fecha_creacion', 'fecha_envio', 'total_destinatarios',
+                           'mensajes_enviados', 'mensajes_fallidos', 'creado_por')
