@@ -178,9 +178,15 @@ class ProductoVarianteViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """
         Opcionalmente permite ver variantes inactivas con ?incluir_inactivos=true
+        y filtrar por producto con ?producto=<id>
         """
         queryset = ProductoVariante.objects.all()
         incluir_inactivos = self.request.query_params.get('incluir_inactivos', 'false').lower()
+        producto_id = self.request.query_params.get('producto')
+
+        # Filtrar por producto si se proporciona el parámetro
+        if producto_id:
+            queryset = queryset.filter(producto_id=producto_id)
 
         if incluir_inactivos != 'true':
             queryset = queryset.filter(activo=True, producto__activo=True)
