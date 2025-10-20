@@ -25,6 +25,9 @@ import ClientesLista from '../components/ClientesLista.vue'
 // Proveedores
 import ProveedoresLista from '../components/ProveedoresLista.vue'
 
+// Promociones WhatsApp
+import PromocionesWhatsApp from '../components/PromocionesWhatsApp.vue'
+
 // Legacy components (mantener compatibilidad)
 import ArticulosLista from '../components/ArticulosLista.vue'
 import AdicionarArticulo from '../components/AdicionarArticulo.vue'
@@ -137,6 +140,13 @@ const routes = [
     path: '/proveedores',
     name: 'ProveedoresLista',
     component: ProveedoresLista
+  },
+
+  // ========== PROMOCIONES WHATSAPP ==========
+  {
+    path: '/promociones-whatsapp',
+    name: 'PromocionesWhatsApp',
+    component: PromocionesWhatsApp
   },
 
   // ========== RUTAS LEGACY (compatibilidad) ==========

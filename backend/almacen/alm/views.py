@@ -9,13 +9,14 @@ from django.contrib.auth import authenticate
 from .models import (
     Categoria, Marca, Talla, Color, Producto, ProductoVariante,
     Cliente, Venta, DetalleVenta, MovimientoInventario, Proveedor,
-    DetalleCompra, PagoVenta
+    DetalleCompra, PagoVenta, PromocionWhatsApp, EnvioWhatsApp
 )
 from .serializers import (
     CategoriaSerializer, MarcaSerializer, TallaSerializer, ColorSerializer,
     ProductoSerializer, ProductoVarianteSerializer, ClienteSerializer,
     VentaSerializer, DetalleVentaSerializer, MovimientoInventarioSerializer,
-    ProveedorSerializer, PagoVentaSerializer
+    ProveedorSerializer, PagoVentaSerializer, PromocionWhatsAppSerializer,
+    EnvioWhatsAppSerializer
 )
 
 class CategoriaViewSet(viewsets.ModelViewSet):
@@ -523,6 +524,176 @@ class MovimientoInventarioViewSet(viewsets.ReadOnlyModelViewSet):
 class ProveedorViewSet(viewsets.ModelViewSet):
     queryset = Proveedor.objects.all()
     serializer_class = ProveedorSerializer
+
+class PromocionWhatsAppViewSet(viewsets.ModelViewSet):
+    queryset = PromocionWhatsApp.objects.all()
+    serializer_class = PromocionWhatsAppSerializer
+
+    def create(self, request, *args, **kwargs):
+        """
+        Crear una nueva promoción en estado BORRADOR
+        """
+        data = request.data.copy()
+        data['creado_por'] = request.user.id
+        data['estado'] = 'BORRADOR'  # Siempre empieza como borrador
+
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED
+        )
+
+    @action(detail=True, methods=['post'])
+    def enviar_promocion(self, request, pk=None):
+        """
+        Enviar promoción a todos los clientes con teléfono.
+
+        Este endpoint:
+        1. Obtiene todos los clientes activos con teléfono
+        2. Crea un registro de EnvioWhatsApp para cada cliente
+        3. Envía mensajes usando Twilio WhatsApp API
+        4. Actualiza estadísticas de la promoción
+
+        NOTA: Implementa rate limiting (5 mensajes por minuto) para evitar spam
+        """
+        from django.db import transaction
+        from django.utils import timezone
+        from twilio.rest import Client
+        from django.conf import settings
+        import time
+
+        promocion = self.get_object()
+
+        # Validar que la promoción esté en estado BORRADOR
+        if promocion.estado != 'BORRADOR':
+            return Response(
+                {'error': 'Solo se pueden enviar promociones en estado BORRADOR'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Obtener todos los clientes con teléfono
+        clientes = Cliente.objects.filter(telefono__isnull=False).exclude(telefono='')
+
+        if not clientes.exists():
+            return Response(
+                {'error': 'No hay clientes con teléfono registrado'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Configurar Twilio
+        try:
+            # Variables de entorno necesarias:
+            # TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_WHATSAPP_NUMBER
+            twilio_client = Client(
+                settings.TWILIO_ACCOUNT_SID,
+                settings.TWILIO_AUTH_TOKEN
+            )
+            twilio_whatsapp_from = settings.TWILIO_WHATSAPP_NUMBER
+        except AttributeError:
+            return Response(
+                {'error': 'Twilio no está configurado. Verifica las variables de entorno.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        try:
+            with transaction.atomic():
+                # Actualizar estado a ENVIANDO
+                promocion.estado = 'ENVIANDO'
+                promocion.total_destinatarios = clientes.count()
+                promocion.save()
+
+                enviados = 0
+                fallidos = 0
+
+                # Procesar cada cliente
+                for cliente in clientes:
+                    # Personalizar mensaje reemplazando {nombre}
+                    mensaje_personalizado = promocion.mensaje.replace(
+                        '{nombre}',
+                        cliente.nombre_completo
+                    )
+
+                    # Crear registro de envío
+                    envio = EnvioWhatsApp.objects.create(
+                        promocion=promocion,
+                        cliente=cliente,
+                        telefono=cliente.telefono,
+                        mensaje_enviado=mensaje_personalizado,
+                        estado='PENDIENTE'
+                    )
+
+                    # Intentar enviar por WhatsApp
+                    try:
+                        # Formato WhatsApp: whatsapp:+573001234567
+                        telefono_whatsapp = f"whatsapp:+{cliente.telefono.lstrip('+')}"
+
+                        # Enviar mensaje
+                        message = twilio_client.messages.create(
+                            from_=f'whatsapp:{twilio_whatsapp_from}',
+                            body=mensaje_personalizado,
+                            to=telefono_whatsapp
+                        )
+
+                        # Actualizar envío como exitoso
+                        envio.estado = 'ENVIADO'
+                        envio.fecha_envio = timezone.now()
+                        envio.sid_twilio = message.sid
+                        envio.save()
+
+                        enviados += 1
+
+                        # Rate limiting: esperar 12 segundos entre mensajes (5 por minuto)
+                        time.sleep(12)
+
+                    except Exception as e:
+                        # Actualizar envío como fallido
+                        envio.estado = 'FALLIDO'
+                        envio.mensaje_error = str(e)
+                        envio.save()
+
+                        fallidos += 1
+
+                # Actualizar estadísticas de la promoción
+                promocion.estado = 'ENVIADO'
+                promocion.fecha_envio = timezone.now()
+                promocion.mensajes_enviados = enviados
+                promocion.mensajes_fallidos = fallidos
+                promocion.save()
+
+            return Response(
+                {
+                    'message': 'Promoción enviada exitosamente',
+                    'total_destinatarios': promocion.total_destinatarios,
+                    'mensajes_enviados': enviados,
+                    'mensajes_fallidos': fallidos,
+                    'promocion': PromocionWhatsAppSerializer(promocion).data
+                },
+                status=status.HTTP_200_OK
+            )
+
+        except Exception as e:
+            # Si hay error, marcar promoción como ERROR
+            promocion.estado = 'ERROR'
+            promocion.save()
+
+            import traceback
+            error_traceback = traceback.format_exc()
+            print(f"ERROR AL ENVIAR PROMOCIÓN: {error_traceback}")
+
+            return Response(
+                {'error': f'Error al enviar promoción: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+class EnvioWhatsAppViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet de solo lectura para consultar envíos de WhatsApp
+    """
+    queryset = EnvioWhatsApp.objects.all()
+    serializer_class = EnvioWhatsAppSerializer
 
 # Vistas de autenticación
 @api_view(['POST'])

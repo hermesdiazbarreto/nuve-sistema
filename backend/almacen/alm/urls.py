@@ -5,7 +5,8 @@ from .views import (
     CategoriaViewSet, MarcaViewSet, TallaViewSet, ColorViewSet,
     ProductoViewSet, ProductoVarianteViewSet, ClienteViewSet,
     VentaViewSet, DetalleVentaViewSet, MovimientoInventarioViewSet,
-    ProveedorViewSet, login_view, logout_view
+    ProveedorViewSet, PromocionWhatsAppViewSet, EnvioWhatsAppViewSet,
+    login_view, logout_view
 )
 
 def health_check(request):
@@ -23,6 +24,8 @@ router.register(r'ventas', VentaViewSet)
 router.register(r'detalle-ventas', DetalleVentaViewSet)
 router.register(r'movimientos', MovimientoInventarioViewSet)
 router.register(r'proveedores', ProveedorViewSet)
+router.register(r'promociones-whatsapp', PromocionWhatsAppViewSet)
+router.register(r'envios-whatsapp', EnvioWhatsAppViewSet)
 
 urlpatterns = [
     path('', health_check, name='health'),

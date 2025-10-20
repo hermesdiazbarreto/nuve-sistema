@@ -3,7 +3,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "cd backend/almacen && python manage.py fix_codigo_variante_column && python manage.py add_tipo_movimiento && python manage.py migrate --noinput && python manage.py create_superuser && python manage.py collectstatic --noinput && gunicorn almacen.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 2 --timeout 120",
+    "startCommand": "cd backend/almacen && python manage.py limpiar_variantes_duplicadas --codigo SHO-010-10-AZU && python manage.py add_tipo_movimiento && python manage.py migrate --noinput && python manage.py create_superuser && python manage.py collectstatic --noinput && gunicorn almacen.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 2 --timeout 120",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }

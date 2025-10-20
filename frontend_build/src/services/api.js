@@ -242,4 +242,33 @@ export default {
     // Esta será una vista personalizada que crearemos después
     return api.get('/estadisticas/')
   },
+
+  // ============ PROMOCIONES WHATSAPP ============
+  getPromocionesWhatsApp() {
+    return api.get('/promociones-whatsapp/')
+  },
+  getPromocionWhatsApp(id) {
+    return api.get(`/promociones-whatsapp/${id}/`)
+  },
+  createPromocionWhatsApp(data) {
+    return api.post('/promociones-whatsapp/', data)
+  },
+  updatePromocionWhatsApp(id, data) {
+    return api.put(`/promociones-whatsapp/${id}/`, data)
+  },
+  deletePromocionWhatsApp(id) {
+    return api.delete(`/promociones-whatsapp/${id}/`)
+  },
+  enviarPromocionWhatsApp(id) {
+    // Enviar promoción a todos los clientes
+    return api.post(`/promociones-whatsapp/${id}/enviar_promocion/`)
+  },
+
+  // ============ ENVÍOS WHATSAPP ============
+  getEnviosWhatsApp() {
+    return api.get('/envios-whatsapp/')
+  },
+  getEnvioWhatsApp(id) {
+    return api.get(`/envios-whatsapp/${id}/`)
+  },
 }
