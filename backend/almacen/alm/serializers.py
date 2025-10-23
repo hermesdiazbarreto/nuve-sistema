@@ -40,6 +40,12 @@ class ProductoVarianteSerializer(serializers.ModelSerializer):
     talla_nombre = serializers.CharField(source='talla.nombre', read_only=True)
     color_nombre = serializers.CharField(source='color.nombre', read_only=True)
     codigo_variante = serializers.CharField(required=False, allow_blank=True)
+    # Campos adicionales del producto para POS
+    precio_venta = serializers.DecimalField(source='producto.precio_venta', max_digits=10, decimal_places=2, read_only=True)
+    precio_compra = serializers.DecimalField(source='producto.precio_compra', max_digits=10, decimal_places=2, read_only=True)
+    categoria_nombre = serializers.CharField(source='producto.categoria.nombre', read_only=True)
+    marca_nombre = serializers.CharField(source='producto.marca.nombre', read_only=True)
+    color_hex = serializers.CharField(source='color.codigo_hex', read_only=True)
 
     class Meta:
         model = ProductoVariante
