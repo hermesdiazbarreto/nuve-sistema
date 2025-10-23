@@ -1,6 +1,6 @@
 <template>
   <v-container fluid class="mt-4">
-    <h2 class="mb-4">Imprimir Etiquetas con Código QR</h2>
+    <h2 class="mb-4">Imprimir Etiquetas con Cï¿½digo QR</h2>
 
     <v-row>
       <v-col cols="12" md="6">
@@ -13,7 +13,7 @@
               v-model="busqueda"
               variant="outlined"
               density="comfortable"
-              placeholder="Buscar producto o código..."
+              placeholder="Buscar producto o cï¿½digo..."
               prepend-inner-icon="mdi-magnify"
               clearable
               class="mb-4"
@@ -90,8 +90,8 @@
                     Precio: {{ formatearPrecio(variante.precio_venta) }}
                   </div>
                   <div class="etiqueta-qr">
-                    <img v-if="variante.qr_code" :src="getQrUrl(variante.qr_code)" alt="QR Code" class="qr-image" />
-                    <div v-else class="sin-qr">Sin QR</div>
+                    <img v-if="variante.qr_data_url" :src="variante.qr_data_url" alt="QR Code" class="qr-image" />
+                    <div v-else class="sin-qr">Generando...</div>
                   </div>
                   <div class="etiqueta-codigo">
                     {{ variante.codigo_variante }}
@@ -118,6 +118,7 @@
 <script>
 import api from '../services/api'
 import formatoPrecio from '../mixins/formatoPrecio'
+import QRCode from 'qrcode'
 
 export default {
   name: 'ImprimirEtiquetasQR',
@@ -164,13 +165,31 @@ export default {
 
         this.productos = productos
 
-        this.variantes = variantes.map(v => {
+        // Enriquecer variantes con datos del producto y generar QR
+        this.variantes = await Promise.all(variantes.map(async v => {
           const producto = productos.find(p => p.id === v.producto)
-          return {
+          const varianteEnriquecida = {
             ...v,
-            precio_venta: producto ? producto.precio_venta : 0
+            precio_venta: producto ? producto.precio_venta : 0,
+            qr_data_url: null
           }
-        })
+
+          // Generar QR code como Data URL
+          try {
+            varianteEnriquecida.qr_data_url = await QRCode.toDataURL(v.codigo_variante, {
+              width: 200,
+              margin: 1,
+              color: {
+                dark: '#000000',
+                light: '#FFFFFF'
+              }
+            })
+          } catch (err) {
+            console.error(`Error generando QR para ${v.codigo_variante}:`, err)
+          }
+
+          return varianteEnriquecida
+        }))
       } catch (error) {
         console.error('Error al cargar datos:', error)
         this.showSnackbar('Error al cargar productos', 'error')
@@ -186,14 +205,6 @@ export default {
     },
     getVariantesParaImprimir() {
       return this.variantes.filter(v => this.variantesSeleccionadas.includes(v.id))
-    },
-    getQrUrl(qrPath) {
-      if (qrPath && qrPath.startsWith('http')) {
-        return qrPath
-      }
-      const baseUrl = process.env.VUE_APP_API_URL || 'https://nuve-sistema-production.up.railway.app'
-      const cleanBaseUrl = baseUrl.replace(/\/api$/, '')
-      return `${cleanBaseUrl}${qrPath}`
     },
     imprimirEtiquetas() {
       window.print()
