@@ -27,15 +27,27 @@
             <span class="text-white">Seleccionar Productos</span>
           </v-card-title>
           <v-card-text class="pt-4">
-            <v-text-field
-              v-model="busqueda"
-              variant="outlined"
-              density="comfortable"
-              placeholder="Buscar producto, código o variante..."
-              prepend-inner-icon="mdi-magnify"
-              @input="filtrarVariantes"
-              class="mb-4"
-            ></v-text-field>
+            <div class="d-flex gap-2 mb-4">
+              <v-text-field
+                v-model="busqueda"
+                variant="outlined"
+                density="comfortable"
+                placeholder="Buscar producto, código o variante... (o escanea QR)"
+                prepend-inner-icon="mdi-magnify"
+                @input="filtrarVariantes"
+                @keyup.enter="buscarPorCodigoManual"
+                clearable
+                class="flex-grow-1"
+              ></v-text-field>
+              <v-btn
+                color="primary"
+                size="large"
+                @click="abrirScannerQR"
+                icon
+              >
+                <v-icon>mdi-qrcode-scan</v-icon>
+              </v-btn>
+            </div>
 
             <!-- Vista Desktop: Tabla -->
             <div v-if="$vuetify.display.mdAndUp" style="max-height: 500px; overflow-y: auto;">
@@ -644,15 +656,25 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Modal Scanner QR -->
+    <QrScannerModal
+      v-model="mostrarScannerQR"
+      @codigo-escaneado="onCodigoEscaneado"
+    />
   </v-container>
 </template>
 
 <script>
 import api from '../services/api'
 import formatoPrecio from '../mixins/formatoPrecio'
+import QrScannerModal from './QrScannerModal.vue'
 
 export default {
   name: 'NuevaVenta',
+  components: {
+    QrScannerModal
+  },
   mixins: [formatoPrecio],
   data() {
     return {
@@ -677,6 +699,8 @@ export default {
       snackbar: false,
       snackbarText: '',
       snackbarColor: 'success',
+      // Scanner QR
+      mostrarScannerQR: false,
       // Diálogos para agregar datos
       mostrarDialogCategoria: false,
       mostrarDialogMarca: false,
@@ -751,6 +775,59 @@ export default {
       this.snackbarText = text
       this.snackbarColor = color
       this.snackbar = true
+    },
+    // Métodos para Scanner QR
+    abrirScannerQR() {
+      this.mostrarScannerQR = true
+    },
+    async onCodigoEscaneado(codigo) {
+      try {
+        // Buscar la variante por código
+        const response = await api.buscarVariantePorCodigo(codigo)
+        const variante = response.data
+
+        // Verificar si tiene stock
+        if (variante.stock_actual <= 0) {
+          this.showSnackbar('Producto sin stock disponible', 'warning')
+          return
+        }
+
+        // Agregar al carrito
+        this.agregarAlCarrito(variante)
+        this.showSnackbar(`Producto agregado: ${variante.producto_nombre} - ${variante.talla_nombre} - ${variante.color_nombre}`, 'success')
+      } catch (error) {
+        console.error('Error al buscar producto por QR:', error)
+        if (error.response && error.response.status === 404) {
+          this.showSnackbar('Código QR no encontrado', 'error')
+        } else {
+          this.showSnackbar('Error al buscar producto', 'error')
+        }
+      }
+    },
+    async buscarPorCodigoManual() {
+      // Si el usuario presiona Enter en el campo de búsqueda, intentar buscar como código exacto
+      if (!this.busqueda || this.busqueda.trim() === '') {
+        return
+      }
+
+      const codigo = this.busqueda.trim()
+
+      try {
+        const response = await api.buscarVariantePorCodigo(codigo)
+        const variante = response.data
+
+        if (variante.stock_actual <= 0) {
+          this.showSnackbar('Producto sin stock disponible', 'warning')
+          return
+        }
+
+        this.agregarAlCarrito(variante)
+        this.showSnackbar(`Producto agregado: ${variante.producto_nombre}`, 'success')
+        this.busqueda = '' // Limpiar búsqueda
+      } catch (error) {
+        // Si no se encuentra como código exacto, continuar con la búsqueda normal
+        console.log('No se encontró como código exacto, continuando con búsqueda normal')
+      }
     },
     async cargarDatos() {
       try {

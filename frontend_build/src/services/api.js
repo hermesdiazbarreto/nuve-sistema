@@ -167,6 +167,14 @@ export default {
     // data puede contener: { talla, color, stock_actual, stock_minimo }
     return api.post(`/producto-variantes/${id}/duplicar/`, data)
   },
+  buscarVariantePorCodigo(codigo) {
+    // Buscar variante por código QR escaneado
+    return api.get(`/producto-variantes/buscar_por_codigo/?codigo=${codigo}`)
+  },
+  regenerarQrVariante(id) {
+    // Regenerar el código QR de una variante
+    return api.post(`/producto-variantes/${id}/regenerar_qr/`)
+  },
 
   // ============ CLIENTES ============
   getClientes() {

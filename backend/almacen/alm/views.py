@@ -274,6 +274,61 @@ class ProductoVarianteViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+    @action(detail=True, methods=['post'])
+    def regenerar_qr(self, request, pk=None):
+        """
+        Regenera el código QR para una variante específica
+        """
+        variante = self.get_object()
+
+        try:
+            variante.generar_qr()
+            variante.save()
+
+            return Response(
+                {
+                    'message': 'Código QR regenerado exitosamente',
+                    'qr_code_url': variante.qr_code.url if variante.qr_code else None
+                },
+                status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Error al regenerar QR: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['get'])
+    def buscar_por_codigo(self, request):
+        """
+        Busca una variante por su código_variante
+        Útil para el escáner QR en el POS
+
+        Parámetro GET: codigo
+        """
+        codigo = request.query_params.get('codigo', None)
+
+        if not codigo:
+            return Response(
+                {'error': 'Debe proporcionar el parámetro "codigo"'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            variante = ProductoVariante.objects.get(codigo_variante=codigo, activo=True)
+            serializer = self.get_serializer(variante)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except ProductoVariante.DoesNotExist:
+            return Response(
+                {'error': f'No se encontró una variante activa con el código: {codigo}'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Error en la búsqueda: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 class ClienteViewSet(viewsets.ModelViewSet):
     queryset = Cliente.objects.all()
     serializer_class = ClienteSerializer

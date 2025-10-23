@@ -28,6 +28,9 @@ import ProveedoresLista from '../components/ProveedoresLista.vue'
 // Promociones WhatsApp
 import PromocionesWhatsApp from '../components/PromocionesWhatsApp.vue'
 
+// Etiquetas QR
+import ImprimirEtiquetasQR from '../components/ImprimirEtiquetasQR.vue'
+
 // Legacy components (mantener compatibilidad)
 import ArticulosLista from '../components/ArticulosLista.vue'
 import AdicionarArticulo from '../components/AdicionarArticulo.vue'
@@ -147,6 +150,13 @@ const routes = [
     path: '/promociones-whatsapp',
     name: 'PromocionesWhatsApp',
     component: PromocionesWhatsApp
+  },
+
+  // ========== ETIQUETAS QR ==========
+  {
+    path: '/etiquetas-qr',
+    name: 'ImprimirEtiquetasQR',
+    component: ImprimirEtiquetasQR
   },
 
   // ========== RUTAS LEGACY (compatibilidad) ==========

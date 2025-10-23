@@ -1,6 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.files.base import ContentFile
+import qrcode
+from io import BytesIO
 
 class Categoria(models.Model):
     nombre = models.CharField(max_length=100, unique=True)
@@ -126,9 +129,37 @@ class ProductoVariante(models.Model):
     stock_actual = models.IntegerField(default=0, validators=[MinValueValidator(0)])
     stock_minimo = models.IntegerField(default=5, validators=[MinValueValidator(0)])
     activo = models.BooleanField(default=True)
+    qr_code = models.ImageField(upload_to='qr_codes/', blank=True, null=True)
 
     def __str__(self):
         return f"{self.producto.nombre} - {self.talla} - {self.color}"
+
+    def generar_qr(self):
+        """Genera el código QR para esta variante"""
+        if not self.codigo_variante:
+            return
+
+        # Crear el código QR
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(self.codigo_variante)
+        qr.make(fit=True)
+
+        # Generar imagen
+        img = qr.make_image(fill_color="black", back_color="white")
+
+        # Guardar en un BytesIO
+        buffer = BytesIO()
+        img.save(buffer, format='PNG')
+        buffer.seek(0)
+
+        # Guardar como archivo Django
+        filename = f'qr_{self.codigo_variante}.png'
+        self.qr_code.save(filename, ContentFile(buffer.read()), save=False)
 
     def save(self, *args, **kwargs):
         if not self.codigo_variante:
@@ -156,7 +187,17 @@ class ProductoVariante(models.Model):
 
             self.codigo_variante = f"{producto_codigo}-{talla_nombre}-{codigo_color}"
 
+        # Generar QR si no existe
+        generar_qr_nuevo = False
+        if not self.qr_code and self.codigo_variante:
+            generar_qr_nuevo = True
+
         super().save(*args, **kwargs)
+
+        # Generar el QR después de guardar para tener el ID
+        if generar_qr_nuevo:
+            self.generar_qr()
+            super().save(*args, **kwargs)
 
     class Meta:
         unique_together = ['producto', 'talla', 'color']

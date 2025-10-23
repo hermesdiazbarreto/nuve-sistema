@@ -158,6 +158,7 @@ export default {
         { title: 'Clientes', icon: 'mdi-account-group', to: '/clientes' },
         { title: 'Proveedores', icon: 'mdi-truck', to: '/proveedores' },
         { title: 'Movimientos', icon: 'mdi-swap-horizontal', to: '/movimientos' },
+        { title: 'Etiquetas QR', icon: 'mdi-qrcode', to: '/etiquetas-qr' },
       ],
       maestrosMenuItems: [
         { title: 'Categorías', icon: 'mdi-tag-multiple', to: '/categorias' },
