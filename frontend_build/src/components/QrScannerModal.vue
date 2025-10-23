@@ -47,11 +47,12 @@ import { Html5Qrcode } from 'html5-qrcode';
 export default {
   name: 'QrScannerModal',
   props: {
-    value: {
+    modelValue: {
       type: Boolean,
       default: false
     }
   },
+  emits: ['update:modelValue', 'codigo-escaneado'],
   data() {
     return {
       html5QrCode: null,
@@ -64,10 +65,10 @@ export default {
   computed: {
     dialog: {
       get() {
-        return this.value;
+        return this.modelValue;
       },
       set(val) {
-        this.$emit('input', val);
+        this.$emit('update:modelValue', val);
       }
     }
   },
@@ -124,9 +125,12 @@ export default {
         try {
           await this.html5QrCode.stop();
           this.html5QrCode.clear();
+          this.html5QrCode = null;
           this.scanning = false;
         } catch (err) {
           console.error('Error al detener scanner:', err);
+          this.scanning = false;
+          this.html5QrCode = null;
         }
       }
     },
@@ -149,12 +153,15 @@ export default {
       // console.warn('Scan failure:', error);
     },
 
-    cerrarScanner() {
-      this.detenerScanner();
-      this.dialog = false;
+    async cerrarScanner() {
+      await this.detenerScanner();
+      // Esperar un poco antes de cerrar el diálogo
+      setTimeout(() => {
+        this.dialog = false;
+      }, 100);
     }
   },
-  beforeDestroy() {
+  beforeUnmount() {
     this.detenerScanner();
   }
 };
