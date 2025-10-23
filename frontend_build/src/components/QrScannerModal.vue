@@ -98,6 +98,21 @@ export default {
           return;
         }
 
+        // Verificar si el navegador soporta getUserMedia
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          this.cameraError = 'Tu navegador no soporta acceso a la cámara. Usa Chrome, Safari o Firefox actualizado.';
+          return;
+        }
+
+        // Solicitar permisos de cámara primero
+        try {
+          await navigator.mediaDevices.getUserMedia({ video: true });
+        } catch (permErr) {
+          console.error('Error de permisos:', permErr);
+          this.cameraError = 'Necesitas dar permisos de cámara en tu navegador. Ve a Configuración → Permisos del sitio → Cámara.';
+          return;
+        }
+
         this.html5QrCode = new Html5Qrcode('qr-reader');
 
         const config = {
@@ -106,17 +121,36 @@ export default {
           aspectRatio: 1.0
         };
 
-        await this.html5QrCode.start(
-          { facingMode: 'environment' }, // Cámara trasera
-          config,
-          this.onScanSuccess,
-          this.onScanFailure
-        );
+        // Intentar con cámara trasera primero, si falla usar cualquiera
+        try {
+          await this.html5QrCode.start(
+            { facingMode: 'environment' }, // Cámara trasera
+            config,
+            this.onScanSuccess,
+            this.onScanFailure
+          );
+        } catch (backCamErr) {
+          // Si falla la cámara trasera, intentar con cualquier cámara
+          await this.html5QrCode.start(
+            { facingMode: 'user' }, // Cámara frontal
+            config,
+            this.onScanSuccess,
+            this.onScanFailure
+          );
+        }
 
         this.scanning = true;
       } catch (err) {
         console.error('Error al iniciar scanner:', err);
-        this.cameraError = 'No se pudo acceder a la cámara. Por favor, verifica los permisos.';
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+          this.cameraError = 'Permiso de cámara denegado. Por favor, permite el acceso a la cámara en la configuración de tu navegador.';
+        } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+          this.cameraError = 'No se encontró ninguna cámara en tu dispositivo.';
+        } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+          this.cameraError = 'La cámara está siendo usada por otra aplicación. Cierra otras apps que usen la cámara.';
+        } else {
+          this.cameraError = `Error al acceder a la cámara: ${err.message || 'Error desconocido'}. Intenta recargar la página.`;
+        }
       }
     },
 

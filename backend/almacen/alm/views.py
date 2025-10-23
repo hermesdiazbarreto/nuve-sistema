@@ -798,3 +798,46 @@ def logout_view(request):
             {'error': str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def generar_todos_qr(request):
+    """
+    Genera códigos QR para todas las variantes que no tienen
+    """
+    try:
+        variantes = ProductoVariante.objects.all()
+        total = variantes.count()
+        sin_qr = variantes.filter(qr_code='').count()
+
+        if sin_qr == 0:
+            return Response({
+                'message': 'Todas las variantes ya tienen QR',
+                'total': total,
+                'sin_qr': 0,
+                'generados': 0
+            })
+
+        generados = 0
+        errores = []
+
+        for variante in variantes.filter(qr_code=''):
+            try:
+                variante.generar_qr()
+                variante.save()
+                generados += 1
+            except Exception as e:
+                errores.append(f'{variante.codigo_variante}: {str(e)}')
+
+        return Response({
+            'message': f'QR codes generados exitosamente',
+            'total_variantes': total,
+            'sin_qr_antes': sin_qr,
+            'generados': generados,
+            'errores': errores
+        })
+    except Exception as e:
+        return Response(
+            {'error': f'Error al generar QR codes: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
