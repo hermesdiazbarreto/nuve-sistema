@@ -23,3 +23,5 @@ psycopg2-binary==2.9.9
 dj-database-url==2.1.0
 twilio==9.0.4
 qrcode==8.0
+Pillow==11.3.0
+reportlab==4.0.7
