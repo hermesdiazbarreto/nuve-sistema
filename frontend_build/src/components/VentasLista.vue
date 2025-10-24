@@ -27,6 +27,16 @@
         <v-row>
           <v-col cols="12" sm="6" md="3">
             <v-select
+              v-model="filtro.tipo_movimiento"
+              :items="['Todos', 'INGRESO', 'EGRESO']"
+              label="Tipo"
+              variant="outlined"
+              density="compact"
+              @update:model-value="aplicarFiltros"
+            ></v-select>
+          </v-col>
+          <v-col cols="12" sm="6" md="3">
+            <v-select
               v-model="filtro.estado"
               :items="['Todos', 'PAGADO', 'ABONO', 'PENDIENTE', 'CANCELADO']"
               label="Estado"
@@ -35,7 +45,7 @@
               @update:model-value="aplicarFiltros"
             ></v-select>
           </v-col>
-          <v-col cols="12" sm="6" md="3">
+          <v-col cols="12" sm="6" md="2">
             <v-text-field
               v-model="filtro.fecha_desde"
               type="date"
@@ -45,7 +55,7 @@
               @change="aplicarFiltros"
             ></v-text-field>
           </v-col>
-          <v-col cols="12" sm="6" md="3">
+          <v-col cols="12" sm="6" md="2">
             <v-text-field
               v-model="filtro.fecha_hasta"
               type="date"
@@ -55,10 +65,10 @@
               @change="aplicarFiltros"
             ></v-text-field>
           </v-col>
-          <v-col cols="12" sm="6" md="3">
+          <v-col cols="12" sm="6" md="2">
             <v-btn color="grey" variant="outlined" block @click="limpiarFiltros">
               <v-icon left>mdi-refresh</v-icon>
-              Limpiar Filtros
+              Limpiar
             </v-btn>
           </v-col>
         </v-row>
@@ -123,7 +133,7 @@
       <v-data-table
         v-if="$vuetify.display.mdAndUp"
         :headers="headers"
-        :items="ventasParaMostrar"
+        :items="ventasFiltradas"
         :items-per-page="10"
         items-per-page-text="Ventas por página"
         no-data-text="No hay ventas registradas"
@@ -239,7 +249,7 @@
       <!-- Vista Móvil/Tablet: Cards -->
       <v-card-text v-else class="pa-2">
         <v-card
-          v-for="venta in ventasParaMostrar"
+          v-for="venta in ventasFiltradas"
           :key="venta.id"
           class="mb-3"
           elevation="2"
@@ -339,7 +349,7 @@
         </v-card>
 
         <!-- Paginación manual para móvil (opcional) -->
-        <div v-if="ventasParaMostrar.length === 0" class="text-center pa-4 text-medium-emphasis">
+        <div v-if="ventasFiltradas.length === 0" class="text-center pa-4 text-medium-emphasis">
           No hay ventas registradas
         </div>
       </v-card-text>
@@ -562,6 +572,7 @@ export default {
       ventasFiltradas: [],
       loading: true,
       filtro: {
+        tipo_movimiento: 'Todos',
         estado: 'Todos',
         fecha_desde: '',
         fecha_hasta: ''
@@ -599,10 +610,6 @@ export default {
     }
   },
   computed: {
-    // Solo mostrar ventas de tipo INGRESO en la tabla
-    ventasParaMostrar() {
-      return this.ventasFiltradas.filter(v => v.tipo_movimiento === 'INGRESO')
-    },
     totalIngresos() {
       return this.ventasFiltradas
         .filter(v => v.tipo_movimiento === 'INGRESO')
@@ -614,7 +621,7 @@ export default {
         .reduce((sum, v) => sum + Number(v.total), 0)
     },
     cantidadVentas() {
-      return this.ventasParaMostrar.length
+      return this.ventasFiltradas.length
     }
   },
   async created() {
@@ -639,16 +646,24 @@ export default {
     aplicarFiltros() {
       let filtradas = [...this.ventas]
 
+      // Filtro por tipo de movimiento
+      if (this.filtro.tipo_movimiento && this.filtro.tipo_movimiento !== 'Todos') {
+        filtradas = filtradas.filter(v => v.tipo_movimiento === this.filtro.tipo_movimiento)
+      }
+
+      // Filtro por estado
       if (this.filtro.estado && this.filtro.estado !== 'Todos') {
         filtradas = filtradas.filter(v => v.estado === this.filtro.estado)
       }
 
+      // Filtro por fecha desde
       if (this.filtro.fecha_desde) {
         filtradas = filtradas.filter(v =>
           new Date(v.fecha_venta) >= new Date(this.filtro.fecha_desde)
         )
       }
 
+      // Filtro por fecha hasta
       if (this.filtro.fecha_hasta) {
         const fechaHasta = new Date(this.filtro.fecha_hasta)
         fechaHasta.setHours(23, 59, 59)
@@ -661,6 +676,7 @@ export default {
     },
     limpiarFiltros() {
       this.filtro = {
+        tipo_movimiento: 'Todos',
         estado: 'Todos',
         fecha_desde: '',
         fecha_hasta: ''
