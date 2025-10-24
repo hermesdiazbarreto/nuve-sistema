@@ -26,7 +26,7 @@
           </p>
         </div>
 
-        <v-alert v-else type="warning" class="mb-4">
+        <v-alert v-else type="warning" class="mb-4" style="white-space: pre-line;">
           {{ cameraError }}
         </v-alert>
       </v-card-text>
@@ -88,6 +88,15 @@ export default {
       this.success = null;
 
       try {
+        // Verificar si se está usando HTTPS (requerido para cámara)
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const isHttps = window.location.protocol === 'https:';
+
+        if (!isLocalhost && !isHttps) {
+          this.cameraError = '⚠️ HTTPS REQUERIDO: Tu navegador solo permite acceso a la cámara en sitios seguros (HTTPS). Contacta al administrador del sistema para habilitar HTTPS.';
+          return;
+        }
+
         // Esperar a que el DOM esté listo
         await this.$nextTick();
 
@@ -109,7 +118,21 @@ export default {
           await navigator.mediaDevices.getUserMedia({ video: true });
         } catch (permErr) {
           console.error('Error de permisos:', permErr);
-          this.cameraError = 'Necesitas dar permisos de cámara en tu navegador. Ve a Configuración → Permisos del sitio → Cámara.';
+
+          // Manejar errores específicos de permisos
+          if (permErr.name === 'NotAllowedError' || permErr.name === 'PermissionDeniedError') {
+            this.cameraError = '📷 PERMISO DENEGADO: Permite el acceso a la cámara en tu navegador:\n\n• Chrome/Android: Toca el candado 🔒 en la barra de direcciones → Permisos → Cámara → Permitir\n• Safari/iOS: Ajustes → Safari → Cámara → Permitir\n\nLuego recarga esta página.';
+          } else if (permErr.name === 'NotFoundError') {
+            this.cameraError = '📷 SIN CÁMARA: No se detectó ninguna cámara en tu dispositivo.';
+          } else if (permErr.name === 'NotReadableError') {
+            this.cameraError = '📷 CÁMARA EN USO: Otra aplicación está usando la cámara. Cierra otras apps y vuelve a intentar.';
+          } else if (permErr.name === 'OverconstrainedError') {
+            this.cameraError = '📷 CÁMARA NO COMPATIBLE: Tu cámara no cumple con los requisitos mínimos.';
+          } else if (permErr.name === 'SecurityError') {
+            this.cameraError = '🔒 ERROR DE SEGURIDAD: El acceso a la cámara fue bloqueado por políticas de seguridad del navegador. Asegúrate de estar en HTTPS.';
+          } else {
+            this.cameraError = `📷 ERROR: ${permErr.message || permErr.name || 'No se pudo acceder a la cámara'}. Intenta:\n\n1. Recargar la página\n2. Verificar permisos de cámara\n3. Cerrar otras apps que usen la cámara\n4. Reiniciar el navegador`;
+          }
           return;
         }
 
@@ -142,14 +165,26 @@ export default {
         this.scanning = true;
       } catch (err) {
         console.error('Error al iniciar scanner:', err);
+
+        // Manejar errores específicos del scanner
         if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-          this.cameraError = 'Permiso de cámara denegado. Por favor, permite el acceso a la cámara en la configuración de tu navegador.';
+          this.cameraError = '📷 PERMISO DENEGADO: Permite el acceso a la cámara:\n\n• Android: Toca el candado 🔒 → Permisos → Cámara → Permitir\n• iPhone: Ajustes → Safari → Cámara → Permitir\n\nLuego recarga esta página.';
         } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-          this.cameraError = 'No se encontró ninguna cámara en tu dispositivo.';
+          this.cameraError = '📷 SIN CÁMARA: No se detectó ninguna cámara en tu dispositivo.';
         } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-          this.cameraError = 'La cámara está siendo usada por otra aplicación. Cierra otras apps que usen la cámara.';
+          this.cameraError = '📷 CÁMARA EN USO: Otra app está usando la cámara. Cierra otras apps y vuelve a intentar.';
+        } else if (err.name === 'OverconstrainedError') {
+          this.cameraError = '📷 CÁMARA NO COMPATIBLE: Tu cámara no soporta la configuración requerida. Intenta con otro dispositivo.';
+        } else if (err.name === 'SecurityError') {
+          this.cameraError = '🔒 ERROR DE SEGURIDAD:\n\n1. Verifica que la URL use HTTPS (no HTTP)\n2. Limpia la caché del navegador\n3. Verifica los permisos de la cámara\n\nSi el problema persiste, contacta al administrador.';
+        } else if (err.name === 'AbortError') {
+          this.cameraError = '⚠️ INICIALIZACIÓN INTERRUMPIDA: El proceso fue cancelado. Vuelve a intentar.';
+        } else if (err.name === 'TypeError') {
+          this.cameraError = '⚠️ ERROR DE CONFIGURACIÓN: Problema interno del scanner. Recarga la página.';
         } else {
-          this.cameraError = `Error al acceder a la cámara: ${err.message || 'Error desconocido'}. Intenta recargar la página.`;
+          // Error desconocido - dar información detallada
+          const errorMsg = err.message || err.toString() || 'Error desconocido';
+          this.cameraError = `📷 ERROR AL INICIAR CÁMARA:\n\n${errorMsg}\n\n✅ Soluciones:\n1. Recarga la página\n2. Verifica permisos de cámara\n3. Cierra otras apps\n4. Usa HTTPS (no HTTP)\n5. Prueba otro navegador\n\nSi usas HTTP, pide al admin habilitar HTTPS.`;
         }
       }
     },
