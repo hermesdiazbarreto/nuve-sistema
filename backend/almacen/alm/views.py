@@ -7,12 +7,18 @@ from django.shortcuts import get_object_or_404
 from django.db import models, connection
 from django.contrib.auth import authenticate
 from django.http import HttpResponse
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import cm
-from reportlab.pdfgen import canvas
-from reportlab.lib.utils import ImageReader
 from io import BytesIO
 import os
+
+# Import reportlab solo cuando sea necesario (lazy import)
+try:
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.units import cm
+    from reportlab.pdfgen import canvas as pdf_canvas
+    from reportlab.lib.utils import ImageReader
+    REPORTLAB_AVAILABLE = True
+except ImportError:
+    REPORTLAB_AVAILABLE = False
 from .models import (
     Categoria, Marca, Talla, Color, Producto, ProductoVariante,
     Cliente, Venta, DetalleVenta, MovimientoInventario, Proveedor,
@@ -858,6 +864,12 @@ def generar_pdf_etiquetas_qr(request):
     Formato: 3 columnas x N filas en página A4
     Cada etiqueta incluye: QR code, nombre del producto, talla, color, código
     """
+    if not REPORTLAB_AVAILABLE:
+        return Response(
+            {'error': 'La librería reportlab no está instalada. Contacta al administrador.'},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE
+        )
+
     try:
         # Obtener todas las variantes activas con QR generado
         variantes = ProductoVariante.objects.filter(
@@ -867,7 +879,7 @@ def generar_pdf_etiquetas_qr(request):
 
         # Crear el PDF en memoria
         buffer = BytesIO()
-        p = canvas.Canvas(buffer, pagesize=A4)
+        p = pdf_canvas.Canvas(buffer, pagesize=A4)
         width, height = A4
 
         # Configuración de la cuadrícula de etiquetas
