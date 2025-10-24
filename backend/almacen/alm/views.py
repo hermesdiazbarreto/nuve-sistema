@@ -919,18 +919,37 @@ def generar_pdf_etiquetas_qr(request):
                 variante.generar_qr()
                 ProductoVariante.objects.filter(pk=variante.pk).update(qr_code=variante.qr_code)
 
-            # Dibujar QR code
+            # Dibujar QR code - generar en memoria en lugar de leer archivo
             try:
-                from django.conf import settings
-                qr_path = os.path.join(settings.MEDIA_ROOT, str(variante.qr_code))
+                import qrcode
+                from io import BytesIO
 
-                if os.path.exists(qr_path):
-                    qr_img = ImageReader(qr_path)
-                    qr_size = 2.5 * cm
-                    p.drawImage(qr_img, x + 0.25 * cm, y + etiqueta_alto - qr_size - 0.25 * cm,
-                              width=qr_size, height=qr_size, preserveAspectRatio=True)
+                # Generar QR code en memoria
+                qr = qrcode.QRCode(
+                    version=1,
+                    error_correction=qrcode.constants.ERROR_CORRECT_L,
+                    box_size=10,
+                    border=1,
+                )
+                qr.add_data(variante.codigo_variante)
+                qr.make(fit=True)
+
+                # Crear imagen del QR
+                qr_img = qr.make_image(fill_color="black", back_color="white")
+
+                # Convertir a formato que ReportLab pueda usar
+                qr_buffer = BytesIO()
+                qr_img.save(qr_buffer, format='PNG')
+                qr_buffer.seek(0)
+
+                # Dibujar en el PDF
+                qr_size = 2.5 * cm
+                p.drawImage(ImageReader(qr_buffer), x + 0.25 * cm, y + etiqueta_alto - qr_size - 0.25 * cm,
+                          width=qr_size, height=qr_size, preserveAspectRatio=True)
             except Exception as e:
-                # Si falla la carga del QR, continuar sin él
+                # Si falla la generación del QR, mostrar texto de error (opcional)
+                p.setFont("Helvetica", 6)
+                p.drawString(x + 0.25 * cm, y + etiqueta_alto - 1 * cm, "Error QR")
                 pass
 
             # Información del producto (lado derecho del QR)
