@@ -841,3 +841,44 @@ def generar_todos_qr(request):
             {'error': f'Error al generar QR codes: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def emergency_reset_sequence(request):
+    """Reset definitivo de secuencia - encuentra TODOS los IDs y salta a MAX + 500"""
+    try:
+        with connection.cursor() as cursor:
+            # Obtener MAX(id) absoluto
+            cursor.execute("""
+                SELECT MAX(id) FROM alm_productovariante;
+            """)
+            max_id = cursor.fetchone()[0] or 0
+
+            # Contar cuántos registros hay realmente
+            cursor.execute("SELECT COUNT(*) FROM alm_productovariante;")
+            total_registros = cursor.fetchone()[0]
+
+            # Resetear secuencia a MAX + 500 (margen muy grande)
+            nuevo_valor = max_id + 500
+
+            cursor.execute("""
+                SELECT setval(
+                    pg_get_serial_sequence('alm_productovariante', 'id'),
+                    %s,
+                    false
+                );
+            """, [nuevo_valor])
+
+            secuencia_final = cursor.fetchone()[0]
+
+        return Response({
+            'total_registros': total_registros,
+            'max_id_encontrado': max_id,
+            'margen_agregado': 500,
+            'secuencia_reseteada_a': secuencia_final,
+            'proximo_id': secuencia_final,
+            'mensaje': f'Secuencia DEFINITIVAMENTE reseteada. Próximo ID: {secuencia_final}'
+        })
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
