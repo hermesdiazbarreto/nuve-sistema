@@ -50,6 +50,7 @@ class ProductoVarianteSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductoVariante
         fields = '__all__'
+        read_only_fields = ('id',)  # El ID se genera automáticamente, no debe enviarse desde el frontend
 
 class ClienteSerializer(serializers.ModelSerializer):
     nombre_completo = serializers.CharField(read_only=True)
