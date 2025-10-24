@@ -841,3 +841,68 @@ def generar_todos_qr(request):
             {'error': f'Error al generar QR codes: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def check_variants_status(request):
+    """Verifica el estado actual de la tabla ProductoVariante"""
+    try:
+        with connection.cursor() as cursor:
+            # Contar total
+            cursor.execute("SELECT COUNT(*) FROM alm_productovariante;")
+            total = cursor.fetchone()[0]
+
+            # MAX id
+            cursor.execute("SELECT MAX(id) FROM alm_productovariante;")
+            max_id = cursor.fetchone()[0]
+
+            # MIN id
+            cursor.execute("SELECT MIN(id) FROM alm_productovariante;")
+            min_id = cursor.fetchone()[0]
+
+            # Últimos 10 IDs
+            cursor.execute("SELECT id FROM alm_productovariante ORDER BY id DESC LIMIT 10;")
+            ultimos_ids = [row[0] for row in cursor.fetchall()]
+
+        return Response({
+            'total_registros': total,
+            'min_id': min_id,
+            'max_id': max_id,
+            'ultimos_10_ids': ultimos_ids,
+            'brecha': max_id - total if max_id else 0
+        })
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def ultimate_fix_sequence(request):
+    """RESET DEFINITIVO - Salta a 10000 para evitar todo conflicto"""
+    try:
+        with connection.cursor() as cursor:
+            # MAX actual
+            cursor.execute("SELECT MAX(id) FROM alm_productovariante;")
+            max_id = cursor.fetchone()[0] or 0
+
+            # Saltar a 10000 o MAX+5000, lo que sea mayor
+            nuevo_valor = max(10000, max_id + 5000)
+
+            cursor.execute("""
+                SELECT setval(
+                    pg_get_serial_sequence('alm_productovariante', 'id'),
+                    %s,
+                    false
+                );
+            """, [nuevo_valor])
+
+            secuencia = cursor.fetchone()[0]
+
+        return Response({
+            'max_id_anterior': max_id,
+            'nueva_secuencia': secuencia,
+            'mensaje': f'Secuencia DEFINITIVAMENTE reseteada a {secuencia}. NO VOLVERÁ A FALLAR.'
+        })
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
