@@ -846,7 +846,10 @@ def generar_todos_qr(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def fix_all_sequences(request):
-    """Resetea TODAS las secuencias de PostgreSQL de forma definitiva"""
+    """
+    Resetea TODAS las secuencias de PostgreSQL de forma definitiva.
+    Encuentra el MAX(id) real de cada tabla y actualiza la secuencia.
+    """
     try:
         from django.apps import apps
 
