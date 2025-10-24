@@ -70,26 +70,39 @@
 
     <!-- Stats Cards -->
     <v-row v-if="!loading" class="mb-4">
-      <v-col cols="12" sm="6">
+      <v-col cols="12" sm="6" md="4">
         <v-card color="success" dark elevation="3">
           <v-card-text>
             <div class="d-flex justify-space-between align-center">
               <div>
-                <div class="text-subtitle-2">Total Ventas</div>
-                <div class="text-h4 font-weight-bold">{{ formatearPrecio(totalVentas) }}</div>
+                <div class="text-subtitle-2">Total Ventas (Ingresos)</div>
+                <div class="text-h4 font-weight-bold">{{ formatearPrecio(totalIngresos) }}</div>
               </div>
-              <v-icon size="48">mdi-currency-usd</v-icon>
+              <v-icon size="48">mdi-cash-plus</v-icon>
             </div>
           </v-card-text>
         </v-card>
       </v-col>
-      <v-col cols="12" sm="6">
+      <v-col cols="12" sm="6" md="4">
+        <v-card color="error" dark elevation="3">
+          <v-card-text>
+            <div class="d-flex justify-space-between align-center">
+              <div>
+                <div class="text-subtitle-2">Total Egresos</div>
+                <div class="text-h4 font-weight-bold">{{ formatearPrecio(totalEgresos) }}</div>
+              </div>
+              <v-icon size="48">mdi-cash-minus</v-icon>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+      <v-col cols="12" sm="6" md="4">
         <v-card color="info" dark elevation="3">
           <v-card-text>
             <div class="d-flex justify-space-between align-center">
               <div>
                 <div class="text-subtitle-2">Cantidad de Ventas</div>
-                <div class="text-h4 font-weight-bold">{{ ventasFiltradas.length }}</div>
+                <div class="text-h4 font-weight-bold">{{ cantidadVentas }}</div>
               </div>
               <v-icon size="48">mdi-counter</v-icon>
             </div>
@@ -110,7 +123,7 @@
       <v-data-table
         v-if="$vuetify.display.mdAndUp"
         :headers="headers"
-        :items="ventasFiltradas"
+        :items="ventasParaMostrar"
         :items-per-page="10"
         items-per-page-text="Ventas por página"
         no-data-text="No hay ventas registradas"
@@ -226,7 +239,7 @@
       <!-- Vista Móvil/Tablet: Cards -->
       <v-card-text v-else class="pa-2">
         <v-card
-          v-for="venta in ventasFiltradas"
+          v-for="venta in ventasParaMostrar"
           :key="venta.id"
           class="mb-3"
           elevation="2"
@@ -326,7 +339,7 @@
         </v-card>
 
         <!-- Paginación manual para móvil (opcional) -->
-        <div v-if="ventasFiltradas.length === 0" class="text-center pa-4 text-medium-emphasis">
+        <div v-if="ventasParaMostrar.length === 0" class="text-center pa-4 text-medium-emphasis">
           No hay ventas registradas
         </div>
       </v-card-text>
@@ -586,8 +599,22 @@ export default {
     }
   },
   computed: {
-    totalVentas() {
-      return this.ventasFiltradas.reduce((sum, v) => sum + Number(v.total), 0)
+    // Solo mostrar ventas de tipo INGRESO en la tabla
+    ventasParaMostrar() {
+      return this.ventasFiltradas.filter(v => v.tipo_movimiento === 'INGRESO')
+    },
+    totalIngresos() {
+      return this.ventasFiltradas
+        .filter(v => v.tipo_movimiento === 'INGRESO')
+        .reduce((sum, v) => sum + Number(v.total), 0)
+    },
+    totalEgresos() {
+      return this.ventasFiltradas
+        .filter(v => v.tipo_movimiento === 'EGRESO')
+        .reduce((sum, v) => sum + Number(v.total), 0)
+    },
+    cantidadVentas() {
+      return this.ventasParaMostrar.length
     }
   },
   async created() {
