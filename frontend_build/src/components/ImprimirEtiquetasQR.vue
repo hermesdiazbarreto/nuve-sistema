@@ -49,15 +49,28 @@
             </div>
           </v-card-text>
 
-          <v-card-actions>
+          <v-card-actions class="flex-column pa-3">
             <v-btn
               color="primary"
               block
               :disabled="variantesSeleccionadas.length === 0"
               @click="imprimirEtiquetas"
+              class="mb-2"
             >
               <v-icon left>mdi-printer</v-icon>
               Imprimir {{ variantesSeleccionadas.length }} Etiqueta(s)
+            </v-btn>
+
+            <v-btn
+              color="success"
+              variant="elevated"
+              block
+              @click="descargarTodasEtiquetasPdf"
+              :loading="descargandoPdf"
+              prepend-icon="mdi-download"
+            >
+              <v-icon left>mdi-file-pdf-box</v-icon>
+              Descargar TODAS las Etiquetas en PDF
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -131,7 +144,8 @@ export default {
       productos: [],
       snackbar: false,
       snackbarText: '',
-      snackbarColor: 'success'
+      snackbarColor: 'success',
+      descargandoPdf: false
     }
   },
   computed: {
@@ -208,6 +222,43 @@ export default {
     },
     imprimirEtiquetas() {
       window.print()
+    },
+    async descargarTodasEtiquetasPdf() {
+      this.descargandoPdf = true
+      try {
+        const response = await api.descargarEtiquetasQrPdf()
+
+        // Crear un blob URL y descargar el archivo
+        const blob = new Blob([response.data], { type: 'application/pdf' })
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+
+        // Generar nombre del archivo con fecha actual
+        const fecha = new Date().toISOString().split('T')[0]
+        link.download = `etiquetas-qr-${fecha}.pdf`
+
+        // Simular click para descargar
+        document.body.appendChild(link)
+        link.click()
+
+        // Limpiar
+        document.body.removeChild(link)
+        window.URL.revokeObjectURL(url)
+
+        this.showSnackbar('PDF descargado exitosamente', 'success')
+      } catch (error) {
+        console.error('Error al descargar PDF:', error)
+
+        // Manejar error si la librería no está instalada
+        if (error.response && error.response.status === 503) {
+          this.showSnackbar('El servidor no puede generar PDFs en este momento. Contacta al administrador.', 'error')
+        } else {
+          this.showSnackbar('Error al descargar el PDF. Intenta nuevamente.', 'error')
+        }
+      } finally {
+        this.descargandoPdf = false
+      }
     },
     showSnackbar(text, color = 'success') {
       this.snackbarText = text

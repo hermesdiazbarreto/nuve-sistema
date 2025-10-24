@@ -282,4 +282,12 @@ export default {
   getEnvioWhatsApp(id) {
     return api.get(`/envios-whatsapp/${id}/`)
   },
+
+  // ============ ETIQUETAS QR PDF ============
+  descargarEtiquetasQrPdf() {
+    // Descargar PDF con todas las etiquetas QR
+    return api.get('/etiquetas-qr-pdf/', {
+      responseType: 'blob', // Importante para manejar el PDF como binario
+    })
+  },
 }
