@@ -59,7 +59,8 @@ export default {
       error: null,
       success: null,
       cameraError: null,
-      scanning: false
+      scanning: false,
+      procesandoEscaneo: false // Bandera para evitar escaneos duplicados
     };
   },
   computed: {
@@ -86,6 +87,7 @@ export default {
       this.error = null;
       this.cameraError = null;
       this.success = null;
+      this.procesandoEscaneo = false; // Resetear bandera al iniciar
 
       try {
         // Verificar si se está usando HTTPS (requerido para cámara)
@@ -204,17 +206,27 @@ export default {
       }
     },
 
-    onScanSuccess(decodedText, decodedResult) {
+    async onScanSuccess(decodedText, decodedResult) {
+      // Evitar múltiples escaneos del mismo código
+      if (this.procesandoEscaneo) {
+        return;
+      }
+
+      this.procesandoEscaneo = true;
       console.log('QR escaneado:', decodedText);
       this.success = `Código escaneado: ${decodedText}`;
-      
+
+      // DETENER EL SCANNER INMEDIATAMENTE para evitar escaneos duplicados
+      await this.detenerScanner();
+
       // Emitir el código escaneado
       this.$emit('codigo-escaneado', decodedText);
-      
-      // Cerrar el scanner después de 1 segundo
+
+      // Cerrar el modal después de 500ms (solo para mostrar el mensaje de éxito)
       setTimeout(() => {
-        this.cerrarScanner();
-      }, 1000);
+        this.dialog = false;
+        this.procesandoEscaneo = false;
+      }, 500);
     },
 
     onScanFailure(error) {
