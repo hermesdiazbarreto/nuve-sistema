@@ -94,20 +94,29 @@
                 class="etiqueta"
               >
                 <div class="etiqueta-contenido">
-                  <h3 class="etiqueta-nombre">{{ variante.producto_nombre }}</h3>
-                  <div class="etiqueta-detalles">
-                    <span><strong>Talla:</strong> {{ variante.talla_nombre }}</span>
-                    <span class="ml-3"><strong>Color:</strong> {{ variante.color_nombre }}</span>
-                  </div>
-                  <div class="etiqueta-precio">
-                    Precio: {{ formatearPrecio(variante.precio_venta) }}
-                  </div>
+                  <!-- QR arriba centrado -->
                   <div class="etiqueta-qr">
                     <img v-if="variante.qr_data_url" :src="variante.qr_data_url" alt="QR Code" class="qr-image" />
                     <div v-else class="sin-qr">Generando...</div>
                   </div>
+
+                  <!-- Información debajo del QR -->
+                  <h3 class="etiqueta-nombre">{{ variante.producto_nombre }}</h3>
+
+                  <div class="etiqueta-detalles">
+                    <span>Talla: {{ variante.talla_nombre }} | Color: {{ variante.color_nombre }}</span>
+                  </div>
+
+                  <div class="etiqueta-precio">
+                    {{ formatearPrecio(variante.precio_venta) }}
+                  </div>
+
                   <div class="etiqueta-codigo">
                     {{ variante.codigo_variante }}
+                  </div>
+
+                  <div class="etiqueta-stock">
+                    Stock: {{ variante.stock_actual }}
                   </div>
                 </div>
               </div>
@@ -283,52 +292,40 @@ export default {
 .etiqueta {
   border: 2px solid #333;
   border-radius: 8px;
-  padding: 15px;
+  padding: 12px;
   background: white;
   page-break-inside: avoid;
   break-inside: avoid;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
 }
 
 .etiqueta-contenido {
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
 }
 
-.etiqueta-nombre {
-  font-size: 16px;
-  font-weight: bold;
-  margin-bottom: 8px;
-  color: #333;
-}
-
-.etiqueta-detalles {
-  font-size: 12px;
-  margin-bottom: 8px;
-  color: #666;
-}
-
-.etiqueta-precio {
-  font-size: 18px;
-  font-weight: bold;
-  margin: 10px 0;
-  color: #2196F3;
-}
-
+/* QR arriba centrado */
 .etiqueta-qr {
-  margin: 15px 0;
+  margin-bottom: 8px;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
 .qr-image {
-  width: 150px;
-  height: 150px;
+  width: 140px;
+  height: 140px;
   border: 1px solid #ddd;
 }
 
 .sin-qr {
-  width: 150px;
-  height: 150px;
+  width: 140px;
+  height: 140px;
   border: 2px dashed #ddd;
   display: flex;
   align-items: center;
@@ -336,12 +333,47 @@ export default {
   color: #999;
 }
 
-.etiqueta-codigo {
-  font-size: 11px;
+/* Información debajo del QR */
+.etiqueta-nombre {
+  font-size: 15px;
   font-weight: bold;
-  margin-top: 8px;
+  margin: 0;
+  color: #333;
+  line-height: 1.2;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.etiqueta-detalles {
+  font-size: 12px;
+  color: #666;
+}
+
+.etiqueta-precio {
+  font-size: 20px;
+  font-weight: bold;
+  margin: 4px 0;
+  color: #2196F3;
+}
+
+.etiqueta-codigo {
+  font-size: 12px;
+  font-weight: bold;
   color: #666;
   font-family: monospace;
+  margin-top: 4px;
+}
+
+.etiqueta-stock {
+  font-size: 10px;
+  color: #999;
+  margin-top: auto;
+  text-align: right;
+  width: 100%;
 }
 
 @media print {

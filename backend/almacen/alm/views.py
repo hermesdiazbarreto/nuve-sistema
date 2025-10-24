@@ -920,7 +920,11 @@ def generar_pdf_etiquetas_qr(request):
                 variante.generar_qr()
                 ProductoVariante.objects.filter(pk=variante.pk).update(qr_code=variante.qr_code)
 
-            # Dibujar QR code - generar en memoria en lugar de leer archivo
+            # LAYOUT VERTICAL: QR arriba centrado, información abajo
+            # Calcular centro horizontal de la etiqueta
+            centro_x = x + etiqueta_ancho / 2
+
+            # Dibujar QR code centrado en la parte superior
             try:
                 import qrcode
 
@@ -942,9 +946,11 @@ def generar_pdf_etiquetas_qr(request):
                 qr_img.save(qr_buffer, format='PNG')
                 qr_buffer.seek(0)
 
-                # Dibujar en el PDF
-                qr_size = 2.5 * cm
-                p.drawImage(ImageReader(qr_buffer), x + 0.25 * cm, y + etiqueta_alto - qr_size - 0.25 * cm,
+                # QR centrado en la parte superior
+                qr_size = 2.2 * cm
+                qr_x = centro_x - qr_size / 2
+                qr_y = y + etiqueta_alto - qr_size - 0.2 * cm
+                p.drawImage(ImageReader(qr_buffer), qr_x, qr_y,
                           width=qr_size, height=qr_size, preserveAspectRatio=True)
             except Exception as e:
                 # Si falla la generación del QR, mostrar texto de error
@@ -952,36 +958,34 @@ def generar_pdf_etiquetas_qr(request):
                 logger = logging.getLogger(__name__)
                 logger.error(f"Error generando QR para {variante.codigo_variante}: {str(e)}")
                 p.setFont("Helvetica", 6)
-                p.drawString(x + 0.25 * cm, y + etiqueta_alto - 1 * cm, f"Error: {str(e)[:20]}")
+                p.drawCentredString(centro_x, y + etiqueta_alto - 1 * cm, f"Error QR")
 
-            # Información del producto (lado derecho del QR)
-            text_x = x + 3 * cm
-            text_y = y + etiqueta_alto - 0.7 * cm
+            # Información del producto centrada debajo del QR
+            text_y_start = y + etiqueta_alto - qr_size - 0.5 * cm
 
-            # Nombre del producto (truncado si es muy largo)
+            # Nombre del producto (centrado, truncado si es muy largo)
             p.setFont("Helvetica-Bold", 8)
-            nombre = variante.producto.nombre[:25] + ('...' if len(variante.producto.nombre) > 25 else '')
-            p.drawString(text_x, text_y, nombre)
+            nombre = variante.producto.nombre[:30] + ('...' if len(variante.producto.nombre) > 30 else '')
+            p.drawCentredString(centro_x, text_y_start, nombre)
 
-            # Talla y Color
+            # Talla y Color (centrado)
             p.setFont("Helvetica", 7)
-            p.drawString(text_x, text_y - 0.4 * cm, f"Talla: {variante.talla.nombre}")
-            p.drawString(text_x, text_y - 0.75 * cm, f"Color: {variante.color.nombre[:15]}")
+            p.drawCentredString(centro_x, text_y_start - 0.35 * cm, f"Talla: {variante.talla.nombre} | Color: {variante.color.nombre[:12]}")
 
-            # Código de variante
-            p.setFont("Helvetica-Bold", 6)
-            p.drawString(x + 0.25 * cm, y + 0.3 * cm, variante.codigo_variante)
-
-            # Precio (si existe)
+            # Precio (centrado, destacado)
             if variante.producto.precio_venta:
-                p.setFont("Helvetica-Bold", 9)
+                p.setFont("Helvetica-Bold", 10)
                 precio_text = f"S/ {variante.producto.precio_venta:.2f}"
-                p.drawString(text_x, y + 0.5 * cm, precio_text)
+                p.drawCentredString(centro_x, text_y_start - 0.75 * cm, precio_text)
 
-            # Stock
+            # Código de variante (centrado, en la parte inferior)
+            p.setFont("Helvetica-Bold", 7)
+            p.drawCentredString(centro_x, y + 0.25 * cm, variante.codigo_variante)
+
+            # Stock (pequeño, esquina inferior derecha)
             p.setFont("Helvetica", 6)
             stock_text = f"Stock: {variante.stock_actual}"
-            p.drawString(text_x, y + 0.2 * cm, stock_text)
+            p.drawRightString(x + etiqueta_ancho - 0.15 * cm, y + 0.15 * cm, stock_text)
 
             # Avanzar a la siguiente posición
             columna += 1
