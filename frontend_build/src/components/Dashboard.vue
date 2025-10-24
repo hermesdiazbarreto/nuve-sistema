@@ -334,16 +334,18 @@ export default {
 
         this.estadisticas.productosStockBajo = this.productosStockBajo.length
 
-        // Calcular valorización del inventario
-        this.estadisticas.valorCompra = variantes.reduce((total, v) => {
+        // Calcular valorización del inventario (solo productos con stock > 0)
+        const variantesConStock = variantes.filter(v => v.stock_actual > 0)
+
+        this.estadisticas.valorCompra = variantesConStock.reduce((total, v) => {
           const precioCompra = v.precio_compra || 0
-          const stock = v.stock_actual || 0
+          const stock = v.stock_actual
           return total + (precioCompra * stock)
         }, 0)
 
-        this.estadisticas.valorVenta = variantes.reduce((total, v) => {
+        this.estadisticas.valorVenta = variantesConStock.reduce((total, v) => {
           const precioVenta = v.precio_venta || 0
-          const stock = v.stock_actual || 0
+          const stock = v.stock_actual
           return total + (precioVenta * stock)
         }, 0)
 
