@@ -55,11 +55,6 @@ class Command(BaseCommand):
                         );
                     """)
 
-                    # Obtener el nuevo valor de la secuencia
-                    cursor.execute(f"""
-                        SELECT last_value
-                        FROM pg_get_serial_sequence('{tabla}', 'id');
-                    """)
                     nuevo_valor = cursor.fetchone()[0]
 
                     self.stdout.write(
