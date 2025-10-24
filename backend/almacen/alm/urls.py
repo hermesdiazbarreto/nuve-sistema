@@ -6,7 +6,7 @@ from .views import (
     ProductoViewSet, ProductoVarianteViewSet, ClienteViewSet,
     VentaViewSet, DetalleVentaViewSet, MovimientoInventarioViewSet,
     ProveedorViewSet, PromocionWhatsAppViewSet, EnvioWhatsAppViewSet,
-    login_view, logout_view, generar_todos_qr, emergency_reset_sequence
+    login_view, logout_view, generar_todos_qr
 )
 
 def health_check(request):
@@ -33,7 +33,6 @@ urlpatterns = [
     path('api/login/', login_view, name='login'),
     path('api/logout/', logout_view, name='logout'),
     path('api/generar-todos-qr/', generar_todos_qr, name='generar_todos_qr'),
-    path('api/emergency-fix/', emergency_reset_sequence, name='emergency_reset_sequence'),
 ]
 
 
