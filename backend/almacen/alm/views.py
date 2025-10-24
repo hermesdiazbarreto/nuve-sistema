@@ -841,3 +841,38 @@ def generar_todos_qr(request):
             {'error': f'Error al generar QR codes: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def reset_sequence_with_margin(request):
+    """Resetea la secuencia de ProductoVariante con un margen de seguridad de +100"""
+    try:
+        with connection.cursor() as cursor:
+            # Obtener MAX(id) real
+            cursor.execute("SELECT MAX(id) FROM alm_productovariante;")
+            max_id = cursor.fetchone()[0] or 0
+
+            # Agregar margen de seguridad de 100 IDs
+            nuevo_valor = max_id + 100
+
+            # Resetear secuencia con margen
+            cursor.execute("""
+                SELECT setval(
+                    pg_get_serial_sequence('alm_productovariante', 'id'),
+                    %s,
+                    false
+                );
+            """, [nuevo_valor])
+
+            secuencia = cursor.fetchone()[0]
+
+        return Response({
+            'max_id_encontrado': max_id,
+            'margen_agregado': 100,
+            'secuencia_reseteada_a': secuencia,
+            'proximo_id_sera': secuencia,
+            'mensaje': f'Secuencia reseteada con margen de seguridad. Próximo ID: {secuencia}'
+        })
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
