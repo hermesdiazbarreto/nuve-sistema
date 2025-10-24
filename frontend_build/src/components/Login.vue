@@ -56,12 +56,6 @@
             {{ loading ? 'Iniciando sesión...' : 'Iniciar Sesión' }}
           </v-btn>
         </v-form>
-
-        <div class="login-footer">
-          <small class="text-medium-emphasis">
-            Usuario de prueba: <strong>admin</strong> / Contraseña: <strong>admin123</strong>
-          </small>
-        </div>
       </v-card-text>
     </v-card>
 
@@ -196,13 +190,6 @@ export default {
   font-size: 2.5rem;
   margin-bottom: 10px;
   letter-spacing: 2px;
-}
-
-.login-footer {
-  text-align: center;
-  margin-top: 25px;
-  padding-top: 25px;
-  border-top: 1px solid #dee2e6;
 }
 
 .login-btn {
