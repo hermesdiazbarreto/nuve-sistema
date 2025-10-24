@@ -8,6 +8,7 @@ import Login from '../components/Login.vue'
 import ProductosLista from '../components/ProductosLista.vue'
 import ProductoForm from '../components/ProductoForm.vue'
 import ProductosEliminados from '../components/ProductosEliminados.vue'
+import ProductoDetalle from '../components/ProductoDetalle.vue'
 import CategoriasLista from '../components/CategoriasLista.vue'
 import MarcasLista from '../components/MarcasLista.vue'
 import TallasLista from '../components/TallasLista.vue'
@@ -77,6 +78,11 @@ const routes = [
     path: '/productos/editar/:id',
     name: 'EditarProducto',
     component: ProductoForm
+  },
+  {
+    path: '/productos/:id',
+    name: 'ProductoDetalle',
+    component: ProductoDetalle
   },
 
   // Categorías

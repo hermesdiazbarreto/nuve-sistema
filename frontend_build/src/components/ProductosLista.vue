@@ -125,9 +125,20 @@
           <v-btn
             icon
             size="small"
+            color="info"
+            variant="text"
+            :to="`/productos/${item.id}`"
+            title="Ver detalle"
+          >
+            <v-icon>mdi-eye</v-icon>
+          </v-btn>
+          <v-btn
+            icon
+            size="small"
             color="warning"
             variant="text"
             :to="`/productos/editar/${item.id}`"
+            title="Editar"
           >
             <v-icon>mdi-pencil</v-icon>
           </v-btn>
@@ -137,6 +148,7 @@
             color="error"
             variant="text"
             @click="eliminarProducto(item.id)"
+            title="Eliminar"
           >
             <v-icon>mdi-delete</v-icon>
           </v-btn>
