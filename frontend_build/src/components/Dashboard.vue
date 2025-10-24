@@ -73,6 +73,59 @@
       </v-col>
     </v-row>
 
+    <!-- Tarjetas de Valorización del Inventario -->
+    <v-row class="mb-6">
+      <!-- Valor Precio Compra -->
+      <v-col cols="12" sm="6" md="4">
+        <v-card color="deep-purple" dark elevation="3">
+          <v-card-text>
+            <div class="d-flex justify-space-between align-center">
+              <div>
+                <div class="text-subtitle-2">Valor a Precio Compra</div>
+                <div class="text-h5 font-weight-bold">{{ formatearPrecio(estadisticas.valorCompra) }}</div>
+                <div class="text-caption mt-1">Dinero invertido en inventario</div>
+              </div>
+              <v-icon size="56" class="opacity-75">mdi-cart-arrow-down</v-icon>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <!-- Valor Precio Venta -->
+      <v-col cols="12" sm="6" md="4">
+        <v-card color="teal" dark elevation="3">
+          <v-card-text>
+            <div class="d-flex justify-space-between align-center">
+              <div>
+                <div class="text-subtitle-2">Valor a Precio Venta</div>
+                <div class="text-h5 font-weight-bold">{{ formatearPrecio(estadisticas.valorVenta) }}</div>
+                <div class="text-caption mt-1">Si vendieras todo el stock</div>
+              </div>
+              <v-icon size="56" class="opacity-75">mdi-cash-register</v-icon>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <!-- Ganancia Potencial -->
+      <v-col cols="12" sm="6" md="4">
+        <v-card color="green" dark elevation="3">
+          <v-card-text>
+            <div class="d-flex justify-space-between align-center">
+              <div>
+                <div class="text-subtitle-2">Ganancia Potencial</div>
+                <div class="text-h5 font-weight-bold">{{ formatearPrecio(estadisticas.gananciaPotencial) }}</div>
+                <div class="text-caption mt-1">
+                  {{ ((estadisticas.gananciaPotencial / estadisticas.valorCompra) * 100).toFixed(1) }}% de margen
+                </div>
+              </div>
+              <v-icon size="56" class="opacity-75">mdi-chart-line</v-icon>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+
     <!-- Sección de dos columnas -->
     <v-row>
       <!-- Productos con stock bajo -->
@@ -231,7 +284,10 @@ export default {
         totalProductos: 0,
         totalClientes: 0,
         ventasHoy: 0,
-        productosStockBajo: 0
+        productosStockBajo: 0,
+        valorCompra: 0,
+        valorVenta: 0,
+        gananciaPotencial: 0
       },
       productosStockBajo: [],
       ultimasVentas: []
@@ -258,7 +314,10 @@ export default {
         // Cargar ventas
         const ventasRes = await api.getVentas()
         const ventas = ventasRes.data.results || ventasRes.data || []
-        this.ultimasVentas = ventas.slice(0, 5) // Últimas 5 ventas
+        // Ordenar por fecha descendente (más recientes primero) y tomar las últimas 5
+        this.ultimasVentas = ventas
+          .sort((a, b) => new Date(b.fecha_venta) - new Date(a.fecha_venta))
+          .slice(0, 5)
 
         // Contar ventas de hoy
         const hoy = new Date().toISOString().split('T')[0]
@@ -274,6 +333,21 @@ export default {
         ).slice(0, 10) // Top 10 con stock bajo
 
         this.estadisticas.productosStockBajo = this.productosStockBajo.length
+
+        // Calcular valorización del inventario
+        this.estadisticas.valorCompra = variantes.reduce((total, v) => {
+          const precioCompra = v.precio_compra || 0
+          const stock = v.stock_actual || 0
+          return total + (precioCompra * stock)
+        }, 0)
+
+        this.estadisticas.valorVenta = variantes.reduce((total, v) => {
+          const precioVenta = v.precio_venta || 0
+          const stock = v.stock_actual || 0
+          return total + (precioVenta * stock)
+        }, 0)
+
+        this.estadisticas.gananciaPotencial = this.estadisticas.valorVenta - this.estadisticas.valorCompra
 
       } catch (error) {
         console.error('Error al cargar datos del dashboard:', error)
