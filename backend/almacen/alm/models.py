@@ -187,9 +187,9 @@ class ProductoVariante(models.Model):
 
             self.codigo_variante = f"{producto_codigo}-{talla_nombre}-{codigo_color}"
 
-        # Generar QR si no existe
+        # Generar QR si no existe (solo para registros nuevos)
         generar_qr_nuevo = False
-        if not self.qr_code and self.codigo_variante:
+        if not self.qr_code and self.codigo_variante and not self.pk:
             generar_qr_nuevo = True
 
         super().save(*args, **kwargs)
@@ -197,7 +197,8 @@ class ProductoVariante(models.Model):
         # Generar el QR después de guardar para tener el ID
         if generar_qr_nuevo:
             self.generar_qr()
-            super().save(*args, **kwargs)
+            # Usar update() en lugar de save() para evitar trigger del segundo INSERT
+            ProductoVariante.objects.filter(pk=self.pk).update(qr_code=self.qr_code)
 
     class Meta:
         unique_together = ['producto', 'talla', 'color']
