@@ -179,8 +179,11 @@ export default {
 
         this.productos = productos
 
+        // Filtrar solo variantes con stock > 0
+        const variantesConStock = variantes.filter(v => v.stock_actual > 0)
+
         // Enriquecer variantes con datos del producto y generar QR
-        this.variantes = await Promise.all(variantes.map(async v => {
+        this.variantes = await Promise.all(variantesConStock.map(async v => {
           const producto = productos.find(p => p.id === v.producto)
           const varianteEnriquecida = {
             ...v,

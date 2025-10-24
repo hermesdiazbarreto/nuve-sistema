@@ -871,10 +871,11 @@ def generar_pdf_etiquetas_qr(request):
         )
 
     try:
-        # Obtener todas las variantes activas con QR generado
+        # Obtener todas las variantes activas con stock > 0
         variantes = ProductoVariante.objects.filter(
             activo=True,
-            producto__activo=True
+            producto__activo=True,
+            stock_actual__gt=0  # Solo productos con stock
         ).select_related('producto', 'talla', 'color').order_by('producto__nombre', 'talla__orden', 'color__nombre')
 
         # Crear el PDF en memoria
