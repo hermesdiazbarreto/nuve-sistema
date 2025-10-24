@@ -841,3 +841,65 @@ def generar_todos_qr(request):
             {'error': f'Error al generar QR codes: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def fix_all_sequences(request):
+    """Resetea TODAS las secuencias de PostgreSQL de forma definitiva"""
+    try:
+        from django.apps import apps
+
+        resultados = []
+
+        with connection.cursor() as cursor:
+            # Obtener todas las tablas de la app 'alm'
+            for model in apps.get_app_config('alm').get_models():
+                tabla = model._meta.db_table
+
+                try:
+                    # Verificar si la tabla tiene columna id
+                    cursor.execute(f"""
+                        SELECT column_name
+                        FROM information_schema.columns
+                        WHERE table_name = '{tabla}' AND column_name = 'id';
+                    """)
+
+                    if not cursor.fetchone():
+                        continue
+
+                    # Obtener MAX(id)
+                    cursor.execute(f"SELECT MAX(id) FROM {tabla};")
+                    max_id = cursor.fetchone()[0] or 0
+
+                    # Resetear secuencia
+                    cursor.execute(f"""
+                        SELECT setval(
+                            pg_get_serial_sequence('{tabla}', 'id'),
+                            {max(max_id, 1)},
+                            true
+                        );
+                    """)
+
+                    nuevo_valor = cursor.fetchone()[0]
+
+                    resultados.append({
+                        'tabla': tabla,
+                        'max_id': max_id,
+                        'secuencia': nuevo_valor,
+                        'proximo_id': nuevo_valor + 1
+                    })
+
+                except Exception as e:
+                    resultados.append({
+                        'tabla': tabla,
+                        'error': str(e)
+                    })
+
+        return Response({
+            'mensaje': 'Secuencias actualizadas',
+            'resultados': resultados
+        })
+
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
