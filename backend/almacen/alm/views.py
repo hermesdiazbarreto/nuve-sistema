@@ -858,42 +858,6 @@ def generar_todos_qr(request):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
-def test_qr_generation(request):
-    """Test endpoint para verificar generación de QR"""
-    try:
-        import qrcode
-        from io import BytesIO
-        from reportlab.lib.utils import ImageReader
-
-        # Generar QR
-        qr = qrcode.QRCode(version=1, box_size=10, border=1)
-        qr.add_data('TEST-001')
-        qr.make(fit=True)
-        img = qr.make_image(fill_color='black', back_color='white')
-
-        # Convertir a buffer
-        buf = BytesIO()
-        img.save(buf, format='PNG')
-        buf.seek(0)
-
-        # Crear ImageReader
-        ir = ImageReader(buf)
-
-        return Response({
-            'status': 'success',
-            'message': 'QR generated successfully',
-            'size': ir.getSize()
-        })
-    except Exception as e:
-        import traceback
-        return Response({
-            'status': 'error',
-            'message': str(e),
-            'traceback': traceback.format_exc()
-        }, status=500)
-
-@api_view(['GET'])
-@permission_classes([AllowAny])
 def generar_pdf_etiquetas_qr(request):
     """
     Genera un PDF con todas las etiquetas QR de las variantes de productos.
