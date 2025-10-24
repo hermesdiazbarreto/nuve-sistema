@@ -947,10 +947,12 @@ def generar_pdf_etiquetas_qr(request):
                 p.drawImage(ImageReader(qr_buffer), x + 0.25 * cm, y + etiqueta_alto - qr_size - 0.25 * cm,
                           width=qr_size, height=qr_size, preserveAspectRatio=True)
             except Exception as e:
-                # Si falla la generación del QR, mostrar texto de error (opcional)
+                # Si falla la generación del QR, mostrar texto de error
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Error generando QR para {variante.codigo_variante}: {str(e)}")
                 p.setFont("Helvetica", 6)
-                p.drawString(x + 0.25 * cm, y + etiqueta_alto - 1 * cm, "Error QR")
-                pass
+                p.drawString(x + 0.25 * cm, y + etiqueta_alto - 1 * cm, f"Error: {str(e)[:20]}")
 
             # Información del producto (lado derecho del QR)
             text_x = x + 3 * cm
