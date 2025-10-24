@@ -6,6 +6,13 @@ from rest_framework.authtoken.models import Token
 from django.shortcuts import get_object_or_404
 from django.db import models, connection
 from django.contrib.auth import authenticate
+from django.http import HttpResponse
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import cm
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
+from io import BytesIO
+import os
 from .models import (
     Categoria, Marca, Talla, Color, Producto, ProductoVariante,
     Cliente, Venta, DetalleVenta, MovimientoInventario, Proveedor,
@@ -839,5 +846,128 @@ def generar_todos_qr(request):
     except Exception as e:
         return Response(
             {'error': f'Error al generar QR codes: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def generar_pdf_etiquetas_qr(request):
+    """
+    Genera un PDF con todas las etiquetas QR de las variantes de productos.
+    Formato: 3 columnas x N filas en página A4
+    Cada etiqueta incluye: QR code, nombre del producto, talla, color, código
+    """
+    try:
+        # Obtener todas las variantes activas con QR generado
+        variantes = ProductoVariante.objects.filter(
+            activo=True,
+            producto__activo=True
+        ).select_related('producto', 'talla', 'color').order_by('producto__nombre', 'talla__orden', 'color__nombre')
+
+        # Crear el PDF en memoria
+        buffer = BytesIO()
+        p = canvas.Canvas(buffer, pagesize=A4)
+        width, height = A4
+
+        # Configuración de la cuadrícula de etiquetas
+        etiqueta_ancho = 6 * cm
+        etiqueta_alto = 4 * cm
+        columnas = 3
+        margen_izq = 1 * cm
+        margen_top = 1 * cm
+        espacio_h = 0.5 * cm
+        espacio_v = 0.5 * cm
+
+        # Posición inicial
+        x_inicial = margen_izq
+        y_inicial = height - margen_top - etiqueta_alto
+
+        fila = 0
+        columna = 0
+
+        for variante in variantes:
+            # Calcular posición de la etiqueta
+            x = x_inicial + columna * (etiqueta_ancho + espacio_h)
+            y = y_inicial - fila * (etiqueta_alto + espacio_v)
+
+            # Si nos pasamos del borde inferior, nueva página
+            if y < margen_top:
+                p.showPage()
+                fila = 0
+                columna = 0
+                x = x_inicial
+                y = y_inicial
+
+            # Dibujar borde de la etiqueta
+            p.rect(x, y, etiqueta_ancho, etiqueta_alto, stroke=1, fill=0)
+
+            # Generar QR si no existe
+            if not variante.qr_code:
+                variante.generar_qr()
+                ProductoVariante.objects.filter(pk=variante.pk).update(qr_code=variante.qr_code)
+
+            # Dibujar QR code
+            try:
+                from django.conf import settings
+                qr_path = os.path.join(settings.MEDIA_ROOT, str(variante.qr_code))
+
+                if os.path.exists(qr_path):
+                    qr_img = ImageReader(qr_path)
+                    qr_size = 2.5 * cm
+                    p.drawImage(qr_img, x + 0.25 * cm, y + etiqueta_alto - qr_size - 0.25 * cm,
+                              width=qr_size, height=qr_size, preserveAspectRatio=True)
+            except Exception as e:
+                # Si falla la carga del QR, continuar sin él
+                pass
+
+            # Información del producto (lado derecho del QR)
+            text_x = x + 3 * cm
+            text_y = y + etiqueta_alto - 0.7 * cm
+
+            # Nombre del producto (truncado si es muy largo)
+            p.setFont("Helvetica-Bold", 8)
+            nombre = variante.producto.nombre[:25] + ('...' if len(variante.producto.nombre) > 25 else '')
+            p.drawString(text_x, text_y, nombre)
+
+            # Talla y Color
+            p.setFont("Helvetica", 7)
+            p.drawString(text_x, text_y - 0.4 * cm, f"Talla: {variante.talla.nombre}")
+            p.drawString(text_x, text_y - 0.75 * cm, f"Color: {variante.color.nombre[:15]}")
+
+            # Código de variante
+            p.setFont("Helvetica-Bold", 6)
+            p.drawString(x + 0.25 * cm, y + 0.3 * cm, variante.codigo_variante)
+
+            # Precio (si existe)
+            if variante.producto.precio_venta:
+                p.setFont("Helvetica-Bold", 9)
+                precio_text = f"S/ {variante.producto.precio_venta:.2f}"
+                p.drawString(text_x, y + 0.5 * cm, precio_text)
+
+            # Stock
+            p.setFont("Helvetica", 6)
+            stock_text = f"Stock: {variante.stock_actual}"
+            p.drawString(text_x, y + 0.2 * cm, stock_text)
+
+            # Avanzar a la siguiente posición
+            columna += 1
+            if columna >= columnas:
+                columna = 0
+                fila += 1
+
+        # Finalizar PDF
+        p.save()
+
+        # Retornar el PDF
+        buffer.seek(0)
+        response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="etiquetas_qr_productos.pdf"'
+
+        return response
+
+    except Exception as e:
+        return Response(
+            {'error': f'Error al generar PDF: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
