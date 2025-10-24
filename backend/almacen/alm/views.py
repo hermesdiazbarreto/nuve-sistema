@@ -841,3 +841,32 @@ def generar_todos_qr(request):
             {'error': f'Error al generar QR codes: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def final_sequence_reset(request):
+    """Reset FINAL y DEFINITIVO de secuencia"""
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT MAX(id) FROM alm_productovariante;")
+            max_id = cursor.fetchone()[0] or 0
+
+            # Saltar a MAX + 10000
+            nuevo_valor = max_id + 10000
+
+            cursor.execute("""
+                SELECT setval(
+                    pg_get_serial_sequence('alm_productovariante', 'id'),
+                    %s,
+                    false
+                );
+            """, [nuevo_valor])
+
+            return Response({
+                'max_id': max_id,
+                'nueva_secuencia': nuevo_valor,
+                'mensaje': f'Secuencia reseteada a {nuevo_valor}'
+            })
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
