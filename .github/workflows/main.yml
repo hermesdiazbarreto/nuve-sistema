@@ -1,98 +1,15 @@
-name: Backup Database
+name: Backup Reminder
 
 on:
-  # Se ejecuta diariamente a las 3:00 AM UTC (10 PM hora Colombia si estás en UTC-5)
   schedule:
     - cron: '0 3 * * *'
-
-  # Permite ejecución manual desde GitHub Actions
   workflow_dispatch:
 
 jobs:
-  backup:
+  reminder:
     runs-on: ubuntu-latest
-    
-    env:
-      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
-      - name: Install Railway CLI
+      - name: Backup Reminder
         run: |
-          npm i -g @railway/cli
-
-      - name: Verify Railway authentication
-        run: |
-          echo "Testing Railway authentication..."
-          railway whoami || echo "Not authenticated yet"
-
-      - name: Configure Railway project
-        run: |
-          # Crear archivo de configuración railway.json
-          cat > railway.json << EOF
-          {
-            "projectId": "${{ secrets.RAILWAY_PROJECT_ID }}"
-          }
-          EOF
-          
-          echo "Railway project configured"
-          cat railway.json
-
-      - name: Create backup with Django dumpdata
-        run: |
-          BACKUP_DATE=$(date +%Y%m%d_%H%M%S)
-          BACKUP_FILE="backup_${BACKUP_DATE}.json"
-
-          echo "Creating Django backup: ${BACKUP_FILE}"
-          echo "Project ID: ${{ secrets.RAILWAY_PROJECT_ID }}"
-          
-          # Ejecutar dumpdata en Railway con el token en environment
-          railway run python backend/almacen/manage.py dumpdata alm --indent 2 > "${BACKUP_FILE}"
-
-          echo "Backup created successfully!"
-          ls -lh "${BACKUP_FILE}"
-
-          # Guardar el nombre del archivo para el siguiente step
-          echo "BACKUP_FILE=${BACKUP_FILE}" >> $GITHUB_ENV
-
-      - name: Upload backup as artifact
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: database-backup-${{ github.run_number }}
-          path: ${{ env.BACKUP_FILE }}
-          retention-days: 30
-
-      - name: Commit backup to repository
-        if: success()
-        run: |
-          mkdir -p backups
-          mv "${BACKUP_FILE}" backups/
-          
-          git config --global user.name "GitHub Actions Bot"
-          git config --global user.email "actions@github.com"
-          
-          git add backups/
-          git commit -m "Backup automático: ${BACKUP_FILE}" || echo "No changes to commit"
-          git push || echo "Nothing to push"
-
-      - name: Cleanup old backups
-        if: success()
-        run: |
-          cd backups
-          ls -t backup_*.json 2>/dev/null | tail -n +8 | xargs -r rm -- || echo "No old backups to clean"
-          
-          if [[ -n $(git status -s) ]]; then
-            git config --global user.name "GitHub Actions Bot"
-            git config --global user.email "actions@github.com"
-            git add .
-            git commit -m "Cleanup: eliminados backups antiguos"
-            git push
-          fi
+          echo "RECORDATORIO: Hacer backup manual de la base de datos"
+          echo "Ejecuta: backup_manual.bat o backup_manual.sh"
