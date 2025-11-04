@@ -4,6 +4,7 @@ from django.apps import AppConfig
 class AlmConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'alm'
+    verbose_name = 'CONFIGURACIÓN Y CATÁLOGOS'
 
     def ready(self):
         import alm.signals
