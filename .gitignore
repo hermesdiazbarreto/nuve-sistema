@@ -1,39 +1,35 @@
 # Python
 *.py[cod]
-*$py.class
+__pycache__/
 *.so
-.Python
+*.egg
+*.egg-info/
+dist/
+build/
 venv/
 venv3/
-ENV/
 env/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-pip-log.txt
-pip-delete-this-directory.txt
+ENV/
 
 # Django
 *.log
 db.sqlite3
 db.sqlite3-journal
-/staticfiles/
+/static/
 /media/
-*.pot
-*.pyc
 local_settings.py
 
-# Node.js / Vue
-node_modules/
-/dist/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.DS_Store
+# Backups locales (los del repo se guardan en backups/)
+backup_*.json
+*.sql
+*.dump
 
-# IDE
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# IDEs
 .vscode/
 .idea/
 *.swp
@@ -43,12 +39,11 @@ yarn-error.log*
 # Environment variables
 .env
 .env.local
+.env.*.local
+
+# Railway
+.railway/
 
 # OS
-.DS_Store
 Thumbs.db
-
-# Archivos temporales
-*.tmp
-*.bak
-*.swp
+.DS_Store
