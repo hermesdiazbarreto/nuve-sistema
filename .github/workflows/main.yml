@@ -16,22 +16,41 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install PostgreSQL client
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y postgresql-client
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
 
-      - name: Create backup with pg_dump
+      - name: Install Railway CLI
+        run: |
+          npm i -g @railway/cli
+
+      - name: Configure Railway project
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          # Crear archivo de configuración railway.json
+          mkdir -p .railway
+          cat > railway.json << EOF
+          {
+            "projectId": "${{ secrets.RAILWAY_PROJECT_ID }}"
+          }
+          EOF
+          
+          echo "Railway configured successfully"
+          railway whoami
+
+      - name: Create backup with Django dumpdata
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
           BACKUP_DATE=$(date +%Y%m%d_%H%M%S)
-          BACKUP_FILE="backup_${BACKUP_DATE}.sql"
+          BACKUP_FILE="backup_${BACKUP_DATE}.json"
 
-          echo "Creating PostgreSQL backup: ${BACKUP_FILE}"
+          echo "Creating Django backup: ${BACKUP_FILE}"
           
-          # Usar pg_dump para hacer backup completo de la base de datos
-          pg_dump "$DATABASE_URL" > "${BACKUP_FILE}"
+          # Ejecutar dumpdata en Railway
+          railway run python backend/almacen/manage.py dumpdata alm --indent 2 > "${BACKUP_FILE}"
 
           echo "Backup created successfully!"
           ls -lh "${BACKUP_FILE}"
@@ -49,23 +68,20 @@ jobs:
       - name: Commit backup to repository
         run: |
           mkdir -p backups
-          
-          # Comprimir backup antes de subirlo al repo (ahorra espacio)
-          gzip "${BACKUP_FILE}"
-          mv "${BACKUP_FILE}.gz" backups/
+          mv "${BACKUP_FILE}" backups/
           
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
           
           git add backups/
-          git commit -m "Backup automático: ${BACKUP_FILE}.gz" || echo "No changes to commit"
+          git commit -m "Backup automático: ${BACKUP_FILE}" || echo "No changes to commit"
           git push || echo "Nothing to push"
 
       - name: Cleanup old backups
         run: |
           cd backups
           # Mantener solo los últimos 7 backups
-          ls -t backup_*.sql.gz 2>/dev/null | tail -n +8 | xargs -r rm -- || echo "No old backups to clean"
+          ls -t backup_*.json 2>/dev/null | tail -n +8 | xargs -r rm -- || echo "No old backups to clean"
           
           if [[ -n $(git status -s) ]]; then
             git config --global user.name "GitHub Actions Bot"
