@@ -1,0 +1,101 @@
+name: Backup Database
+
+on:
+  # Se ejecuta diariamente a las 3:00 AM UTC (10 PM hora Colombia si estás en UTC-5)
+  schedule:
+    - cron: '0 3 * * *'
+
+  # Permite ejecución manual desde GitHub Actions
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Railway CLI
+        run: |
+          curl -fsSL https://railway.app/install.sh | sh
+          echo "$HOME/.railway/bin" >> $GITHUB_PATH
+
+      - name: Verify Railway CLI
+        run: railway --version
+
+      - name: Login to Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          echo "Logging in to Railway..."
+          railway login --browserless
+
+      - name: Link Railway Project
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          # Usa el project ID de tus variables de entorno
+          railway link ${{ secrets.RAILWAY_PROJECT_ID }}
+
+      - name: Create backup with dumpdata
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          BACKUP_DATE=$(date +%Y%m%d_%H%M%S)
+          BACKUP_FILE="backup_${BACKUP_DATE}.json"
+
+          echo "Creating backup: ${BACKUP_FILE}"
+          railway run python backend/almacen/manage.py dumpdata alm --indent 2 > "${BACKUP_FILE}"
+
+          echo "Backup created successfully!"
+          ls -lh "${BACKUP_FILE}"
+
+          # Guardar el nombre del archivo para el siguiente step
+          echo "BACKUP_FILE=${BACKUP_FILE}" >> $GITHUB_ENV
+
+      - name: Upload backup as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: database-backup-${{ github.run_number }}
+          path: ${{ env.BACKUP_FILE }}
+          retention-days: 30  # Guarda por 30 días
+
+      - name: Commit backup to repository (opcional)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Crear directorio de backups si no existe
+          mkdir -p backups
+
+          # Mover backup al directorio
+          mv "${BACKUP_FILE}" backups/
+
+          # Configurar git
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+
+          # Añadir y commitear
+          git add backups/
+          git commit -m "Backup automático: ${BACKUP_FILE}" || echo "No changes to commit"
+          git push || echo "Nothing to push"
+
+      - name: Cleanup old backups (mantener solo últimos 7)
+        run: |
+          cd backups
+          # Eliminar backups antiguos, mantener solo los últimos 7
+          ls -t backup_*.json | tail -n +8 | xargs -r rm --
+
+          # Commit si hubo cambios
+          if [[ -n $(git status -s) ]]; then
+            git config --global user.name "GitHub Actions Bot"
+            git config --global user.email "actions@github.com"
+            git add .
+            git commit -m "Cleanup: eliminados backups antiguos"
+            git push
+          fi
