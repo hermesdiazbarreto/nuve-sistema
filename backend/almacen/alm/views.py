@@ -1008,3 +1008,55 @@ def generar_pdf_etiquetas_qr(request):
             {'error': f'Error al generar PDF: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def crear_backup(request):
+    """
+    Vista para generar y descargar un backup de la base de datos.
+    Solo accesible por usuarios autenticados (staff/admin).
+
+    Uso: GET /api/backup/
+    Retorna: Archivo JSON con todos los datos de la app 'alm'
+    """
+    from django.core import management
+    from datetime import datetime
+    import json
+
+    # Verificar que el usuario sea staff o superuser
+    if not (request.user.is_staff or request.user.is_superuser):
+        return Response(
+            {'error': 'No tienes permisos para crear backups. Debes ser administrador.'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    try:
+        # Generar nombre de archivo con fecha y hora
+        backup_date = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f'backup_{backup_date}.json'
+
+        # Crear backup usando Django's dumpdata
+        from io import StringIO
+        out = StringIO()
+        management.call_command(
+            'dumpdata',
+            'alm',  # Solo la app alm
+            indent=2,
+            stdout=out
+        )
+
+        # Obtener el contenido del backup
+        backup_content = out.getvalue()
+
+        # Crear respuesta HTTP con el archivo JSON
+        response = HttpResponse(backup_content, content_type='application/json')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        return response
+
+    except Exception as e:
+        return Response(
+            {'error': f'Error al crear backup: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
