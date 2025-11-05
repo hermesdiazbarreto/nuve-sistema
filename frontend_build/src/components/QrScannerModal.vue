@@ -5,6 +5,14 @@
         <v-icon left>mdi-qrcode-scan</v-icon>
         Escanear Código QR
         <v-spacer></v-spacer>
+        <v-btn
+          v-if="multipleCameras && scanning"
+          icon
+          @click="cambiarCamara"
+          title="Cambiar cámara"
+        >
+          <v-icon>mdi-camera-flip</v-icon>
+        </v-btn>
         <v-btn icon @click="cerrarScanner">
           <v-icon>mdi-close</v-icon>
         </v-btn>
@@ -60,10 +68,16 @@ export default {
       success: null,
       cameraError: null,
       scanning: false,
-      procesandoEscaneo: false // Bandera para evitar escaneos duplicados
+      procesandoEscaneo: false, // Bandera para evitar escaneos duplicados
+      availableCameras: [], // Lista de cámaras disponibles
+      currentCameraId: null, // ID de la cámara actual
+      usarCamaraFrontal: false // Controlar qué cámara usar
     };
   },
   computed: {
+    multipleCameras() {
+      return this.availableCameras.length > 1;
+    },
     dialog: {
       get() {
         return this.modelValue;
@@ -138,6 +152,9 @@ export default {
           return;
         }
 
+        // Obtener lista de cámaras disponibles
+        await this.obtenerCamarasDisponibles();
+
         this.html5QrCode = new Html5Qrcode('qr-reader');
 
         const config = {
@@ -146,23 +163,8 @@ export default {
           aspectRatio: 1.0
         };
 
-        // Intentar con cámara trasera primero, si falla usar cualquiera
-        try {
-          await this.html5QrCode.start(
-            { facingMode: 'environment' }, // Cámara trasera
-            config,
-            this.onScanSuccess,
-            this.onScanFailure
-          );
-        } catch (backCamErr) {
-          // Si falla la cámara trasera, intentar con cualquier cámara
-          await this.html5QrCode.start(
-            { facingMode: 'user' }, // Cámara frontal
-            config,
-            this.onScanSuccess,
-            this.onScanFailure
-          );
-        }
+        // Seleccionar la cámara apropiada
+        await this.iniciarConCamara(config);
 
         this.scanning = true;
       } catch (err) {
@@ -240,6 +242,126 @@ export default {
       setTimeout(() => {
         this.dialog = false;
       }, 100);
+    },
+
+    async obtenerCamarasDisponibles() {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        this.availableCameras = devices.filter(device => device.kind === 'videoinput');
+
+        console.log('Cámaras disponibles:', this.availableCameras);
+
+        // Buscar cámara trasera
+        const backCamera = this.availableCameras.find(camera =>
+          camera.label.toLowerCase().includes('back') ||
+          camera.label.toLowerCase().includes('rear') ||
+          camera.label.toLowerCase().includes('trasera') ||
+          camera.label.toLowerCase().includes('environment')
+        );
+
+        if (backCamera) {
+          this.currentCameraId = backCamera.deviceId;
+          this.usarCamaraFrontal = false;
+          console.log('Usando cámara trasera:', backCamera.label);
+        } else if (this.availableCameras.length > 0) {
+          // Si no se encuentra una cámara trasera explícita, usar la última (suele ser la trasera)
+          this.currentCameraId = this.availableCameras[this.availableCameras.length - 1].deviceId;
+          this.usarCamaraFrontal = false;
+          console.log('Usando última cámara disponible:', this.availableCameras[this.availableCameras.length - 1].label);
+        }
+      } catch (err) {
+        console.error('Error al obtener cámaras:', err);
+        // Continuar sin lista de cámaras, usar facingMode como fallback
+      }
+    },
+
+    async iniciarConCamara(config) {
+      try {
+        // Si tenemos un ID de cámara específico, usarlo
+        if (this.currentCameraId) {
+          await this.html5QrCode.start(
+            { deviceId: { exact: this.currentCameraId } },
+            config,
+            this.onScanSuccess,
+            this.onScanFailure
+          );
+          console.log('Scanner iniciado con cámara específica');
+        } else {
+          // Fallback a facingMode
+          const facingMode = this.usarCamaraFrontal ? 'user' : 'environment';
+          await this.html5QrCode.start(
+            { facingMode: facingMode },
+            config,
+            this.onScanSuccess,
+            this.onScanFailure
+          );
+          console.log('Scanner iniciado con facingMode:', facingMode);
+        }
+      } catch (err) {
+        console.error('Error al iniciar con cámara seleccionada:', err);
+        // Si falla, intentar con la otra cámara
+        try {
+          const facingMode = this.usarCamaraFrontal ? 'environment' : 'user';
+          await this.html5QrCode.start(
+            { facingMode: facingMode },
+            config,
+            this.onScanSuccess,
+            this.onScanFailure
+          );
+          this.usarCamaraFrontal = !this.usarCamaraFrontal;
+          console.log('Scanner iniciado con cámara alternativa:', facingMode);
+        } catch (fallbackErr) {
+          // Re-lanzar el error para que sea manejado por el catch principal
+          throw fallbackErr;
+        }
+      }
+    },
+
+    async cambiarCamara() {
+      if (!this.multipleCameras || !this.scanning) {
+        return;
+      }
+
+      try {
+        // Detener scanner actual
+        await this.detenerScanner();
+
+        // Cambiar a la siguiente cámara
+        const currentIndex = this.availableCameras.findIndex(
+          cam => cam.deviceId === this.currentCameraId
+        );
+        const nextIndex = (currentIndex + 1) % this.availableCameras.length;
+        this.currentCameraId = this.availableCameras[nextIndex].deviceId;
+
+        console.log('Cambiando a cámara:', this.availableCameras[nextIndex].label);
+
+        // Reiniciar scanner con nueva cámara
+        this.html5QrCode = new Html5Qrcode('qr-reader');
+
+        const config = {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0
+        };
+
+        await this.html5QrCode.start(
+          { deviceId: { exact: this.currentCameraId } },
+          config,
+          this.onScanSuccess,
+          this.onScanFailure
+        );
+
+        this.scanning = true;
+        this.success = `Cambiado a: ${this.availableCameras[nextIndex].label || 'Cámara ' + (nextIndex + 1)}`;
+
+        // Ocultar mensaje después de 2 segundos
+        setTimeout(() => {
+          this.success = null;
+        }, 2000);
+      } catch (err) {
+        console.error('Error al cambiar cámara:', err);
+        this.error = 'No se pudo cambiar de cámara. Intenta cerrar y volver a abrir el escáner.';
+      }
     }
   },
   beforeUnmount() {
