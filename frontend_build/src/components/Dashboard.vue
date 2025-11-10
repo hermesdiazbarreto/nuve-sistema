@@ -20,6 +20,7 @@
               <div>
                 <div class="text-subtitle-2">Total Productos</div>
                 <div class="text-h4 font-weight-bold">{{ estadisticas.totalProductos }}</div>
+                <div class="text-caption mt-1">{{ formatearPrecio(estadisticas.valorCompra) }} en inventario</div>
               </div>
               <v-icon size="64" class="opacity-75">mdi-package-variant</v-icon>
             </div>
