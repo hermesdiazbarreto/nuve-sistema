@@ -180,7 +180,7 @@
               v-model="venta.tipo_egreso"
               :items="[
                 { title: 'Seleccione el tipo de egreso...', value: '' },
-                { title: 'Compra', value: 'COMPRA' },
+                { title: 'Compra de Mercancía', value: 'COMPRA' },
                 { title: 'Gasto', value: 'GASTO' }
               ]"
               label="Tipo de Egreso *"
@@ -255,11 +255,11 @@
 
               <v-textarea
                 v-model="venta.observaciones"
-                :label="venta.tipo_egreso === 'COMPRA' ? 'Descripción de la Compra *' : 'Descripción del Gasto *'"
+                :label="venta.tipo_egreso === 'COMPRA' ? 'Descripción de la Compra de Mercancía *' : 'Descripción del Gasto *'"
                 variant="outlined"
                 rows="3"
                 required
-                :placeholder="venta.tipo_egreso === 'COMPRA' ? 'Ej: Compra de inventario, mercadería, etc.' : 'Ej: Pago de servicios, alquiler, suministros, etc.'"
+                :placeholder="venta.tipo_egreso === 'COMPRA' ? 'Ej: Compra de inventario, mercadería, productos, etc.' : 'Ej: Pago de servicios, alquiler, suministros, etc.'"
               ></v-textarea>
 
               <v-divider class="my-4"></v-divider>
@@ -278,7 +278,7 @@
                   block
                 >
                   <v-icon left>mdi-cash-multiple</v-icon>
-                  {{ venta.tipo_egreso === 'COMPRA' ? 'Registrar Compra' : 'Registrar Gasto' }}
+                  {{ venta.tipo_egreso === 'COMPRA' ? 'Registrar Compra de Mercancía' : 'Registrar Gasto' }}
                 </v-btn>
                 <v-btn
                   :to="'/ventas'"
