@@ -8,7 +8,7 @@
         <v-select
           v-model="venta.tipo_movimiento"
           :items="[
-            { title: 'Ingreso (Venta)', value: 'INGRESO' },
+            { title: 'Ingreso', value: 'INGRESO' },
             { title: 'Egreso', value: 'EGRESO' }
           ]"
           label="Tipo de Movimiento *"
@@ -19,9 +19,29 @@
       </v-card-text>
     </v-card>
 
+    <!-- Selector de Tipo de Ingreso (aparece cuando se selecciona INGRESO) -->
+    <v-card v-if="venta.tipo_movimiento === 'INGRESO'" elevation="2" class="mb-4">
+      <v-card-text class="pa-4">
+        <v-select
+          v-model="venta.tipo_ingreso"
+          :items="[
+            { title: 'Seleccione el tipo de ingreso...', value: '' },
+            { title: 'Venta', value: 'VENTA' },
+            { title: 'Aporte Socios', value: 'APORTE_SOCIOS' },
+            { title: 'Préstamos', value: 'PRESTAMOS' },
+            { title: 'Otra Entrada de Dinero', value: 'OTRA_ENTRADA' }
+          ]"
+          label="Tipo de Ingreso *"
+          variant="outlined"
+          density="comfortable"
+          prepend-inner-icon="mdi-cash-plus"
+        ></v-select>
+      </v-card-text>
+    </v-card>
+
     <v-row>
-      <!-- Columna Izquierda: Selector de Productos (solo para INGRESO) -->
-      <v-col cols="12" md="7" v-if="venta.tipo_movimiento === 'INGRESO'">
+      <!-- Columna Izquierda: Selector de Productos (solo para INGRESO tipo VENTA) -->
+      <v-col cols="12" md="7" v-if="venta.tipo_movimiento === 'INGRESO' && venta.tipo_ingreso === 'VENTA'">
         <v-card elevation="3">
           <v-card-title class="bg-primary">
             <span class="text-white">Seleccionar Productos</span>
@@ -294,8 +314,85 @@
         </v-card>
       </v-col>
 
-      <!-- Columna Derecha: Carrito y Resumen (solo para INGRESO) -->
-      <v-col cols="12" md="5" v-if="venta.tipo_movimiento === 'INGRESO'">
+      <!-- Formulario para otros tipos de INGRESO -->
+      <v-col cols="12" v-if="venta.tipo_movimiento === 'INGRESO' && venta.tipo_ingreso && venta.tipo_ingreso !== 'VENTA'">
+        <v-card elevation="3">
+          <v-card-title class="bg-success">
+            <span class="text-white">Registrar Ingreso</span>
+          </v-card-title>
+          <v-card-text class="pt-4">
+            <v-row>
+              <v-col cols="12" md="6">
+                <v-text-field
+                  v-model.number="venta.monto_ingreso"
+                  type="number"
+                  step="0.01"
+                  label="Monto del Ingreso *"
+                  variant="outlined"
+                  density="comfortable"
+                  min="0.01"
+                  required
+                  placeholder="0.00"
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-select
+                  v-model="venta.tipo_pago"
+                  :items="[
+                    { title: 'Seleccione...', value: '' },
+                    { title: 'Efectivo', value: 'EFECTIVO' },
+                    { title: 'Tarjeta', value: 'TARJETA' },
+                    { title: 'Transferencia', value: 'TRANSFERENCIA' }
+                  ]"
+                  label="Tipo de Pago *"
+                  variant="outlined"
+                  density="comfortable"
+                  required
+                ></v-select>
+              </v-col>
+            </v-row>
+
+            <v-textarea
+              v-model="venta.observaciones"
+              label="Descripción del Ingreso *"
+              variant="outlined"
+              rows="3"
+              required
+              :placeholder="getPlaceholderIngreso()"
+            ></v-textarea>
+
+            <v-divider class="my-4"></v-divider>
+
+            <div class="d-flex justify-space-between mb-3 text-h5">
+              <span><strong>TOTAL A INGRESAR:</strong></span>
+              <strong class="text-success">{{ formatearPrecio(venta.monto_ingreso || 0) }}</strong>
+            </div>
+
+            <div class="d-flex flex-column ga-2">
+              <v-btn
+                @click="procesarIngreso"
+                color="success"
+                size="large"
+                :disabled="!puedeRegistrarIngreso"
+                block
+              >
+                <v-icon left>mdi-cash-multiple</v-icon> Registrar Ingreso
+              </v-btn>
+              <v-btn
+                :to="'/ventas'"
+                color="secondary"
+                variant="outlined"
+                block
+              >
+                <v-icon left>mdi-cancel</v-icon> Cancelar
+              </v-btn>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <!-- Columna Derecha: Carrito y Resumen (solo para INGRESO tipo VENTA) -->
+      <v-col cols="12" md="5" v-if="venta.tipo_movimiento === 'INGRESO' && venta.tipo_ingreso === 'VENTA'">
         <v-card elevation="3">
           <v-card-title class="bg-success">
             <span class="text-white">Carrito de Compra</span>
@@ -768,6 +865,7 @@ export default {
       carrito: [],
       venta: {
         tipo_movimiento: 'INGRESO', // Por defecto es Ingreso
+        tipo_ingreso: '', // Tipo de ingreso: VENTA, APORTE_SOCIOS, PRESTAMOS, OTRA_ENTRADA
         tipo_egreso: '', // Tipo de egreso: COMPRA o GASTO
         categoria_gasto_id: '', // Categoría de gasto (solo para GASTO)
         cliente_id: '',
@@ -776,6 +874,7 @@ export default {
         tipo_pago: '',
         observaciones: '',
         monto_egreso: 0,
+        monto_ingreso: 0,
         es_abono: false,
         monto_abonado: 0,
         vendedor: 1 // TODO: Obtener del usuario autenticado
@@ -841,6 +940,9 @@ export default {
         return baseValidation && this.venta.categoria_gasto_id
       }
       return baseValidation
+    },
+    puedeRegistrarIngreso() {
+      return this.venta.tipo_ingreso && this.venta.tipo_pago && this.venta.monto_ingreso > 0 && this.venta.observaciones
     }
   },
   async created() {
@@ -1130,6 +1232,47 @@ export default {
           console.error('Error al procesar egreso:', error)
           console.error('Respuesta del servidor:', error.response?.data)
           this.showSnackbar('Error al procesar el egreso: ' + JSON.stringify(error.response?.data || error.message), 'error')
+        }
+      }
+    },
+    getPlaceholderIngreso() {
+      const placeholders = {
+        'APORTE_SOCIOS': 'Ej: Aporte de capital de socios',
+        'PRESTAMOS': 'Ej: Préstamo bancario, préstamo de terceros',
+        'OTRA_ENTRADA': 'Ej: Ingresos diversos, otros conceptos'
+      }
+      return placeholders[this.venta.tipo_ingreso] || 'Descripción del ingreso'
+    },
+    async procesarIngreso() {
+      if (!this.puedeRegistrarIngreso) {
+        this.showSnackbar('Complete todos los campos requeridos', 'warning')
+        return
+      }
+
+      if (confirm('¿Confirmar el registro de este ingreso?')) {
+        try {
+          const ingresoData = {
+            tipo_movimiento: 'INGRESO',
+            cliente: null,
+            vendedor: this.venta.vendedor,
+            subtotal: Number(this.venta.monto_ingreso).toFixed(2),
+            descuento: 0,
+            impuesto: 0,
+            total: Number(this.venta.monto_ingreso).toFixed(2),
+            tipo_pago: this.venta.tipo_pago,
+            estado: 'PAGADO',
+            observaciones: this.venta.observaciones,
+            detalles: [] // Los ingresos no tienen detalles de productos
+          }
+
+          console.log('Datos de ingreso a enviar:', ingresoData)
+          await api.createVenta(ingresoData)
+          this.showSnackbar('Ingreso registrado correctamente!', 'success')
+          this.$router.push('/ventas')
+        } catch (error) {
+          console.error('Error al procesar ingreso:', error)
+          console.error('Respuesta del servidor:', error.response?.data)
+          this.showSnackbar('Error al procesar el ingreso: ' + JSON.stringify(error.response?.data || error.message), 'error')
         }
       }
     },
