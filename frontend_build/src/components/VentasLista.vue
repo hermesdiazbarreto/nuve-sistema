@@ -11,7 +11,7 @@
       <v-col cols="12" md="6" class="text-md-right">
         <v-btn color="primary" :to="'/ventas/nueva'">
           <v-icon left>mdi-plus</v-icon>
-          Nueva Venta
+          Nueva Transacción
         </v-btn>
       </v-col>
     </v-row>
