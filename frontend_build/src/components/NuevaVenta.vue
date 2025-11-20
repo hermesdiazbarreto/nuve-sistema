@@ -815,8 +815,8 @@ export default {
         codigo_hex: ''
       },
       nuevaCategoriaGasto: {
-        nombre: \'\',
-        descripcion: \'\',
+        nombre: '',
+        descripcion: '',
         activo: true
       }
     }
