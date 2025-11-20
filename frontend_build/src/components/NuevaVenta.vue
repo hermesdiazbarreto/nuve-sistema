@@ -9,7 +9,7 @@
           v-model="venta.tipo_movimiento"
           :items="[
             { title: 'Ingreso (Venta)', value: 'INGRESO' },
-            { title: 'Egreso (Gasto)', value: 'EGRESO' }
+            { title: 'Egreso', value: 'EGRESO' }
           ]"
           label="Tipo de Movimiento *"
           variant="outlined"
@@ -172,74 +172,93 @@
       <v-col cols="12" v-if="venta.tipo_movimiento === 'EGRESO'">
         <v-card elevation="3">
           <v-card-title class="bg-error">
-            <span class="text-white">Registrar Egreso (Gasto)</span>
+            <span class="text-white">Registrar Egreso</span>
           </v-card-title>
           <v-card-text class="pt-4">
-            <v-row>
-              <v-col cols="12" md="6">
-                <v-text-field
-                  v-model.number="venta.monto_egreso"
-                  type="number"
-                  step="0.01"
-                  label="Monto del Egreso *"
-                  variant="outlined"
-                  density="comfortable"
-                  min="0.01"
-                  required
-                  placeholder="0.00"
-                ></v-text-field>
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-select
-                  v-model="venta.tipo_pago"
-                  :items="[
-                    { title: 'Seleccione...', value: '' },
-                    { title: 'Efectivo', value: 'EFECTIVO' },
-                    { title: 'Tarjeta', value: 'TARJETA' },
-                    { title: 'Transferencia', value: 'TRANSFERENCIA' }
-                  ]"
-                  label="Tipo de Pago *"
-                  variant="outlined"
-                  density="comfortable"
-                  required
-                ></v-select>
-              </v-col>
-            </v-row>
-
-            <v-textarea
-              v-model="venta.observaciones"
-              label="Descripción del Egreso *"
+            <!-- Selector de Tipo de Egreso -->
+            <v-select
+              v-model="venta.tipo_egreso"
+              :items="[
+                { title: 'Seleccione el tipo de egreso...', value: '' },
+                { title: 'Compra', value: 'COMPRA' },
+                { title: 'Gasto', value: 'GASTO' }
+              ]"
+              label="Tipo de Egreso *"
               variant="outlined"
-              rows="3"
-              required
-              placeholder="Ej: Pago de servicios, compra de suministros, etc."
-            ></v-textarea>
+              density="comfortable"
+              prepend-inner-icon="mdi-cash-minus"
+              class="mb-4"
+            ></v-select>
 
-            <v-divider class="my-4"></v-divider>
+            <!-- Formulario solo aparece cuando se selecciona un tipo de egreso -->
+            <div v-if="venta.tipo_egreso">
+              <v-row>
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    v-model.number="venta.monto_egreso"
+                    type="number"
+                    step="0.01"
+                    label="Monto del Egreso *"
+                    variant="outlined"
+                    density="comfortable"
+                    min="0.01"
+                    required
+                    placeholder="0.00"
+                  ></v-text-field>
+                </v-col>
+                <v-col cols="12" md="6">
+                  <v-select
+                    v-model="venta.tipo_pago"
+                    :items="[
+                      { title: 'Seleccione...', value: '' },
+                      { title: 'Efectivo', value: 'EFECTIVO' },
+                      { title: 'Tarjeta', value: 'TARJETA' },
+                      { title: 'Transferencia', value: 'TRANSFERENCIA' }
+                    ]"
+                    label="Tipo de Pago *"
+                    variant="outlined"
+                    density="comfortable"
+                    required
+                  ></v-select>
+                </v-col>
+              </v-row>
 
-            <div class="d-flex justify-space-between mb-3 text-h5">
-              <span><strong>TOTAL A EGRESAR:</strong></span>
-              <strong class="text-error">{{ formatearPrecio(venta.monto_egreso || 0) }}</strong>
-            </div>
-
-            <div class="d-flex flex-column ga-2">
-              <v-btn
-                @click="procesarEgreso"
-                color="error"
-                size="large"
-                :disabled="!puedeRegistrarEgreso"
-                block
-              >
-                <v-icon left>mdi-cash-multiple</v-icon> Registrar Egreso
-              </v-btn>
-              <v-btn
-                :to="'/ventas'"
-                color="secondary"
+              <v-textarea
+                v-model="venta.observaciones"
+                :label="venta.tipo_egreso === 'COMPRA' ? 'Descripción de la Compra *' : 'Descripción del Gasto *'"
                 variant="outlined"
-                block
-              >
-                <v-icon left>mdi-cancel</v-icon> Cancelar
-              </v-btn>
+                rows="3"
+                required
+                :placeholder="venta.tipo_egreso === 'COMPRA' ? 'Ej: Compra de inventario, mercadería, etc.' : 'Ej: Pago de servicios, alquiler, suministros, etc.'"
+              ></v-textarea>
+
+              <v-divider class="my-4"></v-divider>
+
+              <div class="d-flex justify-space-between mb-3 text-h5">
+                <span><strong>TOTAL A EGRESAR:</strong></span>
+                <strong class="text-error">{{ formatearPrecio(venta.monto_egreso || 0) }}</strong>
+              </div>
+
+              <div class="d-flex flex-column ga-2">
+                <v-btn
+                  @click="procesarEgreso"
+                  color="error"
+                  size="large"
+                  :disabled="!puedeRegistrarEgreso"
+                  block
+                >
+                  <v-icon left>mdi-cash-multiple</v-icon>
+                  {{ venta.tipo_egreso === 'COMPRA' ? 'Registrar Compra' : 'Registrar Gasto' }}
+                </v-btn>
+                <v-btn
+                  :to="'/ventas'"
+                  color="secondary"
+                  variant="outlined"
+                  block
+                >
+                  <v-icon left>mdi-cancel</v-icon> Cancelar
+                </v-btn>
+              </div>
             </div>
           </v-card-text>
         </v-card>
@@ -686,6 +705,7 @@ export default {
       carrito: [],
       venta: {
         tipo_movimiento: 'INGRESO', // Por defecto es Ingreso
+        tipo_egreso: '', // Tipo de egreso: COMPRA o GASTO
         cliente_id: '',
         descuento: 0,
         impuesto_porcentaje: 0,
@@ -744,7 +764,7 @@ export default {
       return this.venta.tipo_pago && this.carrito.length > 0
     },
     puedeRegistrarEgreso() {
-      return this.venta.tipo_pago && this.venta.monto_egreso > 0 && this.venta.observaciones
+      return this.venta.tipo_egreso && this.venta.tipo_pago && this.venta.monto_egreso > 0 && this.venta.observaciones
     }
   },
   async created() {
