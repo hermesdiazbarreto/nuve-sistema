@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import (
     Categoria, Marca, Talla, Color, Producto, ProductoVariante,
     Cliente, Venta, DetalleVenta, MovimientoInventario, Proveedor, PagoVenta,
-    PromocionWhatsApp, EnvioWhatsApp
+    PromocionWhatsApp, EnvioWhatsApp, CategoriaGasto
 )
 
 class CategoriaSerializer(serializers.ModelSerializer):
