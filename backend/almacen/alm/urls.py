@@ -5,7 +5,7 @@ from .views import (
     CategoriaViewSet, MarcaViewSet, TallaViewSet, ColorViewSet,
     ProductoViewSet, ProductoVarianteViewSet, ClienteViewSet,
     VentaViewSet, DetalleVentaViewSet, MovimientoInventarioViewSet,
-    ProveedorViewSet, PromocionWhatsAppViewSet, EnvioWhatsAppViewSet,
+    ProveedorViewSet, CategoriaGastoViewSet, PromocionWhatsAppViewSet, EnvioWhatsAppViewSet,
     login_view, logout_view, generar_todos_qr, generar_pdf_etiquetas_qr,
     crear_backup
 )
@@ -25,6 +25,7 @@ router.register(r'ventas', VentaViewSet)
 router.register(r'detalle-ventas', DetalleVentaViewSet)
 router.register(r'movimientos', MovimientoInventarioViewSet)
 router.register(r'proveedores', ProveedorViewSet)
+router.register(r'categorias-gasto', CategoriaGastoViewSet)
 router.register(r'promociones-whatsapp', PromocionWhatsAppViewSet)
 router.register(r'envios-whatsapp', EnvioWhatsAppViewSet)
 

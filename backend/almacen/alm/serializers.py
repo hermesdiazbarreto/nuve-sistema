@@ -120,3 +120,7 @@ class PromocionWhatsAppSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('fecha_creacion', 'fecha_envio', 'total_destinatarios',
                            'mensajes_enviados', 'mensajes_fallidos', 'creado_por')
+class CategoriaGastoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CategoriaGasto
+        fields = '__all__'

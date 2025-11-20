@@ -248,6 +248,23 @@ export default {
     return api.delete(`/proveedores/${id}/`)
   },
 
+
+  // ============ CATEGORÍAS DE GASTO ============
+  getCategoriasGasto() {
+    return api.get('/categorias-gasto/')
+  },
+  getCategoriaGasto(id) {
+    return api.get(`/categorias-gasto/${id}/`)
+  },
+  createCategoriaGasto(data) {
+    return api.post('/categorias-gasto/', data)
+  },
+  updateCategoriaGasto(id, data) {
+    return api.put(`/categorias-gasto/${id}/`, data)
+  },
+  deleteCategoriaGasto(id) {
+    return api.delete(`/categorias-gasto/${id}/`)
+  },
   // ============ ESTADÍSTICAS ============
   getEstadisticas() {
     // Esta será una vista personalizada que crearemos después

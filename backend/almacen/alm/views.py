@@ -22,14 +22,14 @@ except ImportError:
 from .models import (
     Categoria, Marca, Talla, Color, Producto, ProductoVariante,
     Cliente, Venta, DetalleVenta, MovimientoInventario, Proveedor,
-    DetalleCompra, PagoVenta, PromocionWhatsApp, EnvioWhatsApp
+    DetalleCompra, PagoVenta, PromocionWhatsApp, EnvioWhatsApp, CategoriaGasto
 )
 from .serializers import (
     CategoriaSerializer, MarcaSerializer, TallaSerializer, ColorSerializer,
     ProductoSerializer, ProductoVarianteSerializer, ClienteSerializer,
     VentaSerializer, DetalleVentaSerializer, MovimientoInventarioSerializer,
     ProveedorSerializer, PagoVentaSerializer, PromocionWhatsAppSerializer,
-    EnvioWhatsAppSerializer
+    EnvioWhatsAppSerializer, CategoriaGastoSerializer
 )
 
 class CategoriaViewSet(viewsets.ModelViewSet):
@@ -598,6 +598,10 @@ class MovimientoInventarioViewSet(viewsets.ReadOnlyModelViewSet):
 class ProveedorViewSet(viewsets.ModelViewSet):
     queryset = Proveedor.objects.all()
     serializer_class = ProveedorSerializer
+
+class CategoriaGastoViewSet(viewsets.ModelViewSet):
+    queryset = CategoriaGasto.objects.filter(activo=True)
+    serializer_class = CategoriaGastoSerializer
 
 class PromocionWhatsAppViewSet(viewsets.ModelViewSet):
     queryset = PromocionWhatsApp.objects.all()

@@ -190,6 +190,36 @@
               class="mb-4"
             ></v-select>
 
+            <!-- Selector de Categoría de Gasto (solo para GASTO) -->
+            <div v-if="venta.tipo_egreso === 'GASTO'" class="mb-4">
+              <div class="d-flex align-center ga-2">
+                <v-select
+                  v-model="venta.categoria_gasto_id"
+                  :items="[
+                    { title: 'Seleccione una categoría...', value: '' },
+                    ...categoriasGasto.map(c => ({
+                      title: c.nombre,
+                      value: c.id
+                    }))
+                  ]"
+                  label="Categoría de Gasto *"
+                  variant="outlined"
+                  density="comfortable"
+                  prepend-inner-icon="mdi-tag"
+                  class="flex-grow-1"
+                ></v-select>
+                <v-btn
+                  color="primary"
+                  size="large"
+                  @click="abrirDialogCategoriaGasto"
+                  icon
+                  title="Agregar nueva categoría de gasto"
+                >
+                  <v-icon>mdi-plus</v-icon>
+                </v-btn>
+              </div>
+            </div>
+
             <!-- Formulario solo aparece cuando se selecciona un tipo de egreso -->
             <div v-if="venta.tipo_egreso">
               <v-row>
@@ -676,6 +706,39 @@
       </v-card>
     </v-dialog>
 
+    <!-- Dialog para agregar Categoría de Gasto -->
+    <v-dialog v-model="mostrarDialogCategoriaGasto" max-width="500px">
+      <v-card>
+        <v-card-title class="bg-error text-white">
+          <v-icon left color="white">mdi-tag-plus</v-icon>
+          Nueva Categoría de Gasto
+        </v-card-title>
+        <v-card-text class="pa-6">
+          <v-text-field
+            v-model="nuevaCategoriaGasto.nombre"
+            label="Nombre de la Categoría *"
+            variant="outlined"
+            density="comfortable"
+            autofocus
+            placeholder="Ej: GASTOS DE OFICINA"
+          ></v-text-field>
+          <v-textarea
+            v-model="nuevaCategoriaGasto.descripcion"
+            label="Descripción (opcional)"
+            variant="outlined"
+            density="comfortable"
+            rows="2"
+            placeholder="Descripción de la categoría de gasto..."
+          ></v-textarea>
+        </v-card-text>
+        <v-card-actions class="pa-4">
+          <v-btn color="grey" variant="text" @click="cerrarDialogCategoriaGasto">Cancelar</v-btn>
+          <v-spacer></v-spacer>
+          <v-btn color="error" @click="guardarCategoriaGasto">Guardar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- Modal Scanner QR -->
     <QrScannerModal
       v-model="mostrarScannerQR"
@@ -706,6 +769,7 @@ export default {
       venta: {
         tipo_movimiento: 'INGRESO', // Por defecto es Ingreso
         tipo_egreso: '', // Tipo de egreso: COMPRA o GASTO
+        categoria_gasto_id: '', // Categoría de gasto (solo para GASTO)
         cliente_id: '',
         descuento: 0,
         impuesto_porcentaje: 0,
@@ -726,10 +790,12 @@ export default {
       mostrarDialogMarca: false,
       mostrarDialogTalla: false,
       mostrarDialogColor: false,
+      mostrarDialogCategoriaGasto: false,
       categorias: [],
       marcas: [],
       tallas: [],
       colores: [],
+      categoriasGasto: [],
       nuevaCategoria: {
         nombre: '',
         descripcion: '',
@@ -747,6 +813,11 @@ export default {
       nuevoColor: {
         nombre: '',
         codigo_hex: ''
+      },
+      nuevaCategoriaGasto: {
+        nombre: \'\',
+        descripcion: \'\',
+        activo: true
       }
     }
   },
@@ -764,7 +835,12 @@ export default {
       return this.venta.tipo_pago && this.carrito.length > 0
     },
     puedeRegistrarEgreso() {
-      return this.venta.tipo_egreso && this.venta.tipo_pago && this.venta.monto_egreso > 0 && this.venta.observaciones
+      const baseValidation = this.venta.tipo_egreso && this.venta.tipo_pago && this.venta.monto_egreso > 0 && this.venta.observaciones
+      // Si es GASTO, también requiere categoría
+      if (this.venta.tipo_egreso === 'GASTO') {
+        return baseValidation && this.venta.categoria_gasto_id
+      }
+      return baseValidation
     }
   },
   async created() {
@@ -851,14 +927,15 @@ export default {
     },
     async cargarDatos() {
       try {
-        const [variantesRes, productosRes, clientesRes, categoriasRes, marcasRes, tallasRes, coloresRes] = await Promise.all([
+        const [variantesRes, productosRes, clientesRes, categoriasRes, marcasRes, tallasRes, coloresRes, categoriasGastoRes] = await Promise.all([
           api.getProductoVariantes(),
           api.getProductos(),
           api.getClientes(),
           api.getCategorias(),
           api.getMarcas(),
           api.getTallas(),
-          api.getColores()
+          api.getColores(),
+          api.getCategoriasGasto()
         ])
 
         const variantes = variantesRes.data.results || variantesRes.data || []
@@ -876,6 +953,7 @@ export default {
         this.marcas = marcas.filter(m => m.activo)
         this.tallas = tallas
         this.colores = colores
+        this.categoriasGasto = categoriasGastoRes.data.results || categoriasGastoRes.data || []
 
         // Enriquecer variantes con precio de venta
         this.variantes = this.variantes.map(v => {
@@ -1134,6 +1212,31 @@ export default {
     cerrarDialogColor() {
       this.mostrarDialogColor = false
       this.nuevoColor = { nombre: '', codigo_hex: '' }
+    },
+    // Métodos para Categoría de Gasto
+    abrirDialogCategoriaGasto() {
+      this.mostrarDialogCategoriaGasto = true
+    },
+    async guardarCategoriaGasto() {
+      if (!this.nuevaCategoriaGasto.nombre) {
+        this.showSnackbar('El nombre es requerido', 'warning')
+        return
+      }
+      try {
+        const response = await api.createCategoriaGasto(this.nuevaCategoriaGasto)
+        this.categoriasGasto.push(response.data)
+        // Seleccionar automáticamente la categoría recién creada
+        this.venta.categoria_gasto_id = response.data.id
+        this.showSnackbar('Categoría de gasto creada correctamente', 'success')
+        this.cerrarDialogCategoriaGasto()
+      } catch (error) {
+        console.error('Error al crear categoría de gasto:', error)
+        this.showSnackbar('Error al crear la categoría de gasto', 'error')
+      }
+    },
+    cerrarDialogCategoriaGasto() {
+      this.mostrarDialogCategoriaGasto = false
+      this.nuevaCategoriaGasto = { nombre: '', descripcion: '', activo: true }
     }
   }
 }
