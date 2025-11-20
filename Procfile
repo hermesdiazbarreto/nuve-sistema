@@ -1,1 +1,1 @@
-web: cd backend/almacen && python manage.py fix_codigo_variante_column && python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn almacen.wsgi --bind 0.0.0.0:$PORT --log-file -
+web: cd backend/almacen && python manage.py fix_codigo_variante_column && python manage.py migrate --noinput && python manage.py crear_categorias_gasto && python manage.py collectstatic --noinput && gunicorn almacen.wsgi --bind 0.0.0.0:$PORT --log-file -
