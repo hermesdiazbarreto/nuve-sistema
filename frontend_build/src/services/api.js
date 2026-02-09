@@ -7,7 +7,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000,
+  timeout: 30000, // 30 segundos para cold start de Railway
 })
 
 // Interceptor para agregar el token a cada petición

@@ -352,6 +352,36 @@
               </v-col>
             </v-row>
 
+            <!-- Selector de Tercero (solo para APORTE_SOCIOS y PRESTAMOS) -->
+            <div v-if="venta.tipo_ingreso === 'APORTE_SOCIOS' || venta.tipo_ingreso === 'PRESTAMOS'" class="mb-4">
+              <div class="d-flex align-center ga-2">
+                <v-select
+                  v-model="venta.tercero_id"
+                  :items="[
+                    { title: 'Seleccione un tercero...', value: '' },
+                    ...terceros.map(t => ({
+                      title: `${t.nombre} - ${t.ruc || 'Sin RUC'}`,
+                      value: t.id
+                    }))
+                  ]"
+                  :label="venta.tipo_ingreso === 'APORTE_SOCIOS' ? 'Socio que aporta *' : 'Tercero que presta *'"
+                  variant="outlined"
+                  density="comfortable"
+                  prepend-inner-icon="mdi-account"
+                  class="flex-grow-1"
+                ></v-select>
+                <v-btn
+                  color="success"
+                  size="large"
+                  @click="abrirDialogTercero"
+                  icon
+                  title="Agregar nuevo tercero"
+                >
+                  <v-icon>mdi-plus</v-icon>
+                </v-btn>
+              </div>
+            </div>
+
             <v-textarea
               v-model="venta.observaciones"
               label="Descripción del Ingreso *"
@@ -836,6 +866,87 @@
       </v-card>
     </v-dialog>
 
+    <!-- Dialog para agregar Tercero -->
+    <v-dialog v-model="mostrarDialogTercero" max-width="600px">
+      <v-card>
+        <v-card-title class="bg-success text-white">
+          <v-icon left color="white">mdi-account-plus</v-icon>
+          Nuevo Tercero (Socio / Prestamista)
+        </v-card-title>
+        <v-card-text class="pa-6">
+          <v-row>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="nuevoTercero.codigo"
+                label="Código *"
+                variant="outlined"
+                density="comfortable"
+                autofocus
+                placeholder="Ej: T-001"
+              ></v-text-field>
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="nuevoTercero.ruc"
+                label="RUC / Documento *"
+                variant="outlined"
+                density="comfortable"
+                placeholder="Ej: 12345678901"
+              ></v-text-field>
+            </v-col>
+          </v-row>
+          <v-text-field
+            v-model="nuevoTercero.nombre"
+            label="Nombre Completo / Razón Social *"
+            variant="outlined"
+            density="comfortable"
+            placeholder="Ej: Juan Pérez / Empresa SAC"
+          ></v-text-field>
+          <v-row>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="nuevoTercero.telefono"
+                label="Teléfono"
+                variant="outlined"
+                density="comfortable"
+                placeholder="Ej: 987654321"
+              ></v-text-field>
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="nuevoTercero.email"
+                label="Email"
+                variant="outlined"
+                density="comfortable"
+                type="email"
+                placeholder="Ej: correo@ejemplo.com"
+              ></v-text-field>
+            </v-col>
+          </v-row>
+          <v-textarea
+            v-model="nuevoTercero.direccion"
+            label="Dirección"
+            variant="outlined"
+            density="comfortable"
+            rows="2"
+            placeholder="Dirección completa..."
+          ></v-textarea>
+          <v-text-field
+            v-model="nuevoTercero.contacto"
+            label="Persona de Contacto"
+            variant="outlined"
+            density="comfortable"
+            placeholder="Nombre del contacto principal"
+          ></v-text-field>
+        </v-card-text>
+        <v-card-actions class="pa-4">
+          <v-btn color="grey" variant="text" @click="cerrarDialogTercero">Cancelar</v-btn>
+          <v-spacer></v-spacer>
+          <v-btn color="success" @click="guardarTercero">Guardar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- Modal Scanner QR -->
     <QrScannerModal
       v-model="mostrarScannerQR"
@@ -868,6 +979,7 @@ export default {
         tipo_ingreso: '', // Tipo de ingreso: VENTA, APORTE_SOCIOS, PRESTAMOS, OTRA_ENTRADA
         tipo_egreso: '', // Tipo de egreso: COMPRA o GASTO
         categoria_gasto_id: '', // Categoría de gasto (solo para GASTO)
+        tercero_id: '', // Tercero (socio/prestamista) para APORTE_SOCIOS y PRESTAMOS
         cliente_id: '',
         descuento: 0,
         impuesto_porcentaje: 0,
@@ -890,11 +1002,13 @@ export default {
       mostrarDialogTalla: false,
       mostrarDialogColor: false,
       mostrarDialogCategoriaGasto: false,
+      mostrarDialogTercero: false,
       categorias: [],
       marcas: [],
       tallas: [],
       colores: [],
       categoriasGasto: [],
+      terceros: [],
       nuevaCategoria: {
         nombre: '',
         descripcion: '',
@@ -916,6 +1030,16 @@ export default {
       nuevaCategoriaGasto: {
         nombre: '',
         descripcion: '',
+        activo: true
+      },
+      nuevoTercero: {
+        codigo: '',
+        nombre: '',
+        ruc: '',
+        direccion: '',
+        telefono: '',
+        email: '',
+        contacto: '',
         activo: true
       }
     }
@@ -942,7 +1066,12 @@ export default {
       return baseValidation
     },
     puedeRegistrarIngreso() {
-      return this.venta.tipo_ingreso && this.venta.tipo_pago && this.venta.monto_ingreso > 0 && this.venta.observaciones
+      const baseValidation = this.venta.tipo_ingreso && this.venta.tipo_pago && this.venta.monto_ingreso > 0 && this.venta.observaciones
+      // Si es APORTE_SOCIOS o PRESTAMOS, también requiere tercero
+      if (this.venta.tipo_ingreso === 'APORTE_SOCIOS' || this.venta.tipo_ingreso === 'PRESTAMOS') {
+        return baseValidation && this.venta.tercero_id
+      }
+      return baseValidation
     }
   },
   async created() {
@@ -1029,7 +1158,7 @@ export default {
     },
     async cargarDatos() {
       try {
-        const [variantesRes, productosRes, clientesRes, categoriasRes, marcasRes, tallasRes, coloresRes, categoriasGastoRes] = await Promise.all([
+        const [variantesRes, productosRes, clientesRes, categoriasRes, marcasRes, tallasRes, coloresRes, categoriasGastoRes, tercerosRes] = await Promise.all([
           api.getProductoVariantes(),
           api.getProductos(),
           api.getClientes(),
@@ -1037,7 +1166,8 @@ export default {
           api.getMarcas(),
           api.getTallas(),
           api.getColores(),
-          api.getCategoriasGasto()
+          api.getCategoriasGasto(),
+          api.getProveedores()
         ])
 
         const variantes = variantesRes.data.results || variantesRes.data || []
@@ -1056,6 +1186,7 @@ export default {
         this.tallas = tallas
         this.colores = colores
         this.categoriasGasto = categoriasGastoRes.data.results || categoriasGastoRes.data || []
+        this.terceros = (tercerosRes.data.results || tercerosRes.data || []).filter(t => t.activo)
 
         // Enriquecer variantes con precio de venta
         this.variantes = this.variantes.map(v => {
